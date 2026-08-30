@@ -93,30 +93,40 @@ Backend PR #34 passed its full backend gate and was squash-merged.
 
 This changed reconciliation from a silent best-effort mechanism into an observable fail-safe process.
 
-## Backend direct withdrawal-to-ledger identity — IN PROGRESS / PR #35
+## Backend direct withdrawal-to-ledger identity — VERIFIED / MERGED
 
-The next research pass covered the current `Withdrawal` schema, `TransactionHistory`, the fiat withdrawal controller, reconciliation worker, provider-attempt identity, exception queue and worker tests.
+Backend PR #35 passed the complete backend gate after a fixture correction and was squash-merged.
 
-### Defect being eliminated
+### Implementation
 
-`Withdrawal` historically had no direct canonical transaction reference. New and legacy reconciliation therefore depended on user + amount + five-second timestamp correlation.
+- `Withdrawal.transactionHistoryId` provides durable canonical identity.
+- Partial uniqueness and FK constraints protect the identity bridge.
+- Historical backfill links only exact single-candidate matches.
+- Ambiguous/missing records remain unresolved rather than being guessed.
+- New mirror rows are linked only when exactly one strict candidate exists.
+- Reconciliation prefers durable identity before legacy correlation.
+- Regression coverage verifies linked rows do not fall back to heuristic matching.
 
-### Implementation in PR #35
+## Backend provider callback monotonicity — IN PROGRESS / PR #37
 
-- Adds nullable `Withdrawal.transactionHistoryId` at the database layer.
-- Adds a partial unique index and FK to `TransactionHistory.id`.
-- Safely backfills only exact single-candidate historical matches.
-- Leaves ambiguous/missing rows unlinked so the reconciliation exception queue can handle them.
-- Adds a database trigger for newly inserted mirror rows, linking only when exactly one strict candidate exists.
-- Reconciliation prefers the durable identity before using the legacy migration fallback.
-- Safely promotes uniquely-correlated legacy rows into the durable link.
-- Regression tests verify linked rows never fall back to heuristic matching.
+A new research pass covered the provider-attempt service, canonical fiat settlement service, provider callback boundary, migration, existing provider-attempt tests and reconciliation architecture.
 
-### Important implementation boundary
+### Defect addressed
 
-The checked-in Prisma client currently predates the additive database column. PR #35 deliberately reads/writes the new identity bridge through SQL while preserving the existing Prisma client contract. A subsequent schema-generation cleanup should expose the relation natively once the full schema file can be regenerated and verified as part of the normal migration pipeline.
+Provider callbacks can arrive out of order. The previous provider-attempt upsert could overwrite a terminal `COMPLETED` attempt with `FAILED`, or a terminal `FAILED` attempt with `COMPLETED`, even though the canonical ledger correctly refused the contradictory financial mutation.
 
-PR #35 is open and must not merge until the complete backend gate passes and the migration/worker diff is re-audited.
+That could leave provider evidence inconsistent with the authoritative ledger and make operational reconciliation misleading.
+
+### Implementation in PR #37
+
+- Provider attempt statuses are validated at the boundary.
+- `COMPLETED` and `FAILED` are terminal and cannot regress.
+- Late contradictory callbacks may enrich provider transaction metadata but cannot rewrite terminal status.
+- The SQL `ON CONFLICT` path applies the same monotonic rule at the database boundary, protecting concurrent callbacks.
+- Regression coverage covers both terminal directions.
+- `TransactionHistory` remains the financial source of truth.
+
+PR #37 is open pending the full backend quality gate and final diff/duplication audit.
 
 ## Admin Portal settlement realtime — MERGED / VERIFIED
 
@@ -144,22 +154,23 @@ Merged:
 - Backend #32 — provider callback authoritative settlement.
 - Backend #33 — durable provider-attempt identity.
 - Backend #34 — reconciliation exception safety.
+- Backend #35 — durable Withdrawal → TransactionHistory identity.
 - Admin Portal #10 — Admin settlement realtime reconciliation.
 - Flutter #17 — canonical withdrawal realtime transport.
 - Business Portal #6 — business event contract hardening.
 
 Open:
 
-- Backend #35 — durable Withdrawal → TransactionHistory identity.
+- Backend #37 — provider-attempt terminal-state monotonicity.
 
 ## Next substantial batches
 
-1. Finish and merge Backend #35 only after the complete quality gate and final duplication/migration audit.
-2. Regenerate/expose the new Withdrawal ↔ TransactionHistory relation natively in Prisma without reintroducing schema drift.
-3. Expose `ReconciliationException` through the Admin Portal as an actionable war-room queue with claim/resolve/audit semantics.
+1. Finish and merge Backend #37 only after the complete quality gate and final duplication audit.
+2. Expose the new Withdrawal ↔ TransactionHistory relation natively in Prisma without schema drift.
+3. Complete the Admin reconciliation exception queue with claim/resolve/audit semantics and realtime updates.
 4. Audit all Flutter escrow/order/invoice event payloads against backend emitters and enforce contract tests.
 5. Audit Business Portal invoice/reservation/transit/Dine-In mutation → event → refetch paths against actual query keys and backend emitters.
-6. Extend the same authoritative-state → domain-event → realtime → client-reconciliation pattern across competition-critical commerce journeys.
+6. Extend the authoritative-state → domain-event → realtime → client-reconciliation pattern across competition-critical commerce journeys.
 
 ## Non-negotiable architecture
 
