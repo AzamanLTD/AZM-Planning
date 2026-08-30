@@ -4,7 +4,7 @@
 
 AZAMAN is being treated as one system: Flutter customer app, Business Portal, Admin Portal, backend, integrations, and this planning repository. Before implementation, affected contracts are researched together; changes are grouped into coherent batches and verified at the highest available gate.
 
-## Completed backend financial-truth batch
+## Verified backend financial-truth foundation
 
 Backend PR #29 was squash-merged after the full **67-suite / 652-test** gate passed.
 
@@ -19,61 +19,27 @@ Key results:
 - Restrictive retention for historical PoR evidence.
 - Complete E2E smoke suite restored after an intermediate bad cleanup implementation.
 - Fixture-scoped E2E cleanup now uses only delegates verified against the active schema; `User.pinHash` is reset directly because PIN is not a separate model.
-- Final corrective run completed successfully.
 
-## Business Portal integration batch — merged
+## Verified Business/Admin authentication integration
 
-Business Portal PR #5 was merged after CI passed.
+Business Portal PR #5, Backend PR #30 and Admin Portal PR #9 are merged.
 
-Research covered the portal API core, AuthContext, Socket.IO singleton, backend business-session controller/routes, and backend Socket.IO authentication.
+The current cross-portal authentication model is:
 
-Implemented:
+- Business Portal: HttpOnly refresh session + in-memory access token + synchronized Socket.IO handshake.
+- Admin Portal: dedicated `azm_admin_refresh` HttpOnly session + in-memory access token + synchronized Socket.IO handshake.
+- Browser clients do not trust/persist refresh credentials in localStorage.
+- Security-critical Authorization/business-selection headers are authoritative.
 
-- caller headers normalized with `Headers`;
-- Authorization and business-selection headers authoritative;
-- HttpOnly session credentials included;
-- 30-second request timeout retained;
-- single-flight refresh retained;
-- Socket.IO handshake credential replaced/reconnected after HTTP token rotation.
+## Backend provider-settlement truth — VERIFIED / MERGED
 
-## Admin browser-session migration — merged
+Backend PR #31 was implemented after a research pass across the finance service/controller, withdrawal controller, reconciliation worker, scheduler, Prisma transaction fields, Moolre behavior, Tatum transaction behavior, and existing frontend realtime contracts.
 
-Backend PR #30 and Admin Portal PR #9 are both now merged.
+### Defect corrected
 
-### Backend session contract
+Fiat withdrawal reservations previously created `TransactionHistory.status = COMPLETED` before external provider settlement. That made “completed” an internal reservation state rather than a provider-settled state.
 
-Dedicated `azm_admin_refresh` HttpOnly cookie namespace:
-
-- canonical auth verification;
-- ADMIN-only session boundary;
-- immediate revocation of a refresh credential issued to a rejected non-admin login;
-- refresh rotation through Phase-K token service;
-- ADMIN revalidation after rotation;
-- invalid/expired cookie clearing;
-- server-side logout revocation;
-- no refresh credential returned to JavaScript.
-
-### Admin Portal client
-
-The portal no longer trusts or persists `admin_token` in localStorage. The central lifecycle is:
-
-`admin-session/login → in-memory access token → HttpOnly refresh cookie → single-flight refresh → socket re-auth`
-
-The Admin Socket.IO connection is centralized. AlertBanner no longer opens an independent stale-token socket. The existing `spring.toast` runtime reference was corrected to the Forge motion contract and the complete API export surface was preserved.
-
-## Provider-settlement truth batch — Backend PR #31 OPEN
-
-A research pass across `finance.service.js`, `finance.controller.js`, `withdrawalController.js`, `withdrawalReconciliationWorker.js`, `src/workers/index.js`, the Prisma withdrawal/transaction fields, Moolre disbursement behavior, and Tatum's current transaction API uncovered an important lifecycle defect.
-
-### Defect
-
-Fiat withdrawal reservations were writing `TransactionHistory.status = COMPLETED` before the external payout provider had settled the payout. Consequently, a customer status read could say “completed” while the provider was still processing the transfer.
-
-The reconciliation worker also assumed the canonical transaction was already complete and only changed the mirror `Withdrawal` row.
-
-### PR #31 changes
-
-The new lifecycle is:
+### Final lifecycle
 
 `reserve → PENDING → provider settlement → COMPLETED`
 
@@ -81,65 +47,72 @@ or
 
 `reserve → PENDING → provider failure → atomic reversal → FAILED`
 
-Implemented:
+### Implementation
 
-- fiat reservation writes `TransactionHistory` as `PENDING`;
-- `reverseFiatWithdrawal` accepts PENDING reservations;
-- reversal first claims the transaction row with a conditional status update, preventing concurrent provider retries from double-refunding;
-- reconciliation changes the canonical TransactionHistory row to COMPLETED only after provider success;
-- provider references are persisted using the existing `TransactionHistory.providerRef` field;
-- provider failure references are retained before reversal;
-- realtime `withdrawal_settled` includes the provider transaction reference when available;
-- reconciliation cadence is 30 seconds through the existing distributed BullMQ scheduler;
-- focused regression tests cover both provider success and asynchronous failure.
+- Fiat reservation creates `TransactionHistory` as `PENDING`.
+- PENDING reservations can be reversed.
+- Reversal claims the row atomically before refunding, preventing concurrent retry double-refunds.
+- Reconciliation advances the canonical transaction to COMPLETED only after provider success.
+- Existing `TransactionHistory.providerRef` stores the provider transaction/reference identifier.
+- Provider failure references are retained before reversal.
+- `withdrawal_settled` realtime payload carries provider transaction reference when available.
+- Distributed reconciliation cadence is 30 seconds instead of the previous 5-minute recovery window.
+- Focused regression tests cover successful provider settlement and asynchronous provider failure.
 
-Tatum's current documentation confirms that successful Polygon transaction broadcasts return a `txId`, so provider identifiers must be recorded from the provider response rather than generated as fake transaction hashes. citeturn0search0turn0search6
+Backend PR #31 passed the **full Backend Test Suite run #216** and was squash-merged. The exact PR head was verified before merge.
 
-### Verification status
+### Remaining architectural limitation identified during the same audit
 
-Backend PR #31 is open. Its full backend GitHub Actions gate is currently running (run #216). It must remain open until the complete suite is green.
+The legacy `Withdrawal` model does not have a dedicated provider-attempt/reference relation, so the reconciliation worker still locates the canonical TransactionHistory using the existing user + amount + timestamp correlation. This is a recovery mechanism, not the desired long-term identity model.
 
-### Remaining provider-correlation work
+The Moolre webhook already emits immediate `withdrawal_progress` UX events, but its success branch still returns the existing transaction status rather than directly updating TransactionHistory. The 30-second reconciliation worker now repairs that canonical state. The next backend batch should make the authenticated webhook itself the immediate state transition and retain the worker strictly as recovery/reconciliation.
 
-The current legacy `Withdrawal` model has no dedicated reference/provider-id column; reconciliation therefore still discovers the canonical transaction through the existing user + amount + timestamp correlation and stores the provider reference on `TransactionHistory`. A future schema batch should add an explicit unique withdrawal reference/provider-attempt relation rather than extending this heuristic indefinitely.
+Tatum's current API contract returns a `txId` for successful transaction broadcasts; production code must record provider identifiers from the actual provider response rather than synthesizing fake transaction hashes. citeturn0search6turn0search7
 
-The Moolre webhook path should also be upgraded to transition the canonical TransactionHistory row immediately on authenticated SUCCESS/FAILED callbacks; the 30-second reconciliation loop is the safety net, not the ideal realtime settlement path.
+## Flutter realtime contract — IN PROGRESS / PR #17
 
-## Flutter customer app
+A research pass compared backend `withdrawal_progress` / `withdrawal_settled` events with the singleton Flutter SocketService and existing listener ownership.
 
-The customer app has a centralized singleton SocketService and a single-flight refresh path. The refresh flow persists the new access token and forces socket reconnection so REST and realtime use the same token generation. Listener ownership has been hardened so feature providers do not dispose the shared global socket. The withdrawal flow already has a backend status endpoint and realtime-oriented progress contract; the next implementation step is to wire the canonical settlement events into that shared socket lifecycle instead of allowing feature-specific polling to become the source of truth.
+Flutter PR #17 adds only the missing transport contract:
 
-## Business Portal realtime contract
+- `onWithdrawalProgress` callback registration;
+- `onWithdrawalSettled` callback registration;
+- listeners for both backend events;
+- safe Map normalization through the existing callback helper;
+- callback cleanup with the existing singleton lifecycle.
 
-The Business Portal uses a single Socket.IO connection and refresh-token synchronization. Backend business events include persistent BusinessNotification records plus realtime `biz_notification` nudges. The next audit should enumerate every `BusinessOrder`/invoice/escrow/KYB event, compare backend emitters against Business Portal consumers, and add contract tests for payload shape and authorization.
+The diff was inspected after implementation and contains no duplicated socket, no feature-owned connection, and no unrelated file changes.
 
-## System command contract
+Flutter CI run #137 is currently in progress. Do not merge PR #17 until the full quality/build gate is green.
 
-`Portal/App intent → authenticated API → domain authorization → authoritative DB mutation → provider/domain settlement → durable transaction state → realtime invalidation/event → client cache reconciliation`
-
-Realtime payloads are invalidation/notification signals, not financial truth. Clients refetch authoritative state after mutations/events.
+The next consumer layer should subscribe through this singleton and reconcile authoritative withdrawal state through the existing REST/provider path; socket payloads must not become a second financial source of truth.
 
 ## Current repository state
 
 Merged:
 
-- Backend PR #29 — financial truth / PoR batch.
-- Business Portal PR #5 — authenticated transport + realtime token synchronization.
-- Backend PR #30 — dedicated Admin browser session.
-- Admin Portal PR #9 — matching Admin session/realtime migration.
+- Backend #29 — financial truth / PoR foundation.
+- Business Portal #5 — authenticated transport + realtime token synchronization.
+- Backend #30 — dedicated Admin browser sessions.
+- Admin Portal #9 — Admin session/realtime integration.
+- Backend #31 — provider-settlement truth and reconciliation hardening.
 
 Open:
 
-- Backend PR #31 — provider-settlement truth and reconciliation hardening.
+- Flutter #17 — canonical withdrawal realtime transport contract.
 
-## Next substantial implementation sequence
+## Next substantial batches
 
-1. Finish and verify Backend PR #31; do not merge on partial/focused tests alone.
-2. Upgrade Moolre webhook settlement to update canonical TransactionHistory immediately, with the 30-second worker as the recovery path.
-3. Add explicit provider correlation to Withdrawal/transaction lifecycle so reconciliation no longer depends on amount/time heuristics.
-4. Audit Flutter socket event names and payloads against every relevant backend emitter and wire withdrawal settlement into the shared socket state.
-5. Audit Business Portal mutation/event pairs and add cross-portal contract tests.
-6. Implement durable external-provider transaction identity + reconciliation exceptions + Admin review/repair workflow.
-7. Surface unresolved financial exceptions in the Admin control plane without making dashboards the source of truth.
+1. Finish Flutter #17 and wire its callbacks into the authoritative withdrawal state provider/UI after CI verification.
+2. Make the Moolre authenticated webhook update TransactionHistory immediately on SUCCESS/FAILED; keep reconciliation as recovery.
+3. Replace the legacy withdrawal correlation heuristic with explicit provider-attempt identity and durable reconciliation exceptions.
+4. Audit all Flutter escrow/order/invoice event payloads against backend emitters and enforce contract tests.
+5. Audit Business Portal mutation → notification → realtime → refetch paths and add contract coverage.
+6. Build the Admin reconciliation/exception queue so unresolved financial operations become actionable work rather than dashboard anomalies.
+7. Continue the competition sequence from the master roadmap: trustworthy core first, then polished retail + signature escrow workspace, then vertical breadth.
 
-Do not substitute dashboards for reconciliation and do not hide discrepancies with automatic state rewriting.
+## Non-negotiable architecture
+
+`intent → authenticated API → domain authorization → authoritative transaction → durable state → domain event → realtime/notification → client reconciliation`
+
+Backend/domain state remains authoritative. Realtime, caches, analytics and UI projections are downstream. Every financial operation must have an idempotent identity and an observable recovery path.
