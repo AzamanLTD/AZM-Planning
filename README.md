@@ -20,7 +20,41 @@ AZM is being developed as one platform with many vertical experiences. The targe
 
 **Identity & Trust → Unified Money/Ledger → Domain Verticals → SDUI/Presentation → Realtime/Eventing → Social Graph → Notifications → Observability/Reconciliation**
 
+### Master platform flow
+
+```mermaid
+flowchart LR
+    A[Identity & Trust] --> B[Unified Money / Ledger]
+    B --> C[Domain Verticals]
+    C --> D[SDUI / Presentation]
+    D --> E[Realtime / Eventing]
+    E --> F[Social Graph]
+    F --> G[Notifications]
+    G --> H[Observability / Reconciliation]
+    H -. feedback & controls .-> A
+```
+
 The platform must prefer shared primitives over parallel implementations. Retail is the current deep-hardening vertical and establishes reusable commerce primitives for Hotel, Transit, Restaurant and later financial/employee experiences.
+
+### Vertical expansion model
+
+```mermaid
+flowchart TD
+    P[Shared AZM Platform] --> R[Retail]
+    P --> H[Hotel]
+    P --> T[Transit]
+    P --> N[Restaurant]
+    P --> E[Escrow / Financial]
+    P --> W[Employee / EWA]
+    P --> S[Social / Discovery]
+    R --> SH[Shared commerce primitives]
+    H --> SH
+    T --> SH
+    N --> SH
+    SH --> M[Common identity, money, orders, notifications, realtime]
+```
+
+These diagrams are conceptual architecture maps. The detailed repository plans remain the source of truth for implementation status and exact flows.
 
 ## Current master status
 
@@ -29,7 +63,7 @@ The platform must prefer shared primitives over parallel implementations. Retail
 - Customer Flutter startup/performance and navigation: active architectural work.
 - Social foundations: existing pieces identified; convergence work remains.
 - Portal architecture: existing repositories need continued contract mapping.
-- Central planning brain: being established now.
+- Central planning brain: established in `AZM-Planning`.
 
 ## State vocabulary
 
