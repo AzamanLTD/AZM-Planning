@@ -16,15 +16,23 @@ A third gap followed from that fix: reconciliation previously scanned only PENDI
 
 The auto-payout provider call also now carries the stored withdrawal network so the existing Moolre routing contract (MTN, Telecel/Vodafone, AirtelTigo) is preserved rather than defaulting an automatic payout to MTN.
 
+The first exact-head backend CI run exposed one compatibility regression introduced while generalizing the provider label: the reconciliation worker used the neutral `DISBURSEMENT` label while `ProviderSettlementAttempt` intentionally allowed only the existing `MTN_MOMO_DISBURSEMENT` and `MOOLRE` identities. The fix normalizes `DISBURSEMENT` to `MTN_MOMO_DISBURSEMENT` rather than creating a third provider namespace, with a dedicated regression test.
+
 ## Invoice lifecycle finding
 
 Business invoices already had a deterministic `payTxHash` (`INV_PAY_<invoiceId>`) and a Business Portal realtime query bridge. Research showed that the service checked the idempotency marker before entering the database transaction. Two concurrent payment requests could therefore both observe `payTxHash = null` before either request committed the marker and both could perform financial mutations.
 
 The settlement transaction now atomically claims the invoice while it is still SENT and unclaimed. The claim is rolled back with the financial transaction if a later step fails. A concurrent loser re-reads the committed PAID invoice and returns an idempotent replay without another debit/credit.
 
+A second invoice defect was found during final PR review: the original status guard ran before the `payTxHash` replay check, meaning a legitimate retry of an already-PAID invoice could still be rejected. The replay check now runs first, and a dedicated regression test verifies that a committed PAID invoice is returned without entering another financial transaction.
+
 The existing `invoice_paid` event is emitted post-commit to both the payer and business owner rooms. Business Portal already has the correct dedicated invoice invalidation path, so no duplicate business-side realtime mechanism was added.
 
-Flutter research found that `invoice_paid` is currently routed through the generic escrow callback but has no active invoice-provider consumer. This remains a client convergence follow-up: the existing singleton socket boundary should be extended without creating a second socket or local financial source of truth.
+## Flutter invoice convergence
+
+Flutter research traced `invoice_paid` through the existing singleton `SocketService`, `MyInvoicesScreen`, and `myInvoicesProvider`. The socket already received the event, but it routed it through the generic escrow callback, leaving the customer invoice provider without a dedicated convergence consumer.
+
+Flutter PR #27 adds a dedicated `invoice_paid` callback to the existing singleton, removes the event from the generic escrow path, and safely registers/unregisters the invoice-screen consumer. The consumer refreshes `myInvoicesProvider` from the canonical API instead of trusting socket payloads as invoice state.
 
 ## Cross-repository verification notes
 
@@ -37,9 +45,9 @@ Flutter research found that `invoice_paid` is currently routed through the gener
 
 ## Open implementation boundaries
 
-- Backend #45: withdrawal canonical identity / atomic auto-payout claim / PROCESSING reconciliation.
-- Backend #46: atomic invoice payment idempotency and bilateral invoice-paid convergence.
-- Flutter follow-up: consume `invoice_paid` through the existing singleton callback registry and refresh `myInvoicesProvider` from the canonical API.
+- Backend #45: withdrawal canonical identity / atomic auto-payout claim / PROCESSING reconciliation, with provider-label compatibility corrected and under exact-head CI verification.
+- Backend #46: atomic invoice payment idempotency, committed replay behavior, and bilateral invoice-paid convergence, under exact-head CI verification.
+- Flutter #27: dedicated `invoice_paid` consumer and canonical `myInvoicesProvider` refresh, under Flutter Quality CI verification.
 
 ## Verification policy
 
