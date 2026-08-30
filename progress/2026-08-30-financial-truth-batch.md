@@ -68,13 +68,13 @@ PR #32 therefore adds:
 
 Moolre's current documentation confirms `txstatus` semantics of `0=Pending`, `1=Successful`, `2=Failed`, uses `externalref` as the durable business reference, and explicitly recommends keeping uncertain operations pending until final state is confirmed and making callbacks idempotent. citeturn0search0turn0search2turn0search1
 
-**Verification:** Backend Test Suite run #218 is currently executing. PR #32 must remain open until the complete gate is green and its final diff is re-audited.
+**Verification:** Backend Test Suite run #219 is currently executing. PR #32 must remain open until the complete gate is green and its final diff is re-audited.
 
 ### Architectural issue still under active hardening
 
 The legacy `Withdrawal` model still lacks a dedicated provider-attempt/reference relation, so reconciliation can still require correlation logic. This must ultimately become an explicit durable provider-attempt identity and exception model rather than relying on timestamp/amount matching.
 
-### Admin Portal PR #10 — realtime control-plane reconciliation
+### Admin Portal PR #10 — MERGED / VERIFIED
 
 Research found a separate session-lifecycle defect: Admin session restoration refreshed the access JWT but did not establish the Admin Socket.IO connection. REST could therefore be healthy while realtime was silently disabled after a browser refresh.
 
@@ -86,9 +86,9 @@ PR #10 adds:
 - `admin_alert` invalidation for settlement/liquidity events;
 - no direct financial cache mutation from socket payloads — authoritative REST refetch remains mandatory.
 
-Admin PR #10 is open pending its build/lint/type gates.
+Admin CI run #25 passed build and changed-file lint. The PR diff was re-audited and then squash-merged.
 
-### Flutter PR #17 — canonical withdrawal realtime transport
+### Flutter PR #17 — MERGED / VERIFIED
 
 A research pass compared backend `withdrawal_progress` / `withdrawal_settled` events with the singleton Flutter SocketService and existing listener ownership.
 
@@ -100,7 +100,7 @@ Flutter PR #17 adds only the missing transport contract:
 - safe Map normalization through the existing callback helper;
 - callback cleanup with the existing singleton lifecycle.
 
-The diff was inspected after implementation and contains no duplicated socket, no feature-owned connection, and no unrelated file changes.
+The PR changed only `lib/services/socket_service.dart`. Flutter quality run #137 passed both analysis and test-with-coverage. The final diff was re-audited for duplicate socket ownership and then squash-merged.
 
 ## Current repository state
 
@@ -111,19 +111,19 @@ Merged:
 - Backend #30 — dedicated Admin browser sessions.
 - Admin Portal #9 — Admin session/realtime integration.
 - Backend #31 — provider-settlement truth and reconciliation hardening.
+- Admin Portal #10 — Admin settlement realtime reconciliation.
+- Flutter #17 — canonical withdrawal realtime transport.
 
 Open:
 
 - Backend #32 — provider callback authoritative settlement.
-- Admin Portal #10 — admin realtime settlement reconciliation.
-- Flutter #17 — canonical withdrawal realtime transport contract.
 
-## Next substantial batches after this verification gate
+## Next substantial batches after Backend #32 verification
 
-1. Finish and merge the three current realtime/settlement pieces only after their full quality gates pass.
+1. Finish and merge Backend #32 only after the complete backend gate and final diff re-audit.
 2. Replace legacy withdrawal correlation with explicit provider-attempt identity and durable reconciliation exceptions.
 3. Audit all Flutter escrow/order/invoice event payloads against backend emitters and enforce contract tests.
-4. Audit Business Portal mutation → notification → realtime → refetch paths and add contract coverage.
+4. Audit Business Portal mutation → notification → realtime → refetch paths and add contract coverage; specifically verify invoice, reservation, transit, and Dine-In event invalidation coverage against `BizNotifType`.
 5. Build the Admin reconciliation/exception queue so unresolved financial operations become actionable work rather than dashboard anomalies.
 6. Extend the same `authoritative state → domain event → realtime → client reconciliation` pattern across the competition-critical commerce journeys.
 
