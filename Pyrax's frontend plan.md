@@ -14,6 +14,16 @@ Flutter is organized around shared services, domain experiences and a server-dri
 
 `Portal/editor → Storefront contract → typed Flutter models → widget registry → trusted native renderer`
 
+```mermaid
+flowchart LR
+    A[Business Portal / Editor] --> B[Storefront Contract]
+    B --> C[Typed Flutter Models]
+    C --> D[Widget Registry]
+    D --> E[Trusted Native Renderer]
+    E --> F[Customer Experience]
+    D --> G[Safe Fallback]
+```
+
 The server supplies declarative data, never arbitrary executable UI. Unknown widget types must degrade safely. Shared primitives should be reused across retail, hotel, transit and restaurant rather than creating separate rendering stacks.
 
 ### Major layers
@@ -35,13 +45,38 @@ The server supplies declarative data, never arbitrary executable UI. Unknown wid
 
 The application should render the first meaningful frame with minimum synchronous work. Non-critical initialization is coordinated after the first frame. Current target sequence:
 
-`native launch → minimum initialization → first meaningful frame → post-frame coordinator → auth restore/socket/WebRTC/push/business state/trade history/secondary hydration`
+```mermaid
+flowchart TD
+    A[Native Launch] --> B[Minimum Synchronous Initialization]
+    B --> C[First Meaningful Frame]
+    C --> D[Post-frame Startup Coordinator]
+    D --> E[Auth Restore]
+    D --> F[Socket]
+    D --> G[WebRTC]
+    D --> H[Push]
+    D --> I[Business State]
+    D --> J[Trade History]
+    D --> K[Secondary Hydration]
+```
 
 Navigation should lazily mount expensive tabs while preserving state where required. Startup and frame performance must be measured on physical devices/profile builds.
 
 ## Retail flow
 
-`SDUI storefront → collection/product → quick look → variant/modifier selection → cart → checkout controller → concrete storefront gateway → StorefrontService → backend checkout → order → order history → fulfillment`
+```mermaid
+flowchart LR
+    A[SDUI Storefront] --> B[Collection / Product]
+    B --> C[Quick Look]
+    C --> D[Variants / Modifiers]
+    D --> E[Cart]
+    E --> F[Checkout Controller]
+    F --> G[Storefront Gateway]
+    G --> H[StorefrontService]
+    H --> I[Backend Checkout]
+    I --> J[Order]
+    J --> K[Order History]
+    K --> L[Fulfillment]
+```
 
 ### Cart invariants
 
@@ -66,6 +101,17 @@ Existing widget families include hero/header, products, collections, reviews, pr
 The social feed widget is currently a presentation seam rather than a mature activity system. It must eventually consume a privacy-safe AZM-native activity model.
 
 ## Social direction
+
+```mermaid
+flowchart LR
+    A[People] --> B[Businesses]
+    B --> C[Places]
+    C --> D[Products / Services]
+    D --> E[Safe Activity]
+    E --> F[Conversation / Discovery]
+    F --> G[Transaction]
+    E --> H[Notifications / Realtime]
+```
 
 The long-term graph is:
 
