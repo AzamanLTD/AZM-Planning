@@ -20,6 +20,12 @@ Admin Portal #12 is now merged and consumes the same ownership API through the e
 
 The lease is concurrency-controlled in the database. Client-side state is never treated as authority.
 
+## Tracking integrity audit
+
+Backend #40 is the active order-tracking hardening batch. Its existing changes centralize customer/business-owner authorization for tracking reads, protect the timeline endpoint, preserve legitimate zero-valued telemetry, and validate ETA input. The branch was re-researched before extending it with numeric/range validation for latitude, longitude, heading, and speed. Invalid telemetry is rejected before database access.
+
+The tracking contract remains intentionally additive: existing routes and Socket.IO event names are unchanged. No second socket layer, tracking state machine, or financial mutation was introduced.
+
 ## Cross-system contract
 
 The operational path is now:
@@ -28,12 +34,18 @@ The operational path is now:
 
 Realtime events remain invalidation signals. The Admin Portal must refetch authoritative exception state after claim/release/resolve rather than trusting socket payloads.
 
+For order tracking the same principle applies:
+
+`authoritative order/tracking mutation → existing Socket.IO event → client invalidation/refetch`
+
+The server remains authoritative for identity, authorization, coordinates, ETA and tracking state.
+
 ## Next deep audit
 
 Before adding more UI, audit the existing backend emitters against the Business Portal and Flutter consumers for the competition-critical domains:
 
 1. escrow lifecycle;
-2. orders/checkout;
+2. orders/checkout/tracking;
 3. invoices;
 4. reservations/transit/Dine-In;
 5. notifications and cache invalidation.
