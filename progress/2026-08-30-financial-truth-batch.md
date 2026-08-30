@@ -35,10 +35,6 @@ The current cross-portal authentication model is:
 
 Backend PR #31 was implemented after a research pass across the finance service/controller, withdrawal controller, reconciliation worker, scheduler, Prisma transaction fields, Moolre behavior, Tatum transaction behavior, and existing frontend realtime contracts.
 
-### Defect corrected
-
-Fiat withdrawal reservations previously created `TransactionHistory.status = COMPLETED` before external provider settlement. That made “completed” an internal reservation state rather than a provider-settled state.
-
 ### Final lifecycle foundation
 
 `reserve → PENDING → provider settlement → COMPLETED`
@@ -51,49 +47,58 @@ Backend PR #31 passed the full backend gate and was squash-merged.
 
 ## Backend provider callback hardening — VERIFIED / MERGED
 
-Backend PR #32 completed the next financial-truth step: provider callbacks are now the normal immediate settlement path while reconciliation remains recovery.
+Backend PR #32 made provider callbacks the normal immediate settlement path while reconciliation remains recovery.
 
-### Implementation
-
-- `services/fiatSettlementService.js` is the provider→ledger transition boundary.
 - Successful callbacks atomically claim only `PENDING` canonical ledger rows.
 - Provider transaction identifiers are persisted into `TransactionHistory.providerRef`.
-- Late SUCCESS cannot resurrect a FAILED withdrawal.
+- Late SUCCESS cannot resurrect FAILED.
 - Moolre/MTN transport parsing is separated from ledger mutation.
 - Customer realtime uses `withdrawal_progress` + `withdrawal_settled`.
 - Admin receives settlement invalidation signals.
-- Focused regression coverage protects success, late-success and failure paths.
+- Complete backend coverage passed after the final fixture correction.
 
-The complete Backend Test Suite was green after the final test-fixture correction, and PR #32 was squash-merged only after that gate.
+## Backend provider-attempt identity — VERIFIED / MERGED
 
-## Backend provider-attempt identity — IN PROGRESS / PR #33
+Backend PR #33 passed **Azaman Test Suite #222** in full, including database schema application, Prisma generation and tests, and was squash-merged.
 
-A second research pass covered the live `TransactionHistory` schema, finance reservation/reversal lifecycle, Moolre/MTN webhook normalization/authentication, MTN's external X-Reference-Id idempotency contract, reconciliation worker, existing settlement tests and Prisma migration conventions.
+### Implementation
 
-### Architectural defect being removed
-
-The canonical ledger has `txHash`/`providerRef`, but there was no durable record representing the external provider attempt itself. That forced the recovery layer to treat provider identity as an attribute discovered after the fact.
-
-### Implementation in Backend PR #33
-
-- Adds `ProviderSettlementAttempt` as a durable external-identity/audit table.
-- Enforces uniqueness on `(provider, providerReference)`.
-- Links each attempt directly to canonical `TransactionHistory`.
-- Stores provider transaction ID, status, first/last seen timestamps, terminal timestamp, failure reason and provider metadata.
-- Adds an idempotent upsert service using parameterized SQL against the additive table.
-- Moolre and MTN callbacks now persist provider identity at the webhook boundary.
-- PENDING callbacks are recorded without mutating financial ledger state.
+- Durable `ProviderSettlementAttempt` identity/audit table.
+- Unique `(provider, providerReference)` constraint.
+- Direct link to canonical `TransactionHistory`.
+- Provider transaction ID, status, timestamps, failure reason and metadata.
+- Idempotent provider-attempt upsert service.
+- Moolre and MTN callbacks persist provider identity at the webhook boundary.
+- PENDING callbacks are recorded without mutating financial state.
 - Reconciliation records MTN provider identity as recovery evidence.
-- Reconciliation cadence is now 30 seconds.
-- Regression coverage covers creation, duplicate callback update, successful settlement, late SUCCESS protection and asynchronous failure.
+- Reconciliation cadence is 30 seconds.
+- Regression coverage for creation, duplicate callbacks, successful settlement, late SUCCESS protection and async failure.
 
-### Deliberate boundary
+`ProviderSettlementAttempt` is an identity/audit layer, **not** a second ledger. `TransactionHistory` remains the financial source of truth.
 
-`ProviderSettlementAttempt` is **not** a second ledger. `TransactionHistory` remains authoritative for money state.
+## Backend reconciliation exception safety — IN PROGRESS / PR #34
 
-The remaining legacy weakness is the `Withdrawal` mirror's lack of a direct canonical TransactionHistory reference. PR #33 makes provider identity durable first; the next batch should replace the remaining user+amount+timestamp recovery correlation with a direct reference and durable reconciliation exception queue.
+The next research pass re-reviewed the `Withdrawal` schema, TransactionHistory model, reconciliation worker, provider-attempt service, finance reversal path, Admin alerts and existing worker tests.
 
-Backend Test Suite **#222 is currently running** against PR #33. Do not merge until the complete gate is green and the final diff has been re-audited.
+### Defect found
+
+The legacy `Withdrawal` mirror still lacks a direct canonical TransactionHistory reference. Its recovery path therefore historically used user + amount + five-second creation-window correlation with `findFirst`. That could silently select one transaction when multiple candidates existed.
+
+### Implementation in PR #34
+
+- Adds durable `ReconciliationException` operational queue.
+- Exception upserts are idempotent while OPEN.
+- Missing TransactionHistory matches become explicit exceptions.
+- Multiple candidate matches become explicit exceptions and are **never mutated or sent to the provider**.
+- Provider-status failures become durable exceptions.
+- Reversal failures become durable exceptions alongside the existing Admin alert.
+- Unexpected provider statuses become durable exceptions.
+- Existing provider-attempt identity and canonical ledger authority remain unchanged.
+- Regression coverage protects missing and ambiguous correlation paths plus exception idempotency.
+
+This is intentionally a fail-safe bridge: the legacy heuristic is now observable and refuses unsafe guesses. The next financial migration should replace it with a direct `Withdrawal → TransactionHistory` reference and then build the Admin exception queue on top of this durable operational surface.
+
+Backend PR #34 is open and awaiting its full backend gate. **Do not merge until green and re-audited.**
 
 ## Admin Portal settlement realtime — MERGED / VERIFIED
 
@@ -105,9 +110,9 @@ Flutter PR #17 adds the canonical `withdrawal_progress` / `withdrawal_settled` t
 
 ## Business Portal event-contract hardening — MERGED / VERIFIED
 
-Business Portal PR #6 passed its quality gate and was merged after the final duplication audit.
+Business Portal PR #6 passed Business Portal CI #9 and its final duplication audit, then was squash-merged.
 
-The event layer now classifies backend `BizNotifType` events into projection invalidation domains covering orders, invoices, reservations, transit, Dine-In, KYB/trust, marketing and notifications while preserving the existing singleton socket ownership.
+The event layer now classifies backend `BizNotifType` events into projection invalidation domains covering orders, invoices, reservations, transit, Dine-In, KYB/trust, marketing and notifications while preserving singleton socket ownership.
 
 ## Current repository state
 
@@ -119,21 +124,22 @@ Merged:
 - Admin Portal #9 — Admin session/realtime integration.
 - Backend #31 — provider-settlement truth and reconciliation hardening.
 - Backend #32 — provider callback authoritative settlement.
+- Backend #33 — durable provider-attempt identity.
 - Admin Portal #10 — Admin settlement realtime reconciliation.
 - Flutter #17 — canonical withdrawal realtime transport.
 - Business Portal #6 — business event contract hardening.
 
 Open:
 
-- Backend #33 — explicit provider settlement attempt identity.
+- Backend #34 — reconciliation exception safety.
 
 ## Next substantial batches
 
-1. Finish and merge Backend #33 only after the full quality gate and final duplication audit.
-2. Replace legacy withdrawal correlation with a direct canonical TransactionHistory reference and durable reconciliation exception queue.
-3. Audit all Flutter escrow/order/invoice event payloads against backend emitters and enforce contract tests.
-4. Audit Business Portal invoice/reservation/transit/Dine-In mutation → event → refetch paths against actual query keys and backend emitters.
-5. Build the Admin reconciliation/exception queue so unresolved financial operations become actionable work rather than dashboard anomalies.
+1. Finish and merge Backend #34 only after the complete quality gate and final duplication audit.
+2. Add direct canonical `Withdrawal → TransactionHistory` identity, eliminating the legacy amount/time correlation entirely.
+3. Expose the reconciliation exception queue through the Admin Portal as an actionable war-room workflow.
+4. Audit all Flutter escrow/order/invoice event payloads against backend emitters and enforce contract tests.
+5. Audit Business Portal invoice/reservation/transit/Dine-In mutation → event → refetch paths against actual query keys and backend emitters.
 6. Extend the same authoritative-state → domain-event → realtime → client-reconciliation pattern across competition-critical commerce journeys.
 
 ## Non-negotiable architecture
