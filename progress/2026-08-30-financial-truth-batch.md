@@ -19,23 +19,25 @@ This is a coherent P0 financial-truth hardening batch plus the first cross-porta
 
 ### Critical currency-boundary correction
 
-A deeper schema audit found that `User.availableBalance`, `escrowLockedBalance`, `vendorUnallocatedBalance`, and `disputeEscrowBalance` are USDT liabilities, while `SystemFiatPool.balance` is a separate fiat pool (GHS). The first PoR implementation incorrectly added the fiat pool to the USDT reserve numerator.
+A schema audit found that user USDT liabilities and the system fiat pool are different currencies. `User.availableBalance`, `escrowLockedBalance`, `vendorUnallocatedBalance`, and `disputeEscrowBalance` are USDT; `SystemFiatPool.balance` is separate fiat liquidity (GHS). PoR backing now uses only `SystemMasterCrypto` + `SystemHotWallet` as the USDT reserve numerator. Fiat liquidity is shown separately and cannot inflate the USDT reserve ratio.
 
-That is now corrected. PoR reserve backing is calculated only from the USDT-reserve pools (`SystemMasterCrypto` + `SystemHotWallet`). The fiat pool remains visible separately in the snapshot breakdown for reconciliation visibility but can never inflate the USDT backing ratio.
+A pure regression test locks this boundary.
 
-A pure regression test now locks this boundary so a future refactor cannot silently reintroduce cross-currency arithmetic.
+### Historical retention boundary
+
+The PoR leaf table is evidence, not cache. Its foreign keys now use `ON DELETE RESTRICT` for both the snapshot and user relations so a hard deletion cannot silently erase a historical proof. AZAMAN's existing user lifecycle is soft-delete oriented; any future hard-delete mechanism must explicitly account for proof retention rather than cascading through the evidence table.
 
 ## CI failure root cause and correction
 
-The first PR run reached application assertions but failed in E2E teardown because schema-guessing cleanup referenced nonexistent Prisma delegates. CI research showed the suite uses a disposable PostgreSQL database and applies the schema before tests. The test file was restored to the complete original smoke coverage and the guessed teardown was removed entirely.
+The first PR run reached application assertions but failed in E2E teardown because schema-guessing cleanup referenced nonexistent Prisma delegates. CI research showed the suite uses a disposable PostgreSQL database and applies the schema before tests. The smoke test was restored to the complete original coverage and the guessed teardown was removed entirely.
 
-The immediately following run was cancelled by GitHub when the reserve-currency correction superseded it. The current authoritative verification is backend CI run #209 on the latest head.
+Earlier runs were cancelled as the latest financial corrections superseded them. The current authoritative run is the newest PR workflow for the latest head.
 
 ## Cross-portal integration audit
 
 ### Flutter customer app
 
-`AZM-frontend/lib/config.dart` centralizes environment-specific backend URLs and socket URL derivation. `lib/services/api_client.dart` already performs refresh-token rotation with a single in-flight refresh promise and normal request timeouts.
+`AZM-frontend/lib/config.dart` centralizes environment-specific backend URLs and socket URL derivation. `lib/services/api_client.dart` performs refresh-token rotation with a single in-flight refresh promise and normal request timeouts.
 
 A realtime consistency gap was identified: HTTP could silently rotate the access JWT while the singleton Socket.IO connection continued using the expired JWT. After successful refresh, the client now forces the singleton Socket.IO service to reconnect using the fresh token. Reconnect failure is non-fatal to the HTTP refresh path.
 
@@ -51,7 +53,7 @@ Business Portal commit: `ca75a6c4b9a825fd29eae1201e7214f2c692f75d`
 
 ### Admin Portal
 
-Research found the same request configuration-ordering hazard. The central API layer is now hardened so computed authentication headers cannot be overwritten by `options`, credentials are consistently included, and requests abort after 30 seconds rather than hanging indefinitely.
+Research found the same request configuration-ordering hazard. The central API layer is now hardened so computed authentication headers cannot be overwritten by `options`, credentials are consistently included, and requests abort after 30 seconds.
 
 Admin Portal commit: `5f1d22dc2b5be89865f2e2476ce0f42771059b39`
 
@@ -73,13 +75,13 @@ Realtime messages are nudges, not financial truth. Clients refetch authoritative
 
 Backend PR #29 remains intentionally open until the complete backend gate validates the restored full E2E smoke suite and the entire financial-truth batch together.
 
-Current backend CI: run #209, executing against head `b2701b5cd5f260c25c7767497a9cedaf8a167058` (service change) with test commit `c56be194f600b2b4985071d11a5672d8cb9737c8` as the latest PR head.
+The latest backend workflow was superseded again by the immutable-retention correction; GitHub will run the new head as the authoritative verification.
 
 Admin Portal transport CI run #22 is green. Business Portal transport CI run #3 is green. Flutter's quality workflow is PR-oriented; its realtime-auth fix is intended to be carried into the next coherent Flutter PR with contract coverage.
 
 ## Next substantial integration batch
 
-1. Complete backend PR #29 gate using the restored full smoke suite and corrected currency boundary.
+1. Complete backend PR #29 gate on the latest head.
 2. Build the dedicated Admin browser-session contract end-to-end (backend cookie bridge + admin AuthContext + API core + expiry/reconnect tests).
 3. Add cross-portal contract coverage for business/admin actions that mutate backend state and then emit realtime invalidation events.
 4. Audit Flutter service/socket event names and payload shapes against backend handlers and add contract tests where drift exists.
