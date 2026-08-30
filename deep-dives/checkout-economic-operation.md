@@ -57,37 +57,54 @@ Every mutation must explicitly be classified as:
 
 The classification must be reflected in API/service tests.
 
-## Provider boundary
+## Frontend operation lifecycle — latest verified state
 
-```mermaid
-flowchart LR
-    A[Provider callback / poll] --> B[Provider adapter]
-    B --> C[Canonical AZM status]
-    C --> D[Authoritative transaction lookup]
-    D --> E[Conditional transition]
-    E --> F[Financial mutation]
-    F --> G[Audit + domain event]
-    G --> H[Reconciliation]
-```
-
-Provider-specific status codes and references must never become canonical financial semantics.
-
-## Frontend contract to verify later
+The frontend checkout layer has an explicit `RetailCheckoutOperation` abstraction. The operation owns a stable idempotency key and captures checkout intent from the cart before submission. The controller can accept an existing operation identity for recovery, while the gateway transports the identity to `StorefrontService.checkoutCart()`.
 
 ```mermaid
 flowchart TD
-    A[Cart] --> B[Immutable checkout snapshot]
-    B --> C[Stable idempotency key]
-    C --> D[Backend command]
-    D --> E{Outcome}
-    E -->|success| F[Render authoritative order]
-    E -->|network loss / retryable| G[Retry same operation identity]
-    E -->|validation / conflict| H[Refresh authoritative state]
-    G --> D
-    F --> I[Realtime enhances state; does not authorize it]
+    A[Mutable UI cart] --> B[begin checkout operation]
+    B --> C[Snapshot cart intent]
+    C --> D[Stable idempotency key]
+    D --> E[Checkout gateway]
+    E --> F[Storefront service]
+    F --> G[Backend checkout]
+    G --> H{Outcome}
+    H -->|success| I[Authoritative order]
+    H -->|retryable / lost response| E
+    H -->|conflict / validation| J[Refresh authoritative state]
 ```
 
-The eventual frontend pass must verify that optimistic UI never presents payment, stock or completion as authoritative before backend confirmation.
+**Invariant:** a retry of the same checkout intent must reuse the same operation identity. A materially changed cart must not be silently submitted under an old operation identity.
+
+The operation implementation defensively snapshots checkout lines and variant maps so later UI-side mutation cannot alter an already-created economic intent.
+
+### Verified vs. open
+
+**Verified:** the frontend service accepts and propagates an idempotency key; the retail checkout layer has an operation abstraction; the operation identity is generated at the operation boundary rather than inside the transport gateway; the backend storefront checkout has an idempotency-key contract and transactional checkout foundations.
+
+**Open:** complete production caller graph; exact backend request-fingerprint canonicalization versus the frontend checkout payload; concurrency behavior for two simultaneous first requests using the same key; and end-to-end lost-response recovery tests.
+
+## Commerce state separation
+
+```mermaid
+flowchart LR
+    A[Order created] --> B[Payment state]
+    B --> C[Escrow state when applicable]
+    C --> D[Fulfillment state]
+    A -. operational projection .-> E[Portal / customer UI]
+    B -. financial projection .-> E
+    C -. financial projection .-> E
+    D -. operational projection .-> E
+```
+
+Order creation, payment confirmation, escrow funding/release, and fulfillment are separate state concerns. They must not be collapsed into a single UI status or treated as interchangeable financial authority.
+
+## Storefront authoring concurrency
+
+The storefront domain also contains draft/publish/revert/template/versioning behavior. Its existing optimistic-concurrency pattern (`expectedUpdatedAt`) is an important platform-wide precedent: stale authors should be rejected rather than silently overwriting newer authoritative state.
+
+A related audit remains open for multi-write publish operations: verify whether archiving/deleting/creating publication/history/draft records are enclosed in one database transaction and add failure-boundary coverage if not.
 
 ## Verification gate
 
@@ -97,7 +114,9 @@ Before this area becomes VERIFIED, cover at minimum: duplicate checkout, same-ke
 
 **Foundations already present:** scoped idempotency/fingerprints, authoritative variant validation, order-line snapshots, atomic inventory foundations, conditional order/escrow transitions, deterministic ordering, dispute lifecycle coverage, provider failover/reconciliation infrastructure.
 
-**Still to implement/prove:** exhaustive checkout failure-boundary tests, producer mapping for `BusinessOrderItem`, provider callback convergence, distributed worker safety, and final frontend/backend contract verification.
+**Newly verified:** frontend checkout operation identity is modeled above the transport gateway; checkout intent is defensively snapshotted; the storefront domain contains both commerce and SDUI authoring responsibilities; storefront authoring already uses optimistic concurrency semantics.
+
+**Still to implement/prove:** exhaustive checkout failure-boundary tests, production caller mapping, exact backend fingerprint semantics, provider callback convergence, distributed worker safety, publish transaction boundary, and final frontend/backend contract verification.
 
 ## Agent update rules
 
@@ -107,3 +126,4 @@ Before this area becomes VERIFIED, cover at minimum: duplicate checkout, same-ke
 - Add diagrams where they clarify a real flow; do not decorate every section.
 - Update this document whenever an invariant is implemented, disproved, or newly discovered.
 - Accumulate coherent engineering work and reserve expensive CI for the end of a significant batch.
+- Never mark a change complete from a tool claim alone: independently fetch the resulting branch/file and verify the persisted tree.
