@@ -67,6 +67,25 @@ The Business Portal retains older underscore aliases only as rolling-deployment 
 
 The Admin Portal must not be forced onto the business/customer socket contract. Existing architecture identifies `admin_spy_room` as the control-plane realtime channel.
 
+## Important transport finding — escrow business notifications
+
+The backend `bizNotificationService.notifyOrderEvent()` currently persists the `BusinessNotification` row but does not itself emit a Socket.IO event. The general-purpose `NotificationService` does have a DB + Socket.IO + FCM pipeline, but it is a separate user-notification model and is not the BusinessNotification feed.
+
+This means the escrow hooks in `escrowService` can successfully create `ORDER_FUNDED`, `ORDER_SATISFIED`, `ORDER_DISPUTED`, `ORDER_SETTLED`, and `ORDER_REFUNDED` records while the Business Portal receives no direct realtime signal from that persistence operation unless another controller/socket path emits one.
+
+This is a confirmed transport-gap candidate, not yet an implementation decision.
+
+Before fixing it, research must identify:
+
+1. the canonical Socket.IO instance ownership path;
+2. the authorized business-owner room naming contract;
+3. whether `biz_notification` is already emitted by any escrow/business-order path;
+4. whether adding emission at `bizNotificationService` would create duplicate socket events for controller paths that already emit them;
+5. whether the payload should carry the persisted notification record or only a minimal invalidation signal;
+6. whether a multi-instance Socket.IO adapter is already authoritative for the target deployment.
+
+Only after those checks should the transport gap be implemented. The preferred shape is one existing transport path with idempotent client invalidation, not another event bus.
+
 ## Idempotency and delivery rules
 
 1. Financial mutations must remain protected by their existing transaction/idempotency boundaries.
