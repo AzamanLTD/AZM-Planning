@@ -19,45 +19,39 @@ This is a coherent P0 financial-truth hardening batch plus the first cross-porta
 
 ## CI failure root cause and correction
 
-The first PR run reached the application assertions successfully but failed in E2E teardown because the test cleanup guessed Prisma delegates that are not present in the authoritative schema (`reservation` / `userPin` were referenced as delegates in teardown code that did not match the generated client).
+The first PR run reached the application assertions successfully but failed in E2E teardown because the test cleanup guessed Prisma delegates that are not present in the authoritative schema. Research of the CI workflow showed the suite runs against a disposable PostgreSQL database and applies the schema before testing. The test file was therefore restored to the complete original smoke coverage and the schema-guessing teardown was removed entirely.
 
-Research of the CI workflow showed that the E2E suite runs against a disposable PostgreSQL database created for the workflow. The workflow applies the schema to that disposable database before the test suite. The correct fix is therefore **not** to add more guessed model cleanup or raw-table deletion. The smoke test now leaves its uniquely timestamped fixtures in the disposable CI database and does not perform schema-guessing teardown.
-
-Commit: `512a3a9749d5a52b277fa400aa6c4cce6f51ecea`
+The subsequent run after restoration is now the authoritative verification run; the earlier green run is not treated as proof because it had accidentally reduced the smoke suite.
 
 ## Cross-portal integration audit
 
 ### Flutter customer app
 
-`AZM-frontend/lib/config.dart` centralizes environment-specific backend URLs and socket URL derivation. `lib/services/api_client.dart` already performs coordinated refresh-token rotation, with a single in-flight refresh promise, and all normal requests use the configured timeout.
+`AZM-frontend/lib/config.dart` centralizes environment-specific backend URLs and socket URL derivation. `lib/services/api_client.dart` already performs refresh-token rotation with a single in-flight refresh promise and normal request timeouts.
 
-A realtime consistency gap was identified: the HTTP client could silently rotate the access JWT while the singleton Socket.IO connection continued using the expired JWT. The socket would then hit the backend's authenticated socket middleware with stale credentials and could become auth-blocked until the user restarted/reconnected manually.
-
-This is now hardened: after a successful refresh-token rotation, the client persists the new access/refresh credentials and forces the singleton Socket.IO service to reconnect using the fresh access token. Socket reconnect failure is deliberately non-fatal to the HTTP refresh path.
+A realtime consistency gap was identified: HTTP could silently rotate the access JWT while the singleton Socket.IO connection continued using the expired JWT. After successful refresh, the client now forces the singleton Socket.IO service to reconnect using the fresh token. Reconnect failure is non-fatal to the HTTP refresh path.
 
 Flutter commit: `0bae665057a52d54ae62fe2464b058569068bacf`
 
 ### Business Portal
 
-The portal uses the backend's dedicated browser-session flow:
+The portal uses the backend's dedicated browser-session flow with an HttpOnly refresh cookie and an in-memory access token. Socket.IO uses the same access token in the handshake, while business notification events invalidate React Query caches so the server remains authoritative.
 
-- `POST /api/auth/business-session/login`
-- `POST /api/auth/business-session`
-- `POST /api/auth/business-session/logout`
-
-Refresh credentials remain in an HttpOnly cookie and access tokens remain in memory. Socket.IO uses the same access token in the handshake and the portal refreshes React Query caches from backend business-notification events.
-
-A real request-layer defect was identified: `src/lib/apiCore.js` constructed authentication headers and then spread `...options` over the whole fetch configuration. A caller supplying `options.headers` could therefore replace the computed Authorization/business-selection headers. This is now fixed, and a 30-second abort timeout was added so a hung backend request cannot leave a portal action indefinitely pending.
+A real request-layer defect was identified: `src/lib/apiCore.js` spread `...options` over the computed fetch configuration, allowing a caller-supplied `options.headers` to replace Authorization and business-selection headers. This is fixed, and a 30-second abort timeout now prevents indefinitely hanging portal actions.
 
 Business Portal commit: `ca75a6c4b9a825fd29eae1201e7214f2c692f75d`
 
 ### Admin Portal
 
-The Admin Portal currently uses the standard `/api/auth/login` token flow and stores its access JWT in localStorage. Its central request layer has the same structural `...options` ordering hazard as the Business Portal layer and currently forces a login redirect on token expiry rather than using the backend refresh-token rotation flow. This remains the next integration-hardening target, but it should be implemented only after inspecting the admin auth/session contract and existing admin auth tests together.
+Research of the admin request layer found the same configuration-ordering hazard. The central API layer has now been hardened so computed authentication headers cannot be overwritten by the options object, requests include credentials consistently, and hung requests abort after 30 seconds.
 
-### Backend
+Admin Portal commit: `5f1d22dc2b5be89865f2e2476ce0f42771059b39`
 
-The backend auth contract explicitly exposes both standard refresh-token rotation and the dedicated business browser-session flow. Socket.IO verifies JWTs server-side. The business portal's socket model and Flutter's re-authenticated socket model are therefore aligned with the backend's intended trust boundary.
+The Admin Portal still uses standard `/api/auth/login` with a browser-accessible access token in localStorage and redirects to login when the 15-minute access token expires. The backend standard refresh endpoint is available, but moving the admin portal to an HttpOnly browser session requires a separate admin-session contract rather than incorrectly reusing the business portal cookie contract. That remains a deliberate next batch, not a shortcut.
+
+### Backend realtime contract
+
+Socket.IO is JWT-authenticated server-side and automatically joins `user_<id>` and `balance_room_<id>`. Order rooms validate that the user is either the customer or the business owner. Group chat has its own socket service and validates membership before joining. Clients therefore treat socket events as invalidation/notification signals, not as independent financial truth.
 
 ## System-level principle reinforced by this batch
 
@@ -69,16 +63,18 @@ Realtime messages are nudges, not financial truth. Clients refetch authoritative
 
 ## Verification status
 
-Backend PR #29 remains intentionally open until the complete backend gate validates migration, generated Prisma client, service, routes, worker registration, E2E suite, and regression tests together.
+Backend PR #29 remains intentionally open until the complete backend gate validates the restored full E2E smoke suite and the entire financial-truth batch together.
 
-Backend CI run #207 is currently executing the complete test gate after the E2E correction.
+Backend CI run #208 is executing that restored full suite now.
+
+Admin and Business Portal transport commits have their repository CI workflows configured for main pushes and pull requests. Flutter's quality workflow is PR-oriented; its next coherent Flutter PR should include this realtime-auth fix plus the related contract tests rather than creating one-change verification noise.
 
 ## Next substantial integration batch
 
-1. Complete backend PR #29 gate.
-2. Harden Admin Portal request/session transport after researching standard refresh-token semantics and existing admin auth tests.
+1. Complete backend PR #29 gate using the restored full smoke suite.
+2. Build the dedicated Admin browser-session contract end-to-end (backend cookie bridge + admin AuthContext + API core + expiry/reconnect tests).
 3. Add cross-portal contract coverage for business/admin actions that mutate backend state and then emit realtime invalidation events.
-4. Audit Flutter service/socket layers against the same endpoint and event contracts.
+4. Audit Flutter service/socket event names and payload shapes against backend handlers and add contract tests where drift exists.
 5. Connect external provider state to the financial reconciliation exception queue.
 
 Do not substitute dashboards for reconciliation and do not hide discrepancies with automatic state rewriting.
