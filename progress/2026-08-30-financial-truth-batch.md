@@ -2,98 +2,127 @@
 
 ## System scope
 
-This work treats AZAMAN as one system: Flutter customer app, Business Portal, Admin Portal, backend, integrations, and this planning repository. The implementation rule is to research the complete affected contract before changing code, then verify the complete path rather than stopping at a local compile.
+AZAMAN is being treated as one system: Flutter customer app, Business Portal, Admin Portal, backend, integrations, and this planning repository. Before implementation, affected contracts are researched together; changes are grouped into coherent batches and verified at the highest available gate.
 
-## Backend financial-truth batch — merged
+## Completed backend financial-truth batch
 
-Backend PR #29 (`feat(finance): harden proof-of-reserves and reconciliation`) passed the complete CI gate: **67 suites / 652 tests**. It was then squash-merged.
+Backend PR #29 was squash-merged after the full **67-suite / 652-test** gate passed.
+
+Key results:
+
+- Immutable per-user PoR commitments per snapshot.
+- Historical verification against snapshot-time balances.
+- Read-only public PoR endpoint + explicit admin refresh.
+- Hourly distributed PoR worker.
+- Journal/PoR integrity exception surface.
+- USDT/GHS reserve-boundary correction.
+- Restrictive retention for historical PoR evidence.
+- Complete E2E smoke suite restored after an intermediate bad cleanup implementation.
+- Fixture-scoped E2E cleanup now uses only delegates verified against the active schema; `User.pinHash` is reset directly because PIN is not a separate model.
+- Final corrective run completed successfully.
+
+## Business Portal integration batch
+
+PR #5 was merged after its CI passed.
+
+Research covered:
+
+- `src/lib/apiCore.js`
+- `src/lib/AuthContext.jsx`
+- `src/lib/socket.js`
+- backend business-session controller/routes
+- backend Socket.IO authentication
 
 Implemented:
 
-- Immutable per-user Proof-of-Reserves commitments per snapshot.
-- Snapshot and leaves created in one Serializable transaction.
-- Historical verification from snapshot-time state.
-- Read-only public PoR endpoint; explicit admin refresh mutation.
-- Hourly distributed PoR worker.
-- Journal + PoR integrity surface.
-- Explicit exception state for unbalanced, incomplete, under-backed, or stale financial truth.
-- Merkle regression coverage.
-- USDT/GHS currency-boundary correction: GHS fiat liquidity cannot inflate USDT reserve backing.
-- Historical PoR evidence retained with restrictive foreign keys.
+- caller headers are normalized with `Headers`;
+- `Authorization` and business-selection headers are authoritative;
+- HttpOnly session credentials remain included;
+- 30-second request boundary retained;
+- single-flight refresh retained;
+- Socket.IO receives the fresh JWT after HTTP refresh and performs a new handshake.
 
-### E2E cleanup correction
+This closes the class of failure where REST silently recovers while realtime remains authenticated with an expired JWT.
 
-An intermediate cleanup implementation incorrectly guessed Prisma delegates and also risked replacing the full smoke suite. The complete original smoke suite was restored. The cleanup was then rebuilt only after researching the active Prisma schema and security controller:
+## Admin browser-session migration
 
-- `BusinessOrderItem` is not an active Prisma delegate in the current schema and is not used by this smoke fixture.
-- PIN is `User.pinHash`, not a `UserPin` model.
-- Cleanup is fixture-scoped using the exact smoke-test users, business profile, and reservation rather than deleting unrelated database state.
-- Cleanup errors are now re-thrown so a teardown defect cannot be hidden by a warning.
+### Backend PR #30 — open, verification in progress
 
-The corrected head passed the full gate before PR #29 was merged.
+Dedicated `azm_admin_refresh` HttpOnly session contract implemented.
 
-## Cross-portal transport audit
+The backend bridge:
 
-### Flutter customer app
+- uses the canonical auth controller for credential verification;
+- refuses non-ADMIN users at the session boundary;
+- revokes a refresh token created for a rejected non-admin login;
+- rotates refresh tokens through the existing Phase-K service;
+- rechecks ADMIN role after rotation;
+- clears invalid/expired cookies;
+- revokes the server token on logout;
+- never returns refresh credentials to browser JavaScript.
 
-`AZM-frontend/lib/config.dart` centralizes environment backend/socket URLs. `lib/services/api_client.dart` uses single-flight refresh. The realtime gap where HTTP could rotate a JWT while Socket.IO retained an expired handshake credential was corrected; refreshed credentials now cause the singleton socket to re-authenticate.
+Focused controller tests cover cookie secrecy, non-admin rejection, rotation, and role downgrade handling.
 
-### Business Portal
+Current backend verification: run #214 is executing the full backend suite.
 
-Research covered `src/lib/apiCore.js`, `src/lib/AuthContext.jsx`, `src/lib/socket.js`, the backend business-session controller/routes, and backend Socket.IO authentication.
+### Admin Portal PR #9 — open, CI passed
 
-A real defect was found in the active code: `options.headers` was spread after computed security headers. This allowed a caller to replace `Authorization` or `x-admin-business-id`. The integration branch now:
+Research covered:
 
-- normalizes caller headers with `Headers`;
-- makes Authorization authoritative;
-- makes business selection authoritative;
-- retains credentials for the HttpOnly session cookie;
-- retains the 30-second timeout and single-flight refresh;
-- re-authenticates the existing Socket.IO connection after HTTP token rotation.
+- `src/lib/AuthContext.jsx`
+- `src/lib/api.js`
+- `src/components/admin/AlertBanner.jsx`
+- `src/components/forge/ForgeLayout.jsx` / shell wiring
+- backend Phase-K token lifecycle
+- backend business-session architecture
 
-Business Portal PR #5 is open and awaiting its production build gate.
+Implemented:
 
-### Admin Portal
+- no admin access JWT in localStorage;
+- login via `/api/auth/admin-session/login`;
+- startup restore via `/api/auth/admin-session`;
+- in-memory access JWT with single-flight 401 refresh;
+- logout through server-side session revocation;
+- authoritative security headers;
+- centralized Admin Socket.IO session;
+- socket re-authentication after access-token rotation;
+- AlertBanner now consumes the central socket instead of opening a second stale-token connection;
+- corrected the existing `spring.toast` runtime reference to the Forge motion contract;
+- preserved the complete API surface, including storefront exports.
 
-Research covered `src/lib/AuthContext.jsx`, `src/lib/api.js`, the portal source tree, and the backend's existing business-session architecture.
+Admin Portal CI run #23: **green** (lint + build).
 
-The Admin Portal currently stores its access JWT in localStorage and sends it on every request. Its API layer already has credentials enabled and a 30-second timeout, but its 401 behavior simply discards the token instead of using the backend refresh-token lifecycle.
+### Important dependency order
 
-The next implementation is now underway in the backend branch `admin-session-bridge`:
+Admin Portal PR #9 is intentionally coupled to backend PR #30. Backend #30 must land first so the production endpoint exists before the portal switches from `/api/auth/login` to `/api/auth/admin-session/login`.
 
-- dedicated `azm_admin_refresh` HttpOnly cookie namespace;
-- admin-only browser login bridge;
-- explicit revocation if a non-admin somehow reaches the bridge;
-- refresh/bootstrap role revalidation;
-- logout revocation and cookie clearing;
-- controller-level regression tests.
+## Flutter customer app
 
-This is intentionally a separate authentication contract from Business Portal sessions rather than reusing a business cookie.
+The customer app already has a centralized singleton SocketService and a single-flight refresh path. The current refresh flow persists the new access token and explicitly forces socket reconnection so REST and realtime use the same token generation. Listener ownership has also been hardened so feature providers do not dispose the shared global socket.
 
-## Backend realtime contract
+The next Flutter work is a contract audit of event names/payloads against backend emitters, especially marketplace orders, escrow, invoice payment, notifications, and order tracking.
 
-Socket.IO remains JWT-authenticated server-side. User, balance, order, and group rooms are authorization-bound. Client socket payloads are treated as invalidation/notification signals; authoritative state remains the API/database.
-
-## System-level command contract
+## System command contract
 
 `Portal/App intent → authenticated API → domain authorization → authoritative DB mutation → financial/operational event → realtime notification → client cache reconciliation`
 
-No portal should invent state locally after a successful mutation. Events should trigger refetch/invalidation, while the API remains authoritative.
+Realtime payloads are invalidation/notification signals, not financial truth. Clients refetch authoritative state after mutations/events.
 
-## Verification state
+## Current PR state
 
-- Backend financial-truth PR #29: **MERGED after 67/67 suites and 652/652 tests passed**.
-- Backend E2E cleanup warning: **fixed and verified by the final 67-suite run**.
-- Business Portal integration PR #5: **OPEN**, awaiting CI.
-- Admin browser-session backend branch: **IMPLEMENTATION IN PROGRESS**, with focused controller coverage added.
-- Admin Portal transport hardening from the prior batch: **green**.
+Open PRs:
 
-## Next substantial sequence
+- Backend #30 — dedicated Admin session backend, full suite running.
+- Admin Portal #9 — matching Admin session client, CI green.
 
-1. Finish and verify the dedicated Admin browser-session contract across backend + Admin Portal.
-2. Add Admin API-core refresh/replay and socket re-authentication against the new session lifecycle.
-3. Add cross-portal mutation/event contract coverage for Business Portal and Admin Portal.
-4. Audit Flutter socket event names/payloads against backend handlers and close drift.
-5. Connect external provider transaction identity to durable financial reconciliation exceptions and the Admin review workflow.
+Business Portal #5 and Backend #29 are merged.
 
-Do not substitute dashboards for reconciliation and do not hide discrepancies with automatic state rewriting.
+## Next substantial implementation sequence
+
+1. Complete backend #30's full gate and merge it if green.
+2. Merge Admin Portal #9 against the landed backend contract.
+3. Build cross-portal mutation/event contract tests rather than relying only on build checks.
+4. Audit Flutter socket event names and payloads against every relevant backend emitter/handler and close drift.
+5. Implement durable external-provider transaction identity + reconciliation exceptions + Admin review/repair workflow.
+
+The project should not claim “integrated” merely because builds pass; an integration is complete only when authentication, command execution, persistence, event emission, and client reconciliation agree on the same contract.
