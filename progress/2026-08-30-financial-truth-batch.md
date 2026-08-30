@@ -47,60 +47,62 @@ or
 
 `reserve → PENDING → provider failure → atomic reversal → FAILED`
 
-Backend PR #31 passed the **full Backend Test Suite run #216** and was squash-merged.
+Backend PR #31 passed the full backend gate and was squash-merged.
 
-## Current hardening batch — IN PROGRESS
+## Backend provider callback hardening — VERIFIED / MERGED
 
-### Backend PR #32 — provider callback as the normal settlement path
+Backend PR #32 completed the next financial-truth step: provider callbacks are now the normal immediate settlement path while reconciliation remains recovery.
 
-A second research pass exposed that the newly-correct `PENDING` reservation still had legacy webhook handlers which returned a successful provider callback without immediately changing the canonical `TransactionHistory` row. Reconciliation could repair it later, but that was backwards: provider settlement should be the immediate state transition and reconciliation should be recovery.
+### Implementation
 
-PR #32 therefore adds:
+- `services/fiatSettlementService.js` is the provider→ledger transition boundary.
+- Successful callbacks atomically claim only `PENDING` canonical ledger rows.
+- Provider transaction identifiers are persisted into `TransactionHistory.providerRef`.
+- Late SUCCESS cannot resurrect a FAILED withdrawal.
+- Moolre/MTN transport parsing is separated from ledger mutation.
+- Customer realtime uses `withdrawal_progress` + `withdrawal_settled`.
+- Admin receives settlement invalidation signals.
+- Focused regression coverage protects success, late-success and failure paths.
 
-- `services/fiatSettlementService.js` as a dedicated provider→ledger boundary;
-- atomic `PENDING → COMPLETED` claim on successful provider callbacks;
-- persistence of provider transaction IDs into `TransactionHistory.providerRef`;
-- protection against a late SUCCESS resurrecting a FAILED withdrawal;
-- a normalized Moolre/MTN webhook adapter;
-- `withdrawal_progress` + `withdrawal_settled` as the shared customer realtime contract;
-- `admin_alert` settlement invalidation signals for the Admin control plane;
-- focused service tests for success, late-success protection and failure delegation.
+The complete Backend Test Suite was green after the final test-fixture correction, and PR #32 was squash-merged only after that gate.
 
-Moolre's current documentation confirms `txstatus` semantics of `0=Pending`, `1=Successful`, `2=Failed`, uses `externalref` as the durable business reference, and explicitly recommends keeping uncertain operations pending until final state is confirmed and making callbacks idempotent. citeturn0search0turn0search2turn0search1
+### Remaining financial identity issue
 
-**Verification:** Backend Test Suite run #219 is currently executing. PR #32 must remain open until the complete gate is green and its final diff is re-audited.
+The legacy `Withdrawal` model still lacks a dedicated provider-attempt/reference relation. Reconciliation therefore retains a legacy correlation mechanism. The next backend financial batch should introduce explicit durable provider-attempt identity and reconciliation exceptions instead of relying on timestamp/amount matching.
 
-### Architectural issue still under active hardening
+## Admin Portal settlement realtime — MERGED / VERIFIED
 
-The legacy `Withdrawal` model still lacks a dedicated provider-attempt/reference relation, so reconciliation can still require correlation logic. This must ultimately become an explicit durable provider-attempt identity and exception model rather than relying on timestamp/amount matching.
+Admin PR #10 corrected restore-time realtime establishment and introduced a global settlement reconciliation boundary. Withdrawal queue, statistics, profit, health and payout-review projections are invalidated from authoritative backend events; socket payloads never become financial truth.
 
-### Admin Portal PR #10 — MERGED / VERIFIED
+## Flutter withdrawal realtime transport — MERGED / VERIFIED
 
-Research found a separate session-lifecycle defect: Admin session restoration refreshed the access JWT but did not establish the Admin Socket.IO connection. REST could therefore be healthy while realtime was silently disabled after a browser refresh.
+Flutter PR #17 adds the canonical `withdrawal_progress` / `withdrawal_settled` transport contract to the singleton SocketService. No second socket or feature-owned connection was introduced.
 
-PR #10 adds:
+## Business Portal event-contract hardening — IN PROGRESS / PR #6
 
-- restore-time Admin Socket.IO handshake after validated session restoration;
-- global `useAdminRealtime` reconciliation boundary;
-- `withdrawal_settled` invalidation for withdrawal queue, stats, profit, health and payout-review queries;
-- `admin_alert` invalidation for settlement/liquidity events;
-- no direct financial cache mutation from socket payloads — authoritative REST refetch remains mandatory.
+A repository-wide research pass covered the Business Portal socket singleton, notification hook, query-key factory, invoice consumer and backend `BizNotifType` surface.
 
-Admin CI run #25 passed build and changed-file lint. The PR diff was re-audited and then squash-merged.
+### Defect found
 
-### Flutter PR #17 — MERGED / VERIFIED
+The portal listened to `biz_notification`, but only order events triggered downstream cache invalidation. Backend business events also cover invoices, reservations, transit, Dine-In, KYB/trust and marketing. Those mutations could therefore reach the portal without refreshing the affected projection.
 
-A research pass compared backend `withdrawal_progress` / `withdrawal_settled` events with the singleton Flutter SocketService and existing listener ownership.
+### Implementation in PR #6
 
-Flutter PR #17 adds only the missing transport contract:
+- Centralized business event classification.
+- Invoice event invalidation for both current and legacy query roots.
+- Reservation projection invalidation.
+- Transit booking/trip projection invalidation.
+- Dine-In projection invalidation.
+- Trust/business-profile invalidation.
+- KYB/follower business-profile invalidation.
+- Marketing/ad projection invalidation.
+- Notification cache refresh remains global.
+- Existing singleton socket and listener teardown are preserved.
+- Regression test proves `INVOICE_PAID` refreshes invoice projections and listener cleanup occurs on unmount.
 
-- `onWithdrawalProgress` callback registration;
-- `onWithdrawalSettled` callback registration;
-- listeners for both backend events;
-- safe Map normalization through the existing callback helper;
-- callback cleanup with the existing singleton lifecycle.
+The implementation intentionally uses invalidation rather than copying financial/business payloads into client state: backend REST/domain state remains authoritative.
 
-The PR changed only `lib/services/socket_service.dart`. Flutter quality run #137 passed both analysis and test-with-coverage. The final diff was re-audited for duplicate socket ownership and then squash-merged.
+**PR #6 remains open until Business Portal CI is green and its final diff is re-audited against `main`.**
 
 ## Current repository state
 
@@ -111,21 +113,22 @@ Merged:
 - Backend #30 — dedicated Admin browser sessions.
 - Admin Portal #9 — Admin session/realtime integration.
 - Backend #31 — provider-settlement truth and reconciliation hardening.
+- Backend #32 — provider callback authoritative settlement.
 - Admin Portal #10 — Admin settlement realtime reconciliation.
 - Flutter #17 — canonical withdrawal realtime transport.
 
 Open:
 
-- Backend #32 — provider callback authoritative settlement.
+- Business Portal #6 — business event contract hardening.
 
-## Next substantial batches after Backend #32 verification
+## Next substantial batches
 
-1. Finish and merge Backend #32 only after the complete backend gate and final diff re-audit.
+1. Finish and merge Business Portal #6 only after its full quality gate and final duplication audit.
 2. Replace legacy withdrawal correlation with explicit provider-attempt identity and durable reconciliation exceptions.
 3. Audit all Flutter escrow/order/invoice event payloads against backend emitters and enforce contract tests.
-4. Audit Business Portal mutation → notification → realtime → refetch paths and add contract coverage; specifically verify invoice, reservation, transit, and Dine-In event invalidation coverage against `BizNotifType`.
+4. Audit Business Portal invoice/reservation/transit/Dine-In mutation → event → refetch paths against actual query keys and backend emitters.
 5. Build the Admin reconciliation/exception queue so unresolved financial operations become actionable work rather than dashboard anomalies.
-6. Extend the same `authoritative state → domain event → realtime → client reconciliation` pattern across the competition-critical commerce journeys.
+6. Extend the same authoritative-state → domain-event → realtime → client-reconciliation pattern across competition-critical commerce journeys.
 
 ## Non-negotiable architecture
 
