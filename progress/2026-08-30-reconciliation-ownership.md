@@ -40,6 +40,14 @@ For order tracking the same principle applies:
 
 The server remains authoritative for identity, authorization, coordinates, ETA and tracking state.
 
+## Realtime lifecycle finding
+
+The merged Business Portal realtime bridge correctly treats socket payloads as invalidation signals and replaces listeners when the socket identity changes. The audit then identified a lifecycle gap: the initial bootstrap stops after the first socket is bound, while logout destroys that socket and a later login creates a new singleton instance. Without an explicit rebind hook, the new session can be connected to realtime transport but lack the query invalidation bridge.
+
+Business Portal #8 addresses this by exposing an idempotent `ensureRealtimeQueryBridge()` hook from the existing query client and invoking it whenever AuthContext wires a restored or newly logged-in session socket. This extends the existing bridge; it does not create another socket or event layer.
+
+Flutter research also confirmed a separate lifecycle hazard in `OrderTrackingScreen`: the screen previously replaced the singleton order callbacks with no-op callbacks during `dispose()`. A first attempted fix was intentionally discarded because it rewrote too much unrelated formatting. The branch was reset and no partial Flutter implementation was retained. The next Flutter batch must preserve the original file and change only the callback ownership/lifecycle behavior with focused regression coverage.
+
 ## Next deep audit
 
 Before adding more UI, audit the existing backend emitters against the Business Portal and Flutter consumers for the competition-critical domains:
