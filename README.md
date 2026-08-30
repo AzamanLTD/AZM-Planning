@@ -8,6 +8,7 @@ This repository is the planning source for the product repositories. It intentio
 
 ## Documents
 
+- [Master roadmap 2026](MASTER_ROADMAP_2026-08-30.md) — whole-platform execution roadmap, invariants, competition sequence, risks and definition of done.
 - [Pyrax's frontend plan](Pyrax%27s%20frontend%20plan.md) — customer Flutter application.
 - [Pyrax's backend plan](Pyrax%27s%20backend%20plan.md) — APIs, domain services, money, orders, inventory, realtime and trust boundaries.
 - [Pyrax's businessPortal plan](Pyrax%27s%20businessPortal%20plan.md) — merchant/business operations and configuration.
@@ -54,16 +55,20 @@ flowchart TD
     SH --> M[Common identity, money, orders, notifications, realtime]
 ```
 
-These diagrams are conceptual architecture maps. The detailed repository plans remain the source of truth for implementation status and exact flows.
+These diagrams are conceptual architecture maps. The detailed repository plans and the master roadmap remain the source of truth for implementation status and exact flows.
 
 ## Current master status
 
-- Retail checkout integrity: active hardening.
-- Backend order/payment/inventory state integrity: active hardening.
-- Customer Flutter startup/performance and navigation: active architectural work.
+- Whole-platform roadmap: established and active in `MASTER_ROADMAP_2026-08-30.md`.
+- Retail checkout integrity: foundation verified; continued competition-facing product hardening.
+- Backend order/payment/inventory state integrity: foundation verified; financial reconciliation remains a major platform workstream.
+- Customer Flutter startup/performance and navigation: foundation verified; category-specialized experience work remains.
+- Escrow/ticket trust layer: backend foundation verified; shared workspace UX and full dispute experience remain major product work.
+- Control plane: strong foundation verified; deeper workforce and governance operations remain.
 - Social foundations: existing pieces identified; convergence work remains.
-- Portal architecture: existing repositories need continued contract mapping.
-- Central planning brain: established in `AZM-Planning`.
+- Business operations: broad surface exists; cross-module contract mapping and operational workflows remain.
+- CI/release discipline: strengthened across active application repositories; infrastructure health must continue to be verified rather than assumed.
+- Central planning brain: established and now maintained as the execution record.
 
 ## State vocabulary
 
