@@ -2,7 +2,7 @@
 
 **Repository:** `AzamanLTD/AZM-backend`  
 **Status:** IN PROGRESS / PARTIALLY COMPLETE  
-**Last updated:** 2026-08-30 (UTC)
+**Last updated:** 2026-08-30 (UTC) — large engineering batch active
 
 ## Mission
 
@@ -120,14 +120,31 @@ flowchart LR
     C --> F[Audit / Domain Event]
 ```
 
-Required future hardening:
+### Escrow funding concurrency guard — added in current batch
+
+A service-level pre-read of `DRAFT` is not sufficient to guarantee single funding under concurrent requests. The current batch adds a PostgreSQL trigger migration that makes `DRAFT → FUNDED` a database-enforced transition boundary. Because funding balance mutations, fee accounting and transaction history occur in the same database transaction, a competing transition that loses the database state race causes its complete financial transaction to roll back rather than merely failing after a debit.
+
+This complements the existing service-level conditional guards used for settlement/refund/cancellation; it does not replace authorization or the service's financial validation.
+
+Required verification before merge:
+
+- apply migration against the CI database;
+- exercise concurrent funding requests;
+- verify exactly one funding transaction/history row and one balance movement;
+- verify the losing request leaves no fee, lock, debit or status mutation behind;
+- verify normal non-concurrent funding remains unchanged;
+- verify deployment's schema-convergence mechanism preserves the trigger.
+
+### Required future hardening
 
 - complete payment state-machine inventory;
 - webhook/event signature and replay review;
 - refund idempotency;
 - reconciliation jobs and discrepancy reporting;
 - immutable audit trail for critical financial transitions;
-- explicit relationship between order state and ledger/escrow state.
+- explicit relationship between order state and ledger/escrow state;
+- review every producer of `BusinessOrderItem` against inventory reservation semantics;
+- verify all non-storefront escrow/order flows before expanding database enforcement.
 
 ## Orders and history
 
@@ -177,15 +194,17 @@ Private financial information must never become social activity accidentally.
 - Escrow event protection against stale regression.
 - Deterministic order/notification pagination.
 - Dispute-resolution lifecycle coverage.
-- Backend CI/test suite has passed the current integrity batch.
+- Backend CI/test suite has passed the prior integrity batch.
 
-### IN PROGRESS
+### IN PROGRESS — CURRENT LARGE BATCH
 
+- Database-enforced single-winner escrow funding transition.
 - Full payment/escrow state-machine audit.
 - Refund and reconciliation design.
 - Inventory edge-case review across non-storefront order creation paths.
 - Event/realtime ordering and replay review.
 - Auditability and observability hardening.
+- Red-team verification of the assessment findings before any feature is declared complete.
 
 ### PLANNED
 
@@ -201,6 +220,7 @@ Private financial information must never become social activity accidentally.
 - Payment state can diverge from order state without reconciliation.
 - Late webhooks/events can regress state if every transition is not conditional.
 - Expanding verticals can duplicate money primitives unless the shared boundary is enforced.
+- A service-level fix may still leave an unsafe alternate caller; all callers must be mapped before closing a state-machine issue.
 
 ## Verification
 
@@ -213,8 +233,9 @@ Database/schema application, Prisma generation, unit/integration tests, concurre
 3. Search for all callers of a changed service/state transition.
 4. Treat money, inventory and authorization as fail-closed boundaries.
 5. Prefer atomic/conditional database operations for contested state.
-6. Never make realtime/push authoritative.
-7. Record status only from evidence.
-8. Update this plan after substantial work.
-9. Accumulate coherent changes before expensive CI.
-10. Never remove historical decisions merely to shorten this document.
+6. Use database constraints/triggers when application-level checks cannot fully close a race.
+7. Never make realtime/push authoritative.
+8. Record status only from evidence.
+9. Update this plan after substantial work.
+10. Accumulate coherent changes before expensive CI.
+11. Never remove historical decisions merely to shorten this document.
