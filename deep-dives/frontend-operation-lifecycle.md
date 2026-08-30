@@ -10,9 +10,11 @@
 
 `StorefrontService.checkoutCart()` already accepts and forwards an optional `idempotencyKey` to the storefront checkout API.
 
-`StorefrontRetailCheckoutGateway.checkout()` currently does not supply that key when calling `checkoutCart()`.
+`RetailCheckoutGateway.checkout()` now requires an idempotency key.
 
-`RetailCheckoutController` currently has no operation identity and simply delegates each submission to the gateway.
+`RetailCheckoutOperation` now owns the cart snapshot, checkout options, gateway and idempotency identity. Repeated `submit()` calls on the same operation reuse the same key.
+
+`RetailCheckoutController.begin()` creates the stable logical operation boundary. Its `submit()` method remains available for one-shot callers, while recovery-capable callers should retain the returned operation.
 
 ## Required lifecycle
 
@@ -45,25 +47,49 @@ flowchart LR
     C --> R
 ```
 
+Cart values are immutable at the API boundary: cart mutations return new `RetailCart` values. Therefore a changed cart must begin a new logical operation rather than reuse the old operation identity.
+
 ## Error semantics
 
 The current retail gateway maps every non-`FormatException` thrown by the service to `retryable: true`. This is too coarse for economic operations. The shared API error boundary should eventually preserve canonical error code, HTTP status, retryability and authoritative resource state where supplied.
 
-## Implementation sequence
+## Implementation completed in current batch
 
-1. Make the gateway contract require an idempotency key.
-2. Have the controller own the logical operation identity and reuse it across retryable outcomes.
-3. Pass the identity through the gateway to `StorefrontService.checkoutCart()`.
-4. Classify backend failures instead of treating every exception as retryable.
-5. Add tests proving retry uses the same identity and permanent/success outcomes start a fresh operation.
-6. Trace all other economic entry points before declaring the shared contract complete.
+1. Gateway contract now requires an idempotency key.
+2. Added `RetailCheckoutOperation` to bind one immutable checkout intent to one idempotency identity and one gateway.
+3. Added `RetailCheckoutController.begin()` as the explicit recovery-safe operation boundary.
+4. One-shot `submit()` remains backward-compatible but is documented as unsuitable for multi-attempt recovery unless the caller supplies the original key.
+5. Added tests covering repeated operation submission, new-cart/new-identity behavior, explicit identity preservation and empty-cart rejection.
 
-## Important implementation constraint
+## Next implementation sequence
+
+1. Trace and wire the real production retail UI caller to retain `RetailCheckoutOperation` across retry/recovery.
+2. Classify backend failures instead of treating every exception as retryable.
+3. Verify the backend request fingerprint covers exactly the immutable economic intent represented by the operation.
+4. Audit `placeStorefrontOrder()` as a second economic entry point and determine whether it is live, legacy, or should converge on canonical checkout.
+5. Trace restaurant, hotel and transit economic/booking operations for equivalent retry identity requirements.
+6. Add end-to-end contract tests before declaring the shared operation contract complete.
+
+## Important implementation constraints
 
 Do not create a second UUID/idempotency helper. Reuse `IdempotencyKey.generate()`.
 
 Do not put operation identity generation in the HTTP service itself: the service cannot know whether two requests represent the same logical user operation.
 
-## Current blocker
+Do not generate a new identity inside a gateway for a retry. Gateways transport operation identity; they do not own its lifetime.
 
-The GitHub contents update operation is currently returning a SHA mismatch even though the fetched branch content reports the same blob SHA. A dedicated branch has been created for the implementation, but the source files have **not** been mutated yet. Do not mark the implementation complete until the branch contains the code and tests.
+Do not reuse an operation after its cart intent has changed. Start a new operation from the new snapshot.
+
+## Current verification state
+
+The source and test changes are committed on the frontend branch `feat/retail-checkout-operation-identity`. CI has intentionally **not** been triggered yet because the agreed workflow is to accumulate a significant coherent batch and perform the full verification cycle at the end.
+
+The implementation is therefore **PARTIALLY COMPLETE / IN PROGRESS**, not VERIFIED.
+
+## Agent update rules
+
+- Update this document whenever an invariant is implemented, disproved, or newly discovered.
+- Record the actual source path and behavior; do not infer from intended architecture.
+- Keep diagrams synchronized with lifecycle changes.
+- Never mark a contract VERIFIED until source, tests and cross-repository behavior have been checked.
+- Accumulate coherent changes and reserve expensive CI for the end of a significant batch.
