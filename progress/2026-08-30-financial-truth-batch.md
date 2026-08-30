@@ -17,11 +17,19 @@ This is a coherent P0 financial-truth hardening batch plus the first cross-porta
 - Public PoR returns an explicit unavailable response when no snapshot exists rather than fabricating a successful state.
 - Merkle regression tests cover deterministic roots, odd leaves, multiple positions, tampering, and index binding.
 
+### Critical currency-boundary correction
+
+A deeper schema audit found that `User.availableBalance`, `escrowLockedBalance`, `vendorUnallocatedBalance`, and `disputeEscrowBalance` are USDT liabilities, while `SystemFiatPool.balance` is a separate fiat pool (GHS). The first PoR implementation incorrectly added the fiat pool to the USDT reserve numerator.
+
+That is now corrected. PoR reserve backing is calculated only from the USDT-reserve pools (`SystemMasterCrypto` + `SystemHotWallet`). The fiat pool remains visible separately in the snapshot breakdown for reconciliation visibility but can never inflate the USDT backing ratio.
+
+A pure regression test now locks this boundary so a future refactor cannot silently reintroduce cross-currency arithmetic.
+
 ## CI failure root cause and correction
 
-The first PR run reached the application assertions successfully but failed in E2E teardown because the test cleanup guessed Prisma delegates that are not present in the authoritative schema. Research of the CI workflow showed the suite runs against a disposable PostgreSQL database and applies the schema before testing. The test file was therefore restored to the complete original smoke coverage and the schema-guessing teardown was removed entirely.
+The first PR run reached application assertions but failed in E2E teardown because schema-guessing cleanup referenced nonexistent Prisma delegates. CI research showed the suite uses a disposable PostgreSQL database and applies the schema before tests. The test file was restored to the complete original smoke coverage and the guessed teardown was removed entirely.
 
-The subsequent run after restoration is now the authoritative verification run; the earlier green run is not treated as proof because it had accidentally reduced the smoke suite.
+The immediately following run was cancelled by GitHub when the reserve-currency correction superseded it. The current authoritative verification is backend CI run #209 on the latest head.
 
 ## Cross-portal integration audit
 
@@ -43,11 +51,11 @@ Business Portal commit: `ca75a6c4b9a825fd29eae1201e7214f2c692f75d`
 
 ### Admin Portal
 
-Research of the admin request layer found the same configuration-ordering hazard. The central API layer has now been hardened so computed authentication headers cannot be overwritten by the options object, requests include credentials consistently, and hung requests abort after 30 seconds.
+Research found the same request configuration-ordering hazard. The central API layer is now hardened so computed authentication headers cannot be overwritten by `options`, credentials are consistently included, and requests abort after 30 seconds rather than hanging indefinitely.
 
 Admin Portal commit: `5f1d22dc2b5be89865f2e2476ce0f42771059b39`
 
-The Admin Portal still uses standard `/api/auth/login` with a browser-accessible access token in localStorage and redirects to login when the 15-minute access token expires. The backend standard refresh endpoint is available, but moving the admin portal to an HttpOnly browser session requires a separate admin-session contract rather than incorrectly reusing the business portal cookie contract. That remains a deliberate next batch, not a shortcut.
+The Admin Portal still uses standard `/api/auth/login` with a browser-accessible access token in localStorage and redirects to login when the 15-minute access token expires. The backend standard refresh endpoint is available, but moving the admin portal to an HttpOnly browser session requires a dedicated admin-session contract rather than incorrectly reusing the business portal cookie contract. That remains the next authentication batch.
 
 ### Backend realtime contract
 
@@ -65,13 +73,13 @@ Realtime messages are nudges, not financial truth. Clients refetch authoritative
 
 Backend PR #29 remains intentionally open until the complete backend gate validates the restored full E2E smoke suite and the entire financial-truth batch together.
 
-Backend CI run #208 is executing that restored full suite now.
+Current backend CI: run #209, executing against head `b2701b5cd5f260c25c7767497a9cedaf8a167058` (service change) with test commit `c56be194f600b2b4985071d11a5672d8cb9737c8` as the latest PR head.
 
-Admin and Business Portal transport commits have their repository CI workflows configured for main pushes and pull requests. Flutter's quality workflow is PR-oriented; its next coherent Flutter PR should include this realtime-auth fix plus the related contract tests rather than creating one-change verification noise.
+Admin Portal transport CI run #22 is green. Business Portal transport CI run #3 is green. Flutter's quality workflow is PR-oriented; its realtime-auth fix is intended to be carried into the next coherent Flutter PR with contract coverage.
 
 ## Next substantial integration batch
 
-1. Complete backend PR #29 gate using the restored full smoke suite.
+1. Complete backend PR #29 gate using the restored full smoke suite and corrected currency boundary.
 2. Build the dedicated Admin browser-session contract end-to-end (backend cookie bridge + admin AuthContext + API core + expiry/reconnect tests).
 3. Add cross-portal contract coverage for business/admin actions that mutate backend state and then emit realtime invalidation events.
 4. Audit Flutter service/socket event names and payload shapes against backend handlers and add contract tests where drift exists.
