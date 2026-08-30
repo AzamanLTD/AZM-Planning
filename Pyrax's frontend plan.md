@@ -145,6 +145,8 @@ Sockets/WebRTC/push are delivery mechanisms, not authoritative state. Events mus
 - Rendering/image audit.
 - Deeper storefront/social architecture convergence.
 - Cross-vertical shared primitive mapping.
+- **Publish concurrency contract convergence (2026-08-30):** the frontend storefront service now accepts an optional `expectedUpdatedAt` for publish and the Riverpod draft notifier forwards the currently loaded draft timestamp when publishing. This is intentionally not marked verified until frontend CI and backend service-level enforcement are complete.
+- **Frontend/backend contract audit (2026-08-30):** direct repository-tree access is being used because AZM-frontend code search is unavailable. The storefront service/model/provider chain has been verified as present and writable through repository APIs.
 
 ### PLANNED
 
@@ -153,6 +155,7 @@ Sockets/WebRTC/push are delivery mechanisms, not authoritative state. Events mus
 - Offline/reconnect reconciliation where appropriate.
 - Richer transaction progress and recovery UX.
 - Hotel, transit and restaurant journeys built on shared foundations.
+- First-class conflict UX for stale storefront drafts once backend returns a typed concurrency conflict.
 
 ## Known risks
 
@@ -160,10 +163,14 @@ Sockets/WebRTC/push are delivery mechanisms, not authoritative state. Events mus
 - Rich media can regress frame time or memory.
 - Adding vertical-specific widgets can fragment the SDUI architecture.
 - Financial UX must never imply settlement before authoritative confirmation.
+- The publish API now has a client concurrency field, but the backend service must enforce it atomically before this is considered a complete guarantee.
+- `StorefrontService._parseResponse` currently collapses HTTP failures into a generic `Exception`; typed conflict handling will eventually require preserving status/code information from the backend.
 
 ## Verification
 
 Run analyzer/tests/coverage for meaningful frontend batches. Android/integration verification is expensive and should be run at batch boundaries, not after every micro-change. Review changed flows against existing services and models before verification.
+
+**2026-08-30 batch state:** frontend publish contract changes are implemented on `feat/storefront-commerce-convergence`; CI has not yet been run for this batch. Do not mark these changes VERIFIED until the backend enforcement and frontend tests/analysis pass.
 
 ## Agent continuation rules
 
@@ -175,3 +182,5 @@ Run analyzer/tests/coverage for meaningful frontend batches. Android/integration
 6. Update risks and next steps when discoveries change the architecture.
 7. Keep financial authority server-side.
 8. Accumulate meaningful work before expensive CI.
+9. When GitHub code search is unavailable, use repository contents/tree APIs rather than concluding that a path is absent from a 404.
+10. Preserve concurrency identity from loaded draft state through publish; never silently discard a stale-draft conflict.
