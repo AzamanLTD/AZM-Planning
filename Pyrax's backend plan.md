@@ -10,7 +10,16 @@ The backend is the authoritative platform boundary for identity, authorization, 
 
 ## Authority model
 
-`Client intent → API authorization → domain service rules → database atomicity → ledger/payment authority → event/notification delivery`
+```mermaid
+flowchart LR
+    A[Client Intent] --> B[API Authorization]
+    B --> C[Domain Service Rules]
+    C --> D[Database Atomicity]
+    D --> E[Ledger / Payment Authority]
+    E --> F[Domain Event]
+    F --> G[Notification / Realtime Delivery]
+    G -. never authoritative .-> A
+```
 
 Never trust client-provided price, balance, role, stock, payment state or completion state as authoritative.
 
@@ -32,7 +41,19 @@ Realtime is downstream delivery. It cannot be the source of truth.
 
 ## Retail checkout flow
 
-`customer request → business/customer validation → request fingerprint/idempotency → authoritative product/variant validation → inventory reservation → payment/escrow transaction → order creation → order items/snapshots → notifications/realtime → customer order history → fulfillment`
+```mermaid
+flowchart TD
+    A[Customer Request] --> B[Customer / Business Validation]
+    B --> C[Idempotency + Request Fingerprint]
+    C --> D[Authoritative Product / Variant Validation]
+    D --> E[Atomic Inventory Reservation]
+    E --> F[Payment / Escrow Transaction]
+    F --> G[Order + Historical Line Snapshots]
+    G --> H[Domain Events]
+    H --> I[Notifications / Realtime]
+    G --> J[Customer Order History]
+    J --> K[Fulfillment]
+```
 
 ### Checkout integrity implemented
 
@@ -48,15 +69,36 @@ Realtime is downstream delivery. It cannot be the source of truth.
 
 Tracked inventory must be reserved atomically with order creation. Concurrent orders must not oversell stock. Cancellation/refund paths release outstanding reservations exactly once. Untracked inventory (`NULL`/unmanaged semantics) must remain unaffected.
 
+```mermaid
+stateDiagram-v2
+    [*] --> Available
+    Available --> Reserved: order accepted
+    Reserved --> Consumed: fulfillment completes
+    Reserved --> Available: cancellation/refund
+    Available --> Available: untracked / no reservation
+```
+
 Deployment currently uses Prisma schema application mechanisms that require special care. Runtime convergence/readiness logic and migrations must agree; a migration alone is insufficient if deployment can recreate an old constraint.
 
 ## Order state machine
 
-The exact legal transitions must remain explicit. A representative successful path is:
+```mermaid
+stateDiagram-v2
+    [*] --> CREATED
+    CREATED --> AWAITING_PAYMENT
+    AWAITING_PAYMENT --> PAID
+    PAID --> DELIVERED
+    DELIVERED --> COMPLETED
+    CREATED --> CANCELLED
+    AWAITING_PAYMENT --> CANCELLED
+    PAID --> REFUNDED
+    PAID --> DISPUTED
+    DELIVERED --> DISPUTED
+    DISPUTED --> REFUNDED
+    DISPUTED --> COMPLETED: authoritative outcome permits
+```
 
-`CREATED → AWAITING_PAYMENT → PAID → DELIVERED → COMPLETED`
-
-Alternative paths include cancellation, refund and dispute. Important rules:
+The exact legal transitions must remain explicit. Important rules:
 
 - illegal transitions are rejected;
 - terminal states cannot be resurrected by stale events;
@@ -68,6 +110,15 @@ Alternative paths include cancellation, refund and dispute. Important rules:
 ## Payments and escrow
 
 The existing transaction/escrow subsystem remains the financial authority. Storefront checkout must not duplicate ledger behavior. Payment events may arrive late or repeatedly; state transitions must be conditional and idempotent.
+
+```mermaid
+flowchart LR
+    A[Payment / Escrow Event] --> B{Current Authoritative State}
+    B -->|Eligible| C[Conditional State Transition]
+    B -->|Already Applied| D[No-op / Idempotent]
+    B -->|Terminal / Conflicting| E[Reject or Reconcile]
+    C --> F[Audit / Domain Event]
+```
 
 Required future hardening:
 
@@ -84,7 +135,16 @@ Customer and merchant access must be isolated. Pagination must use deterministic
 
 ## Notifications/events
 
-`domain state transition → domain event → notification policy → push/realtime/in-app delivery`
+```mermaid
+flowchart LR
+    A[Authoritative State Change] --> B[Domain Event]
+    B --> C[Notification Policy]
+    C --> D[Push]
+    C --> E[Realtime]
+    C --> F[In-app History]
+    D -. delivery failure/retry .-> B
+    E -. duplicate/late safe .-> B
+```
 
 Notifications must never be the mechanism that commits business state. Delivery failures or duplicates must not corrupt the underlying transaction.
 
@@ -92,7 +152,14 @@ Notifications must never be the mechanism that commits business state. Delivery 
 
 Existing business-follow and social/feed concepts are present. The intended convergence is:
 
-`business/customer graph → safe domain activity → feed/story → notification/realtime → discovery`
+```mermaid
+flowchart LR
+    A[Customer / Business Graph] --> B[Safe Domain Activity]
+    B --> C[Feed / Story]
+    B --> D[Realtime / Notification]
+    C --> E[Discovery]
+    E --> F[Commerce]
+```
 
 Private financial information must never become social activity accidentally.
 
