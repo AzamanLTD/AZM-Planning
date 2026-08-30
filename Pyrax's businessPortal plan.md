@@ -10,19 +10,29 @@ The Business Portal is the merchant operating system. It should let businesses c
 
 ## Master role
 
-`Business Portal → authenticated business context → backend business APIs → authoritative domain state → customer app/SDUI/realtime`
+```mermaid
+flowchart LR
+    A[Business Portal] --> B[Authenticated Business Context]
+    B --> C[Backend Business APIs]
+    C --> D[Authoritative Domain State]
+    D --> E[Customer App / SDUI]
+    D --> F[Realtime / Notifications]
+```
 
 The Portal is an operator surface, not a second source of truth. It may configure and initiate actions, but financial, authorization, inventory and order decisions remain server-side.
 
 ## Storefront architecture
 
+```mermaid
+flowchart LR
+    A[Portal Editor] --> B[Validated Storefront Contract]
+    B --> C[Persisted Configuration]
+    C --> D[Customer App Registry]
+    D --> E[Native Renderer]
+    D --> F[Preview Client]
+```
+
 The Portal is intended to configure the normalized storefront contract consumed by the customer Flutter renderer. It should not encode Flutter-specific executable behavior into content.
-
-Conceptually:
-
-`Portal editor → validated Storefront Contract → persisted configuration → customer app registry/renderer`
-
-The same contract should support preview and future clients.
 
 ## Commerce flows
 
@@ -30,15 +40,43 @@ The same contract should support preview and future clients.
 
 `business → product → pricing/SKU → inventory → variants/modifiers → storefront collection → publish`
 
+```mermaid
+flowchart TD
+    A[Business] --> B[Product]
+    B --> C[Pricing / SKU]
+    C --> D[Inventory]
+    D --> E[Variants / Modifiers]
+    E --> F[Collection]
+    F --> G[Publish]
+```
+
 ### Order operations
 
-`new order → review → payment/escrow state → fulfillment → delivery → completion`
+```mermaid
+flowchart LR
+    A[New Order] --> B[Review]
+    B --> C[Payment / Escrow State]
+    C --> D[Fulfillment]
+    D --> E[Delivery]
+    E --> F[Completion]
+    B --> G[Cancellation]
+    C --> H[Refund / Dispute]
+```
 
 Cancellation, refund and dispute operations must follow backend state-machine rules and never be implemented as local UI-only mutations.
 
 ### Inventory
 
 Portal stock changes must respect reservation state. Operators must be able to understand available versus reserved stock rather than overwriting quantities blindly.
+
+```mermaid
+flowchart LR
+    A[Catalog Stock] --> B[Available]
+    B --> C[Reserved by Orders]
+    C --> D[Consumed by Fulfillment]
+    C --> E[Released by Cancellation / Refund]
+    E --> B
+```
 
 ## Financial operations
 
@@ -53,6 +91,15 @@ The Portal can receive order/payment/inventory notifications through realtime ch
 ## Social/customer relationship
 
 Business follows, reviews, social activity and customer interactions should become discoverable platform primitives. Portal controls should let merchants participate in the social graph without exposing private customer financial data.
+
+```mermaid
+flowchart LR
+    A[Business] --> B[Posts / Promotions / Status]
+    B --> C[Safe Social Activity]
+    C --> D[Followers / Customers]
+    D --> E[Discovery]
+    E --> F[Storefront / Commerce]
+```
 
 Potential future capabilities:
 
