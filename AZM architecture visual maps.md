@@ -149,13 +149,33 @@ flowchart LR
     A[Order State] --> C{Reconciliation}
     B[Payment / Escrow State] --> C
     D[Ledger / Transaction History] --> C
-    C -->|consistent| E[Verified]
-    C -->|mismatch| F[Discrepancy Record]
-    F --> G[Review / Safe Repair]
-    G --> H[Auditable Resolution]
+    E[Proof-of-Reserves Snapshot] --> C
+    C -->|consistent| F[Verified]
+    C -->|mismatch| G[Discrepancy Record / Alert]
+    G --> H[Admin Review / Safe Repair]
+    H --> I[Auditable Resolution]
 ```
 
 Reconciliation observes authoritative sources; it must not silently rewrite financial history.
+
+## Proof-of-reserves verification
+
+```mermaid
+flowchart TD
+    A[Authoritative User Balances] --> B[Serializable Snapshot]
+    B --> C[Immutable Per-User Leaf Records]
+    C --> D[Salted Merkle Root]
+    D --> E[Public Latest Snapshot]
+    C --> F[Authenticated User Proof]
+    F --> G{Proof Valid?}
+    G -->|yes| H[Historical Balance Inclusion Proven]
+    G -->|no| I[Integrity Exception]
+    J[Journal Trial Balance] --> K[Admin Integrity Report]
+    D --> K
+    C --> K
+```
+
+Public reads do not create snapshots. Snapshot creation is an operational/admin action and is scheduled independently. Historical verification uses the balances committed at snapshot time, not the user's current live balance.
 
 ## Notifications and realtime
 
