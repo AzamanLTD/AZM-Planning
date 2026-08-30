@@ -16,12 +16,14 @@
 
 `RetailCheckoutController.begin()` creates the stable logical operation boundary. Its `submit()` method remains available for one-shot callers, while recovery-capable callers should retain the returned operation.
 
+The operation now defensively snapshots the cart lines and their variant maps when created. Later mutation of the caller's source list/map cannot change the economic intent represented by the operation.
+
 ## Required lifecycle
 
 ```mermaid
 flowchart TD
     A[User begins checkout] --> B[Create logical operation identity]
-    B --> C[Immutable checkout intent]
+    B --> C[Freeze checkout intent snapshot]
     C --> D[Submit with same idempotency key]
     D --> E{Outcome}
     E -->|success| F[Close operation]
@@ -47,7 +49,17 @@ flowchart LR
     C --> R
 ```
 
-Cart values are immutable at the API boundary: cart mutations return new `RetailCart` values. Therefore a changed cart must begin a new logical operation rather than reuse the old operation identity.
+The operation also freezes the client-side intent at creation time:
+
+```mermaid
+flowchart LR
+    C[Mutable UI cart] --> S[Checkout operation snapshot]
+    S --> K[Stable idempotency key]
+    C -. later UI mutation .-> N[New cart value]
+    N --> K2[New operation / new key]
+```
+
+Cart mutations return new `RetailCart` values. The operation additionally copies its line list and variant maps, preventing external collection mutation from changing an in-flight economic intent.
 
 ## Error semantics
 
@@ -60,6 +72,7 @@ The current retail gateway maps every non-`FormatException` thrown by the servic
 3. Added `RetailCheckoutController.begin()` as the explicit recovery-safe operation boundary.
 4. One-shot `submit()` remains backward-compatible but is documented as unsuitable for multi-attempt recovery unless the caller supplies the original key.
 5. Added tests covering repeated operation submission, new-cart/new-identity behavior, explicit identity preservation and empty-cart rejection.
+6. Added a regression test proving source cart collections and variant maps cannot mutate an already-created operation snapshot.
 
 ## Next implementation sequence
 
