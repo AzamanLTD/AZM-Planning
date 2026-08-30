@@ -135,16 +135,43 @@ Required verification before merge:
 - verify normal non-concurrent funding remains unchanged;
 - verify deployment's schema-convergence mechanism preserves the trigger.
 
-### Required future hardening
+## Storefront authoritative-state hardening — current batch
 
-- complete payment state-machine inventory;
-- webhook/event signature and replay review;
-- refund idempotency;
-- reconciliation jobs and discrepancy reporting;
-- immutable audit trail for critical financial transitions;
-- explicit relationship between order state and ledger/escrow state;
-- review every producer of `BusinessOrderItem` against inventory reservation semantics;
-- verify all non-storefront escrow/order flows before expanding database enforcement.
+The storefront now has an explicit atomic boundary at the route layer rather than relying on the legacy service's read/check/write behavior.
+
+```mermaid
+flowchart TD
+    A[Storefront Mutation] --> B[Acquire BusinessProfile row lock]
+    B --> C{Expected draft snapshot still current?}
+    C -->|No| D[409 STOREFRONT_DRAFT_CONFLICT]
+    C -->|Yes| E[Domain validation]
+    E --> F[Conditional draft mutation or publication]
+    F --> G[History / publication writes]
+    G --> H[COMMIT]
+```
+
+### Implemented on `feat/storefront-commerce-convergence`
+
+- Added `services/storefrontAtomicService.js` as the authoritative transaction boundary for save, revert, template application and publish.
+- The boundary acquires a PostgreSQL `FOR UPDATE` lock on the owning `BusinessProfile` before reading/writing storefront state.
+- Draft conflicts now return HTTP 409 with `STOREFRONT_DRAFT_CONFLICT` instead of a generic 400.
+- Publication's multi-step history/layout transition executes inside one Prisma transaction.
+- Version allocation is serialized by the business-profile row lock, eliminating concurrent `MAX(version)+1` races among these authoritative mutation paths without changing existing history semantics.
+- Extended validation contracts so revert/template mutations can carry the same `expectedUpdatedAt` concurrency identity.
+- Added backend regression tests for transaction use, row locking, conflict behavior and sequential publication version allocation.
+- Updated `storefrontRoutes.js` so draft save, publish, revert and template operations use the atomic service.
+
+### Verification status
+
+**IMPLEMENTED / NOT YET VERIFIED BY CI.** The code has been written and inspected through GitHub's authoritative branch/blob APIs. CI has not yet been run for this accumulated batch.
+
+### Important remaining hardening
+
+- The legacy `storefrontService` functions remain callable internally and should eventually be made private/deprecated so no alternate caller can bypass the atomic boundary.
+- `getOrCreateDraft()` can still encounter first-creation races and should eventually use the same business-profile lock boundary.
+- Version uniqueness is serialized by the authoritative service lock; a future database uniqueness constraint should be considered only after checking existing production history for duplicates and planning a non-destructive migration.
+- Nitro tier thresholds are duplicated between `checkEligibility()` and the validation path and should converge on one authoritative tier resolver.
+- Analytics currently loads the entire date-range event set into application memory and should later move toward database aggregation/time-window limits.
 
 ## Orders and history
 
@@ -178,64 +205,31 @@ flowchart LR
     E --> F[Commerce]
 ```
 
-Private financial information must never become social activity accidentally.
+## Cross-repository contract direction
 
-## Current status
+```mermaid
+flowchart LR
+    A[AZM-frontend] --> B[Storefront API Contract]
+    C[AZM-businessPortal] --> B
+    B --> D[AZM-backend Domain Authority]
+    D --> E[Ledger / Escrow / Order State]
+    D --> F[Safe Events]
+    F --> A
+    F --> C
+```
 
-### VERIFIED / IMPLEMENTED
-
-- Customer/business-scoped checkout idempotency.
-- Request fingerprint protection.
-- Concurrent duplicate checkout handling.
-- Server-side variant validation and historical snapshots.
-- Complete order-line retrieval.
-- Atomic inventory reservation/release foundations.
-- Conditional delivery state transition.
-- Escrow event protection against stale regression.
-- Deterministic order/notification pagination.
-- Dispute-resolution lifecycle coverage.
-- Backend CI/test suite has passed the prior integrity batch.
-
-### IN PROGRESS — CURRENT LARGE BATCH
-
-- Database-enforced single-winner escrow funding transition.
-- Full payment/escrow state-machine audit.
-- Refund and reconciliation design.
-- Inventory edge-case review across non-storefront order creation paths.
-- Event/realtime ordering and replay review.
-- Auditability and observability hardening.
-- Red-team verification of the assessment findings before any feature is declared complete.
-
-### PLANNED
-
-- Unified financial event/audit model.
-- Reconciliation tooling.
-- Cross-vertical payment/booking primitives.
-- Social activity event contracts.
-- Hotel/transit/restaurant domain services built on shared foundations.
-
-## Risks
-
-- Database triggers or schema convergence can affect legacy order creation paths.
-- Payment state can diverge from order state without reconciliation.
-- Late webhooks/events can regress state if every transition is not conditional.
-- Expanding verticals can duplicate money primitives unless the shared boundary is enforced.
-- A service-level fix may still leave an unsafe alternate caller; all callers must be mapped before closing a state-machine issue.
-
-## Verification
-
-Database/schema application, Prisma generation, unit/integration tests, concurrency tests and relevant contract tests are required for meaningful backend batches. Expensive CI should be run after a coherent batch. Financial changes require explicit review of retries, concurrency, authorization and reconciliation—not just happy-path tests.
+The frontend now carries the draft `updatedAt` snapshot into publish and recognizes the backend's typed conflict response. Business-portal integration remains part of the later cross-portal hookup pass.
 
 ## Agent continuation rules
 
-1. Read this file before backend architectural changes.
-2. Trace route → controller → service → transaction → model → event callers before editing.
-3. Search for all callers of a changed service/state transition.
-4. Treat money, inventory and authorization as fail-closed boundaries.
-5. Prefer atomic/conditional database operations for contested state.
-6. Use database constraints/triggers when application-level checks cannot fully close a race.
-7. Never make realtime/push authoritative.
-8. Record status only from evidence.
-9. Update this plan after substantial work.
-10. Accumulate coherent changes before expensive CI.
-11. Never remove historical decisions merely to shorten this document.
+1. Read this file before changing backend architecture.
+2. Inspect the actual route/service/schema/test chain before adding code.
+3. Prefer existing primitives and authoritative domain services.
+4. Never duplicate financial accounting inside storefront/order presentation code.
+5. Critical state transitions must be atomic and concurrency-safe.
+6. Record every substantial completed change here with status and rationale.
+7. Never mark a change VERIFIED without actual CI/test evidence.
+8. Keep the accumulated research as architectural guidance, not as a substitute for implementation.
+9. When GitHub code search or file retrieval returns 404/truncation, use repository contents/tree/blob APIs before concluding the resource is absent.
+10. Do meaningful engineering batches before expensive CI, then use CI as a verification boundary.
+11. Keep Planning synchronized so another agent can reconstruct the work without reading every PR or commit.
