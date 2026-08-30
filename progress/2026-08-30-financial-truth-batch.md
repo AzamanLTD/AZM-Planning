@@ -21,7 +21,7 @@ This is a coherent P0 financial-truth hardening batch plus the first cross-porta
 
 The first PR run reached the application assertions successfully but failed in E2E teardown because the test cleanup guessed Prisma delegates that are not present in the authoritative schema (`reservation` / `userPin` were referenced as delegates in teardown code that did not match the generated client).
 
-Research of the CI workflow showed that the E2E suite runs against a disposable PostgreSQL database created for the workflow. The workflow explicitly applies the schema to that disposable database before the test suite. The correct fix is therefore **not** to add more guessed model cleanup or raw-table deletion. The smoke test now leaves its uniquely timestamped fixtures in the disposable CI database and does not perform schema-guessing teardown.
+Research of the CI workflow showed that the E2E suite runs against a disposable PostgreSQL database created for the workflow. The workflow applies the schema to that disposable database before the test suite. The correct fix is therefore **not** to add more guessed model cleanup or raw-table deletion. The smoke test now leaves its uniquely timestamped fixtures in the disposable CI database and does not perform schema-guessing teardown.
 
 Commit: `512a3a9749d5a52b277fa400aa6c4cce6f51ecea`
 
@@ -29,7 +29,13 @@ Commit: `512a3a9749d5a52b277fa400aa6c4cce6f51ecea`
 
 ### Flutter customer app
 
-`AZM-frontend/lib/config.dart` currently centralizes environment-specific backend URLs and socket URL derivation. Production, staging, and development are explicit, which is the correct foundation for eliminating environment drift.
+`AZM-frontend/lib/config.dart` centralizes environment-specific backend URLs and socket URL derivation. `lib/services/api_client.dart` already performs coordinated refresh-token rotation, with a single in-flight refresh promise, and all normal requests use the configured timeout.
+
+A realtime consistency gap was identified: the HTTP client could silently rotate the access JWT while the singleton Socket.IO connection continued using the expired JWT. The socket would then hit the backend's authenticated socket middleware with stale credentials and could become auth-blocked until the user restarted/reconnected manually.
+
+This is now hardened: after a successful refresh-token rotation, the client persists the new access/refresh credentials and forces the singleton Socket.IO service to reconnect using the fresh access token. Socket reconnect failure is deliberately non-fatal to the HTTP refresh path.
+
+Flutter commit: `0bae665057a52d54ae62fe2464b058569068bacf`
 
 ### Business Portal
 
@@ -47,11 +53,11 @@ Business Portal commit: `ca75a6c4b9a825fd29eae1201e7214f2c692f75d`
 
 ### Admin Portal
 
-The Admin Portal currently uses the standard `/api/auth/login` token flow and stores its access JWT in localStorage. Its central request layer has the same structural `...options` ordering hazard as the Business Portal layer and currently forces a login redirect on token expiry rather than using the backend refresh-token rotation flow. This is a next integration-hardening target, but it should be implemented only after inspecting the admin auth/session contract and existing backend refresh tests together.
+The Admin Portal currently uses the standard `/api/auth/login` token flow and stores its access JWT in localStorage. Its central request layer has the same structural `...options` ordering hazard as the Business Portal layer and currently forces a login redirect on token expiry rather than using the backend refresh-token rotation flow. This remains the next integration-hardening target, but it should be implemented only after inspecting the admin auth/session contract and existing admin auth tests together.
 
 ### Backend
 
-The backend auth contract explicitly exposes both standard refresh-token rotation and the dedicated business browser-session flow. Socket.IO verifies JWTs server-side. The business portal's socket model is therefore aligned with the backend's intended trust boundary.
+The backend auth contract explicitly exposes both standard refresh-token rotation and the dedicated business browser-session flow. Socket.IO verifies JWTs server-side. The business portal's socket model and Flutter's re-authenticated socket model are therefore aligned with the backend's intended trust boundary.
 
 ## System-level principle reinforced by this batch
 
@@ -65,7 +71,7 @@ Realtime messages are nudges, not financial truth. Clients refetch authoritative
 
 Backend PR #29 remains intentionally open until the complete backend gate validates migration, generated Prisma client, service, routes, worker registration, E2E suite, and regression tests together.
 
-The latest correction has triggered backend CI run #207.
+Backend CI run #207 is currently executing the complete test gate after the E2E correction.
 
 ## Next substantial integration batch
 
