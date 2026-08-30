@@ -17,36 +17,20 @@ Affected code was traced before editing:
 
 ## Implementation
 
-Admin Portal PR #14 modifies only `src/hooks/useAdminRealtime.js`.
+Admin Portal PR #14 modified only `src/hooks/useAdminRealtime.js`.
 
-It adds convergence handling for:
-
-- `escrow_funded`
-- `escrow_settled`
-- `escrow_pending_settlement`
-- `escrow_disputed`
-- `escrow_resolved`
-- `escrow_terms_updated`
-- `invoice_paid`
-- `order:location`
-- `order:status`
-- `order:eta`
-- legacy order event aliases
-- `business_order_delivered`
-- `balance_update`
-
-Escrow events invalidate the existing escrow/dispute/admin financial projections. Order events invalidate only admin operational projections. Balance and withdrawal events invalidate existing financial projections.
-
-Socket payloads are deliberately not copied into financial React Query state. Events remain convergence signals and canonical API responses remain authoritative.
+It adds convergence handling for escrow, invoice, order, balance and reconciliation events while retaining the existing admin socket and React Query architecture.
 
 ## Duplication audit
 
 No second socket, event bus, financial cache, or state store was created. Existing `adminSocket.js` remains the sole transport and existing `useAdminData.js` query keys remain the sole data surfaces.
 
-## Validation state
+## Validation
 
-PR #14 is open while its CI run executes. It is intentionally not recorded as merged until the exact head SHA has a successful CI result.
+PR #14 CI completed successfully on implementation head `0c480af9455e0c145c00b51f4d2bc86bfd00b8c5`.
+
+PR #14 was squash-merged into `main` as `fe35146ad502cfe1a945fa3cc69e7d6a191b714c`.
 
 ## Next audit
 
-After Admin CI is green, continue the event matrix through Business Portal and Flutter for terminal escrow/refund/settlement events, duplicate delivery, reconnects and stale-event ordering. Avoid adding new event names unless source tracing proves the current contract cannot express the required state transition.
+Continue the event matrix through Business Portal and Flutter for terminal escrow/refund/settlement events, duplicate delivery, reconnects and stale-event ordering. Avoid adding new event names unless source tracing proves the current contract cannot express the required state transition.
