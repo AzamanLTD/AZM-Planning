@@ -27,22 +27,15 @@ Research of the current mainline found that:
 5. `EscrowService.fundEscrow()` calls the canonical `/escrow/fund` endpoint.
 6. Backend `/escrow/fund` is protected by active-user guard, 2FA, idempotency middleware and validation.
 
-The actual missing product boundary was discoverability: `MyOrdersScreen` did not explicitly expose that an `AWAITING_PAYMENT` order with an escrow/ticket was awaiting funding. A small Flutter PR (#30) now adds a `Fund escrow` CTA that reuses the existing TicketWorkspace flow. It intentionally does not duplicate payment logic or create a second escrow service.
+The actual missing product boundary was discoverability: `MyOrdersScreen` did not explicitly expose that an `AWAITING_PAYMENT` order with an escrow/ticket was awaiting funding. Flutter PR #30 now adds a `Fund escrow` CTA that reuses the existing TicketWorkspace flow. It intentionally does not duplicate payment logic or create a second escrow service.
 
-## Important newly discovered correctness risk
+## Escrow satisfaction concurrency finding
 
-`escrowService.markSatisfied()` currently claims the participant satisfaction flag with a conditional update, then reads the row, and if both flags are true calls the single-winner release routine. If only one party is satisfied, it subsequently performs an unconditional `status = PENDING_SETTLEMENT` update.
+`escrowService.markSatisfied()` claims the participant satisfaction flag with a conditional update, then reads the row and, when both flags are true, invokes the single-winner release routine. If only one party is satisfied, it attempts to move the status to `PENDING_SETTLEMENT`.
 
-Under a concurrent two-party satisfaction race, this ordering can permit:
+A concurrent two-party satisfaction race can cause the second request to settle while a stale first request subsequently attempts the pending transition. Importantly, the existing database migration `20260830190000_escrow_funding_transition_guard` already protects the financial invariant: its trigger rejects `PENDING_SETTLEMENT` writes when the committed row is `SETTLED`, `RELEASED`, `REFUNDED`, or `EXPIRED`. Therefore this is **not currently a double-payout/data-integrity hole**.
 
-- party A claims payerSatisfied;
-- party B claims payeeSatisfied and settles the escrow;
-- party A's earlier read still observes the other flag as false;
-- party A then writes `PENDING_SETTLEMENT` after the settlement commit.
-
-The single-winner release guard prevents double payout, but it does not by itself prevent this terminal-state regression. This must be fixed before declaring the escrow lifecycle complete.
-
-The correct implementation should make the satisfaction transition and terminal settlement decision atomic, or use conditional status updates that cannot overwrite `SETTLED`/other terminal states. Do not add a second state machine or a second financial release implementation.
+The remaining defect is transport semantics: the stale request can receive an error even though the other request has already successfully settled the escrow. The next implementation should make this race idempotently converge at the service/API boundary (or atomically decide the terminal state) so the losing concurrent request returns the committed canonical state rather than a misleading 500. Do not remove or weaken the database guard, and do not add a second financial release implementation.
 
 ## Important order/webhook contract risk
 
@@ -64,7 +57,7 @@ A future socket abstraction should support multiple subscription handles with ev
 ## Next priority order
 
 1. Finish and verify Flutter PR #30 exact-head CI; merge only after its repository gate passes.
-2. Fix `markSatisfied()` terminal-state race with a dedicated concurrency regression test after tracing the complete escrow release implementation and relevant database guards.
+2. Fix the `markSatisfied()` concurrent-loser response semantics while preserving the existing database terminal-state guard, with a dedicated concurrency regression test.
 3. Resolve the order webhook semantic contract after tracing all producers and consumers across Backend, Business Portal, Admin Portal and Flutter.
 4. Build cross-repository event-contract tests so backend event renames cannot silently break downstream convergence.
 5. Add Business Portal realtime/query-bridge tests.
