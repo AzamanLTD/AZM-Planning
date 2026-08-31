@@ -25,7 +25,8 @@ Realtime payloads are signals, not financial truth. Clients must refresh authori
 - Flutter invoice-paid convergence is merged.
 - Flutter invoice-received convergence is merged.
 - Flutter order-delivered convergence is merged.
-- Flutter customer order → existing TicketWorkspace escrow funding entrypoint is implemented in PR #30 and has passed its exact-head Flutter Quality gate.
+- Flutter customer order → existing TicketWorkspace escrow funding entrypoint was implemented in PR #30, passed its exact-head Flutter Quality gate, and was merged to Flutter main as `3c2a2f9e6f8a700ec211d636e0048fd1005a74db`.
+- Planning now contains this cross-session architecture/execution control document.
 
 ## Non-negotiable engineering invariants
 
@@ -108,7 +109,7 @@ At the beginning of every new engineering session:
 
 ## Current PR state at the time of writing
 
-Flutter PR #30 is the only known open implementation PR. It adds a customer-order escrow funding entrypoint by reusing the existing TicketWorkspace funding flow. Its exact-head Flutter Quality check passed; it should be merged only after the normal mergeability check.
+No implementation PR from the current AZM engineering loop is intentionally left open. Flutter PR #30 is merged. Any new PR must be compared against current main and this document before implementation is continued.
 
 ## Quality standard
 
