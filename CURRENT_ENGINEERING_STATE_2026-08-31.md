@@ -2,172 +2,202 @@
 
 ## Purpose
 
-This file is a durable continuation point for future engineering sessions. It records verified repository state, the current architectural direction, and work that must not be duplicated.
+Durable continuation point for the AZM engineering program. This state is verified against the live GitHub repositories after the previous session reached its chat limit.
 
-## Repository baseline
+## System objective
 
-Repositories in scope:
+AZM is a multi-surface financial platform:
 
-- `AZM-backend` — authoritative identity, money, domain state, APIs and events.
-- `AZM-frontend` — Flutter consumer experience.
-- `AZM-businessPortal` — merchant operating/control surface.
-- `AZM-adminPortal` — administrative/control-plane surface.
-- `AZM-Planning` — architecture, roadmap and verification memory.
+`AZM-backend ↔ AZM-adminPortal ↔ AZM-businessPortal ↔ AZM-frontend (Flutter)`
 
-## Verified PR state
+`AZM-Planning` is the persistent architecture/verification record.
 
-As of 2026-08-31 there are no open pull requests under the AzamanLTD organization from the current repository search.
+Engineering standard: correctness, atomic financial operations, authoritative contracts, realtime convergence, idempotency, authorization, observability, testability, scalability, clean architecture, minimal duplication, backwards compatibility, and safe incremental delivery.
 
-Important recent Backend history:
+## Continuation protocol
 
-- PR #52 `fix: converge concurrent escrow satisfaction responses` is merged.
-- PR #53 `fix: make admin force release atomic from disputed state` is closed and unmerged.
-- PR #54 `fix: make admin force release an atomic financial claim` is closed and unmerged.
+For every meaningful change:
 
-PRs #53/#54 were experiments around repository-write/tooling limitations. They must not be treated as implemented product work. Do not resurrect either branch as-is.
+`research → implement → check → research → implement → test → audit`
 
-## Backend CI baseline
+Before editing, trace all affected producers/consumers across the complete system. Never invent an API contract. Never duplicate an existing wrapper/service/listener/helper. CI is a gate, not decoration. Financial mutations require explicit review of transaction boundaries, race conditions, balances, fees, audit history, notifications, realtime timing, rollback and HTTP error semantics.
 
-Backend `main` is at the post-PR #52 baseline. The normal `Azaman Test Suite` returned green after the temporary force-release workflow experiments were removed.
+## Verified repository / branch baseline
 
-The failed/cancelled runs around PR #53/#54 were not evidence that the established Backend CI was intrinsically broken. They were contaminated by temporary workflow/branch manipulation. Future work must use the existing CI as the validation gate rather than introducing self-modifying patch workflows.
+Live branch search on 2026-08-31:
 
-## Architectural rule: one authoritative financial mutation path
+- `AZM-backend`: `main` only.
+- `AZM-frontend`: `main` only.
+- `AZM-Planning`: `main` only.
+- `AZM-adminPortal`: `main` plus `refactor/financial-api-escrow-consumer` (merged PR branch; no longer active work).
+- `AZM-businessPortal`: `main` plus `test/business-portal-smoke-foundation` (merged PR branch; no longer active work).
 
-For financial operations:
+The two remaining non-main branches are historical merged branches. The available GitHub connector exposes branch creation/ref movement but not branch-ref deletion; do not treat these as active engineering work or resurrect them.
 
-1. Controller validates request and authorization.
-2. Canonical domain service owns the financial transition.
-3. The authoritative state transition is claimed atomically inside the transaction before money moves.
-4. Balance, fee, ledger/history and durable financial state changes occur in the same transaction where applicable.
-5. Realtime/socket events are convergence signals emitted only after authoritative commit.
-6. Clients refetch canonical HTTP state instead of treating socket payloads as a second financial database.
-7. Retries and concurrent callers converge to the committed canonical state where the operation is safely idempotent.
+## Verified open PR baseline
 
-Never introduce a second ledger, second socket transport, second event bus, or second domain state machine to solve a convergence problem.
+Current live search shows no open PRs after the two continuation PRs below were merged.
 
-## Current Admin force-release finding
+## Completed in this continuation
 
-Current Backend `adminController.forceRelease` still performs a separate conditional `DISPUTED -> PAID` mutation and then calls `p2p.completeTrade`, whose canonical financial claim only accepts `PAID -> COMPLETED`.
+### Admin Portal — Smart Escrow financial boundary
 
-This leaves an avoidable committed intermediate state between an Admin decision and the financial settlement engine.
+PR #20: `refactor: route escrow disputes through financial API facade`
 
-The intended correction is NOT to create another settlement implementation. The canonical `p2p.completeTrade` engine should own the privileged Admin `DISPUTED -> COMPLETED` claim, with an explicit authorization input from the Admin controller. The same transaction must perform the claim before balances/fees/history/profit are changed.
+Merged commit: `bdabd790acf4f1d3239429f4f703360083cb0f8a`.
 
-Required regression evidence:
+Before implementation, the Backend producer was audited through:
 
-- two concurrent Admin force-release calls against one `DISPUTED` trade;
-- exactly one financial completion path;
-- exactly one payout/fee/history/profit result;
-- no `DISPUTED -> PAID` intermediate state committed by the controller;
-- a failed settlement must not leave the trade stranded in `PAID`;
-- ordinary `PAID -> COMPLETED` callers must remain unchanged;
-- Admin audit/realtime behavior must remain post-commit and non-duplicative.
+`routes/adminRoutes.js → controllers/adminController.js → escrowService`
 
-This work is researched but **not implemented** in `main`.
+The Backend `GET /api/admin/escrow-disputes` producer returns `success`, `disputes`, and pagination `{ page, limit, total, totalPages }`; each dispute includes the escrow, ticket, payer/payee, raisedBy/assignedTo and ruling fields used by the Admin page.
 
-## Realtime convergence already completed
+The Backend resolve path validates the ruling, rejects already-finalized/non-resolvable escrows with HTTP 409, delegates the financial mutation to `escrowService.resolveDispute`, emits `escrow_resolved` after the financial service returns, persists a SYSTEM TicketMessage audit record, closes the parent ticket when appropriate, and writes the append-only admin audit record.
 
-Recent merged batches establish the following pattern:
+Admin changes merged:
 
-### Escrow
-Backend escrow satisfaction/release convergence was hardened in PR #52. Concurrent opposite-party satisfaction now converges to the committed `SETTLED` state rather than producing a false failure, while the single financial release claim remains authoritative.
+- `EscrowDisputes.jsx` now uses `financialApi.escrow.disputes()` and `financialApi.escrow.resolve(...)` rather than direct `api.js` escrow calls.
+- `financialContracts.js` now contains a producer-backed `escrowDisputeListResponseSchema` for the actual Backend response shape.
+- `financialApi.js` parses the escrow dispute list through that response contract.
+- Existing 30-second refetch behavior, extreme-ruling confirmation, mutation loading state and UI behavior were preserved.
+- CI run #52 passed: dependency install, changed-file lint and build all succeeded.
 
-### Business Portal
-The existing singleton realtime/query bridge invalidates canonical React Query projections. It now covers order/escrow, business notifications, invoice payment and invoice void convergence. It does not patch financial state directly.
+An intermediate agent-generated branch version had accidentally removed the `Issuing…` loading state and changed the DollarSign icon size while also reformatting the file. That branch was discarded/reset to current `main`; the final PR was rebuilt from current `main` and the merged change is a clean 3-file diff with only the intended facade/contract work.
 
-### Flutter
-The existing singleton Socket.IO service is the realtime transport. Recent merged work routes invoice/order/balance events into canonical provider/API refresh paths rather than creating local financial truth.
+### Business Portal — smoke-test foundation
 
-### Admin Portal
-The existing privileged Admin socket and realtime hook invalidate canonical financial/control-plane queries. The portal does not treat socket payloads as authoritative balances.
+PR #16: `test: add Business Portal smoke foundation`
 
-## Cross-repo contract rule
+Merged commit: `a2977478838a07d03cee900d928846a15e573c7b`.
 
-For every new backend event or state transition, research all four consumers before changing the producer:
+The smoke foundation:
 
-`Backend producer → Admin consumer → Business consumer → Flutter consumer`
+- adds `scripts/smoke-test.mjs`;
+- checks required entry files exist;
+- checks critical routes exist in `App.jsx`;
+- checks `main.jsx` mounts `<App />`;
+- checks `AuthProvider` and `QueryClientProvider` are mounted;
+- runs in CI before the existing build.
 
-Then verify:
+CI run #32 passed: install, smoke test and build all succeeded.
 
-- event name;
-- room/audience;
-- payload identity fields;
-- post-commit timing;
-- idempotency/replay behavior;
-- consumer query/provider invalidation;
-- listener registration/removal lifecycle;
-- stale-read protection;
-- duplicate listener risk.
+Dependency hygiene was explicitly corrected before merge. The final diff preserves the original tight ranges:
 
-## CI rules
+- `react-resizable: ^4.0.2`
+- `glob: ^13.0.6`
 
-Do not modify CI merely to make a dashboard green.
+No dependency widening is present in the final branch diff. The only package.json addition is the `test:smoke` script.
 
-Before implementation:
+This smoke test is intentionally a structural foundation, not a substitute for runtime/component/API testing.
 
-- inspect the current workflow;
-- inspect the latest green run;
-- inspect any recent failed/cancelled run;
-- determine whether the cause is source, test, environment, workflow, or branch/concurrency;
-- prefer deterministic dependency installation and existing repository gates;
-- never introduce a temporary self-modifying patch workflow to bypass repository tooling limitations.
+## Prior major completed work
 
-A failed run becomes an engineering investigation, not something to hide or blindly retry.
+### Backend realtime refund producer
 
-## Current highest-value work queue
+Backend PR #55 merged. `_refundEscrow()` now emits `escrow_refunded` after the atomic refund claim commits. Admin and Business consumers were verified. Flutter was deliberately not given a listener because the event was not required on that surface.
 
-### P0 — Financial truth
+Lesson: trace producer → transport → consumers; never assume an event exists merely because a client listens for it.
 
-1. Complete the Admin force-release atomicity correction described above.
-2. Verify Admin audit + realtime convergence for the corrected path.
-3. Continue the financial mutation audit across P2P, escrow, withdrawal, refund and direct payment paths.
-4. Mature reconciliation from transaction-row inspection into explicit invariant/exception detection.
-5. Establish/propagate correlation IDs across financial operations.
+### Backend Admin force-release atomicity
 
-### P0 — Cross-repo retail convergence
+Backend PR #57 merged and issue #48 closed.
 
-1. Continue auditing canonical order lifecycle across Backend, Business Portal and Flutter.
-2. Verify duplicate-tap/retry-after-timeout/stock-race behavior.
-3. Ensure delivery/refund/settlement events have one producer and one convergence path per client.
+Canonical flow:
 
-### P0/P1 — Administrative control plane
+- normal: `PAID → COMPLETED`;
+- Admin disputed override: `DISPUTED → COMPLETED`.
 
-1. Finish the Admin dispute/financial governance lifecycle around the canonical Backend mutation paths.
-2. Burn down pre-existing Admin type-system debt without weakening type checks.
-3. Continue reconciliation exception ownership and realtime convergence.
+`p2p.completeTrade()` owns the authoritative atomic claim with `adminOverride`. The Admin controller no longer performs a separate `DISPUTED → PAID` claim. `forceCancel` remains `DISPUTED → CANCELLED` and should not be changed without new evidence.
 
-### P0/P1 — Business Portal
+Required financial properties remain: atomic claim before money movement, authorization at the Admin boundary, concurrency protection, audit/history/profit preservation, correct 409 semantics, and post-commit realtime behavior.
 
-1. Keep the existing production-build CI gate operational.
-2. Prove realtime query convergence against every authoritative business-order/invoice/escrow event.
-3. Avoid introducing a second state store or socket layer.
+### Historical checkout branch audit
 
-## Duplicate-work protection
+The old retail checkout branch was audited against current Flutter main and rejected as a merge because most of its work already existed on main. Only genuinely unique cart work was identified; the stale branch was removed previously. Do not resurrect it.
 
-Before starting a task, search:
+## Admin financial API boundary
 
-- current `main` implementation;
-- merged PRs for the same feature;
-- closed/superseded PRs;
-- existing event producers/consumers;
-- existing services/helpers;
-- current Planning documents;
-- all four application repositories.
+Current architecture:
 
-If a previous branch contains useful work but is stale, port the intent to a fresh branch based directly on current `main`; never blindly revive a stale branch.
+`Admin financial consumer`
+`↓`
+`financialApi`
+`↓`
+`validated request/response contracts`
+`↓`
+`src/lib/api.js`
+`↓`
+`Backend controller/service`
 
-## Definition of done
+PR #18 established the financial input contract foundation, including identifier validation and escrow resolve validation.
 
-A substantial batch is complete only after:
+PR #19 migrated the War Room consumer and added the first Backend-backed dispute response contract.
 
-1. affected architecture and callers were researched;
-2. affected schema/migrations were checked;
-3. authorization was checked;
-4. idempotency/concurrency was checked;
-5. realtime/event consumers were checked;
-6. regression coverage exists for the failure mode;
-7. exact CI head is green;
-8. the final diff has been audited for duplication;
-9. merged `main` is re-read after merge;
-10. this Planning state is updated with evidence.
+PR #20 extended the boundary to Smart Escrow dispute listing/resolution with an audited response contract.
+
+Do not enable full `src/lib` typechecking prematurely. Continue:
+
+`financial boundary → proven consumers → response contracts → wider type checking`
+
+## Highest-value next Admin financial slices
+
+Research each against Backend before implementation:
+
+1. force release / force cancel consumer paths — confirm current facade coverage and avoid duplicating PR #57's backend mutation logic;
+2. withdrawals;
+3. payouts;
+4. user credit;
+5. fee profiles;
+6. financial settings.
+
+For each slice: search every Admin consumer call; trace Backend route → controller → service; verify authorization and status/error semantics; verify idempotency/concurrency; verify balance/fee/history/audit/realtime effects where financial; reuse or extend existing contracts; migrate one coherent consumer; test and run exact CI; audit the final diff against `main` and merged PR history.
+
+## Business Portal testing roadmap
+
+The smoke foundation is now merged and is the minimum CI structural gate.
+
+Next, research existing versions/dependencies and choose the smallest compatible test framework rather than blindly installing one.
+
+Preferred progression:
+
+1. build smoke — existing;
+2. module/route smoke — now established;
+3. auth-state rendering;
+4. key page rendering;
+5. API/query tests;
+6. realtime convergence tests.
+
+Keep the existing React Query + singleton realtime architecture. Do not introduce a second state store or socket layer.
+
+## Cross-repo contract testing
+
+Formal cross-repo contract testing remains a major opportunity.
+
+Priority realtime events include `escrow_refunded`, `escrow_resolved`, business notifications, order events and dispute events actually present in Backend.
+
+For each event record producer location, exact event name, payload schema, emitting condition, transaction timing, Admin/Business/Flutter consumers, deduplication/replay behavior and reconnect behavior.
+
+Priority financial/status contracts include escrow, trade lifecycle, dispute lifecycle, force release, force cancel, withdrawals, payouts, settlement, and error codes/HTTP statuses.
+
+Tests must enforce actual producer contracts rather than convention.
+
+## Marketplace dead-code audit
+
+Still outstanding. Do not delete anything merely because it looks unused. Research references, imports, routes, feature flags, Backend endpoints, Flutter consumers, reachability, duplicated implementations and superseded compatibility layers. Only delete after proving code is unused or superseded.
+
+## Final audit requirements
+
+Before declaring this program phase complete:
+
+- search every repository's branches and remove merged feature branches when repository tooling permits;
+- search open/closed/merged PRs for duplicate, superseded and abandoned work;
+- search for duplicate API wrappers, realtime listeners, event constants, competing financial implementations, dead code, stale compatibility layers and contradictory status transitions;
+- verify `Backend producer → Admin → Business → Flutter` for relevant events and financial transitions;
+- inspect the exact latest workflow run for the exact PR head after every meaningful change;
+- for every financial mutation verify atomicity, authorization, idempotency, balance mutations, fee calculations, profit logs, transaction history, notifications, socket events, rollback, concurrent requests and HTTP error semantics.
+
+## Immediate continuation
+
+The two continuation slices above are merged and CI-verified. Continue with the next high-risk Admin financial consumer, beginning with a full usage/producer audit before editing. Then progress through the Business Portal runtime test foundation, cross-repo contracts, marketplace dead-code audit, and final whole-system branch/PR/duplication audit.
+
+Do not start over. Do not resurrect stale branches. Do not optimize for merely green CI. The standard is production-grade, coherent, scalable, and boringly reliable.
