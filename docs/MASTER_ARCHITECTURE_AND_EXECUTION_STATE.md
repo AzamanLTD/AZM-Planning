@@ -57,9 +57,9 @@ Before implementation, inspect:
 - Business Portal escrow event/query invalidation
 - all `escrow_settled` producers/consumers
 
-### Admin force release
+### Admin force release — Backend issue #48
 
-The Admin force-release flow has an intermediate `DISPUTED → PAID` boundary before `completeTrade`. A naïve catch rollback is unsafe because another actor may advance the trade after the intermediate write. The correct implementation should make the operation atomic or use a conditional rollback that cannot overwrite a newer committed state.
+The Admin force-release flow has an intermediate `DISPUTED → PAID` boundary before `completeTrade`. A naïve catch rollback is unsafe because another actor may advance the trade after the intermediate write. The tracked implementation is Backend issue #48. The correct implementation should make the operation atomic or use a conditional rollback that cannot overwrite a newer committed state.
 
 Before implementation, inspect:
 
@@ -72,9 +72,9 @@ Before implementation, inspect:
 - post-commit events
 - Admin Portal action UI and realtime response handling
 
-### Order webhook contract
+### Order webhook contract — Backend issue #49
 
-The current business order service uses `PAID → DELIVERED` while the controller has historically emitted `order.completed` from the delivery endpoint. The webhook dispatcher documentation indicates `order.delivered` and `order.completed` are separate semantic events. Do not add another event until every producer/consumer is mapped.
+The current business order service uses `PAID → DELIVERED` while the controller has historically emitted `order.completed` from the delivery endpoint. The webhook dispatcher documentation indicates `order.delivered` and `order.completed` are separate semantic events. Do not add another event until every producer/consumer is mapped. The tracked implementation is Backend issue #49.
 
 Before implementation, inspect:
 
@@ -91,6 +91,14 @@ Before implementation, inspect:
 Flutter TicketWorkspace currently needs ticket-scoped subscriptions while the singleton socket layer owns global escrow dispatch. Replacing raw listeners with a single callback would lose independent ticket subscriptions. The correct future architecture is a multi-subscriber registry with exact unsubscribe handles, ticket filtering, reconnect safety, and no second socket.
 
 Before implementation, inspect all raw socket listeners, singleton registrations, lifecycle cleanup, reconnect behavior, and tests.
+
+## Active issue register
+
+- **Backend #48 — Admin force-release atomicity:** research complete enough to identify the unsafe intermediate PAID state; implementation must unify the financial transaction boundary rather than add rollback hacks.
+- **Backend #49 — Order webhook semantics:** producer/consumer mapping required before any event rename/addition; avoid duplicate delivery/completion events.
+- **Escrow satisfaction convergence:** remains the next concurrency implementation candidate after full affected-file verification.
+
+These issues are intentionally tracked as engineering work, not as permission to implement without the required research pass.
 
 ## Session continuation protocol
 
@@ -109,7 +117,7 @@ At the beginning of every new engineering session:
 
 ## Current PR state at the time of writing
 
-No implementation PR from the current AZM engineering loop is intentionally left open. Flutter PR #30 is merged. Any new PR must be compared against current main and this document before implementation is continued.
+No implementation PR from the current AZM engineering loop is intentionally left open. Flutter PR #30 is merged. Backend issues #48 and #49 are tracked work items; they are not duplicate PRs.
 
 ## Quality standard
 
