@@ -10,6 +10,8 @@ AZM is treated as one distributed product, not five independent repositories. Th
 
 Realtime payloads are signals, not financial truth. Clients must refresh authoritative projections after financial/state mutations.
 
+The detailed cross-portal realtime contract is maintained in `docs/REALTIME_CONTRACT.md` and must be consulted before changing an event, listener, subscription, or invalidation path.
+
 ## Repository roles
 
 - **AZM-backend:** authoritative domain, ledger, transaction boundaries, state transitions, realtime event production, reconciliation.
@@ -26,7 +28,7 @@ Realtime payloads are signals, not financial truth. Clients must refresh authori
 - Flutter invoice-received convergence is merged.
 - Flutter order-delivered convergence is merged.
 - Flutter customer order → existing TicketWorkspace escrow funding entrypoint was implemented in PR #30, passed its exact-head Flutter Quality gate, and was merged to Flutter main as `3c2a2f9e6f8a700ec211d636e0048fd1005a74db`.
-- Planning now contains this cross-session architecture/execution control document.
+- Planning contains the cross-session architecture/execution control document and the cross-portal realtime contract.
 
 ## Non-negotiable engineering invariants
 
@@ -105,15 +107,16 @@ These issues are intentionally tracked as engineering work, not as permission to
 At the beginning of every new engineering session:
 
 1. Read this document and the historical master roadmap.
-2. Enumerate open PRs across all repositories.
-3. Compare each open PR against current main and close/replace stale duplicates.
-4. Identify the highest-risk incomplete boundary.
-5. Research every producer, consumer, database invariant, UI projection, and test affected by that boundary.
-6. Implement the smallest canonical change.
-7. Run exact-head CI.
-8. Merge only when the repository gate is green and the change is not duplicated elsewhere.
-9. Re-research current main after merge.
-10. Update this document with completed work and newly discovered risks.
+2. Read `docs/REALTIME_CONTRACT.md` before touching realtime behavior.
+3. Enumerate open PRs across all repositories.
+4. Compare each open PR against current main and close/replace stale duplicates.
+5. Identify the highest-risk incomplete boundary.
+6. Research every producer, consumer, database invariant, UI projection, and test affected by that boundary.
+7. Implement the smallest canonical change.
+8. Run exact-head CI.
+9. Merge only when the repository gate is green and the change is not duplicated elsewhere.
+10. Re-research current main after merge.
+11. Update this document with completed work and newly discovered risks.
 
 ## Current PR state at the time of writing
 
