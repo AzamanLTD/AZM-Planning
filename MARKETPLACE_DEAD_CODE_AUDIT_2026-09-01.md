@@ -49,6 +49,9 @@ Several apparently secondary marketplace files are definitely live because paren
 - `advanced_filter_sheet.dart` is imported by both `business_search_screen.dart` and `marketplace_home_screen.dart`.
 - `business_reviews_section.dart` and `business_book_tab.dart` are imported by `business_profile_screen.dart`.
 - `catalog_storefront_screen.dart` is imported by `business_profile_screen.dart`.
+- `cart_screen.dart` is imported by `storefront_screen.dart` and is part of the storefront purchase path.
+
+Searches for the concrete classes also confirm that `BusinessBookTab` and `BusinessReviewsSection` are instantiated from `BusinessProfileScreen`, so their lack of top-level routes does not imply dead code.
 
 These are **DO NOT DELETE** in the current audit phase even if they have no route of their own.
 
@@ -115,6 +118,14 @@ The escrow handlers dispatch payloads as generic `Map<String, dynamic>` data. Th
 
 `AZM-adminPortal/src/hooks/useAdminRealtime.js` subscribes to `escrow_funded`, `escrow_settled`, `escrow_pending_settlement`, `escrow_refunded`, and related events through one invalidation handler. The handler treats escrow payloads as opaque objects and invalidates canonical queries; it does not read `fundedAt` or `settledAt`. The additive escrow timestamp fields therefore do not break the Admin realtime consumer.
 
+## Additional evidence from the deeper pass
+
+- `BusinessBookTab` is instantiated inside `BusinessProfileScreen` on the profile's booking tab. This is a concrete parent→child edge, not a speculative reference.
+- `BusinessReviewsSection` is instantiated inside `BusinessProfileScreen` on its reviews surface.
+- `advanced_filter_sheet.dart` is a shared child of both business search and the marketplace home, so it is a multi-parent dependency.
+- `cart_screen.dart` is imported by `storefront_screen.dart`, putting it directly on the storefront buying flow even though it is not separately routed.
+- `BillDetailScreen` remains the best orphan candidate found in this pass because the concrete class search only resolves to the file and planning scratch material, not a production consumer or router entry. This is still not enough for deletion because dynamic construction has not yet been exhaustively ruled out.
+
 ## Current audit conclusions
 
 1. The business marketplace contains many **confirmed reachable** screens; route count must not be used as a proxy for dead code.
@@ -122,6 +133,7 @@ The escrow handlers dispatch payloads as generic `Map<String, dynamic>` data. Th
 3. `BillDetailScreen` is the strongest removal candidate identified so far, but it remains **unconfirmed** until dynamic construction and hidden consumer paths are ruled out.
 4. Backend route coverage is strong enough that frontend screens must be checked against concrete endpoint/service usage before classification.
 5. No Prisma model is being deleted based solely on low visible usage. Model deletion requires producer/consumer/reference evidence and a separate migration-aware cleanup PR.
+6. The current evidence already disproves several tempting cleanup targets (`advanced_filter_sheet.dart`, `business_book_tab.dart`, `business_reviews_section.dart`, `catalog_storefront_screen.dart`, and `cart_screen.dart`) because they have active parent consumers.
 
 ## Next audit pass
 
