@@ -24,37 +24,41 @@
 - Backend PR #132 shift generic-status mutation boundary verified with exact-head Azaman Test Suite run `33724745236` / run #560 and merged as `ea52b6b82cc6c703bcc66b2dcf4aa7a34681ea8b`.
 - Backend PR #135 dine-in finalization/item-price/payment-idempotency hardening merged as `fc24fcc61800e86cad9657b91b59c8d24e93a8ef`.
 - Backend PR #136 KYB gate fail-closed hardening merged.
-- Backend PR #137 canonical Business OS Finance runtime/route repair merged; current Backend main is `924807b3742f30f929479d46dba96d9660b61f2d`.
-- Planning PR #25 established persistent `ACTIVE_LOOP.md` + `EXECUTION_LEDGER.json` continuation state.
+- Backend PR #137 canonical Business OS Finance runtime/route repair merged; current Backend main remains `924807b3742f30f929479d46bda96d9660b61f2d`.
+- Planning persistent continuation files (`ACTIVE_LOOP.md` + `EXECUTION_LEDGER.json`) are established and remain the canonical continuation mechanism.
 
 ### Current active work package: Business OS financial/operational mutation correctness
 
 #### POS — current replacement PR
-- Former PR #138 is closed and superseded because its branch accumulated diagnostic/CI history.
-- PR #140 (`fix(pos): atomic Business OS POS settlement (current main)`) is the current POS branch, `fix/business-os-pos-atomicity-v2`, head `c1e4186caac0161fea41f253fd96703bbb3980e8`.
-- Current implementation server-derives catalog prices, validates integer quantities, handles CASH/AZM/SPLIT, conditionally debits AZM, recovers idempotency races, creates the order and ledger atomically, and now persists authoritative `BusinessOrderItem` rows in the same transaction.
-- Do not merge until an exact-head green `Azaman Test Suite` exists. The known PR run #584 targeted older head `10b8c326...` and failed before normal job steps; integration-written later commits have not produced a new exact-head PR run.
-- Remaining POS contract audit: tax authority, ledger units, customer/payment identity, inventory effects, and replay semantics.
+- Former PR #138 is closed and superseded because its branch accumulated stale-base/diagnostic history.
+- PR #140 (`fix(pos): atomic Business OS POS settlement (current main)`) is current, branch `fix/business-os-pos-atomicity-v2`.
+- Current head: `b96bfa64491fb0e8790dcc6c4b1720237e17976c`.
+- Current implementation server-derives business catalog prices, validates integer quantities, supports CASH/AZM/SPLIT, conditionally debits AZM, persists authoritative `BusinessOrderItem` rows, and commits order/line-items/ledger atomically with Serializable retry.
+- Idempotent replay is deliberately resolved before catalog validation, preserving safe offline replay after catalog changes while retaining cross-business key isolation.
+- Exact-head CI is **not verified**: no workflow run is attached to the current head `b96bfa...`. Earlier attempts produced genuine test-stage failures and later runner/job-startup failures. Do not merge without an exact-head green full `Azaman Test Suite` run.
+- Remaining POS contract audit: tax authority, ledger currency/unit semantics, customer/payment identity, inventory effects, location/table integrity, and replay response contract.
 
-#### Inventory restock
-- PR #139 remains open at head `f3c945204333ccd6074fcfd6571e7336386f249e`.
-- Restock now mutates stock and records signed expense plus GHS-equivalent ledger amount in one transaction.
-- Do not merge until exact-head CI is green. Recent failures ended before executable job steps were recorded.
-- Remaining audit: retry/idempotency semantics and ledger producer conventions.
+#### Inventory restock — current replacement PR
+- Older duplicate PR #139 remains open for historical reconciliation but is superseded by current PR #141 and must not be merged alongside it.
+- PR #141 (`fix(inventory): atomic restaurant restock on current main`) is current, branch `fix/business-os-inventory-restock-atomicity-v2`.
+- Current head: `ae8311f44fb8aef5ceac90ed947d9ab5c37b01d5`.
+- Current implementation scopes inventory to business, validates quantity/cost, and commits stock plus signed SUPPLIES expense in one transaction. Focused coverage includes ledger failure propagation.
+- Temporary/accidental diagnostic workflow artifacts were removed; current PR diff is the intended four files.
+- Exact-head CI remains **not verified**. Runs `33746032891` (#604), `33746106832` (#605), `33746223780` (#606), and `33746364784` (#607) failed before executable job steps were exposed. Run #607 was explicitly rerun and again failed at job startup. Do not merge without a current exact-head green full run.
 
-### CI blocker
+### CI blocker / evidence rule
 
-Current integration-driven writes are producing stale/missing pull-request workflow runs for newly written heads, and some recent runs fail with a job object containing no executable steps. The canonical workflow itself remains known-good: Backend run `33732480681` executed all setup, tests and DB recovery stages successfully. The release gate must not be weakened to bypass this discrepancy.
+The canonical backend workflow remains unchanged. Known-good PR #137 run `33732480681` executed setup, tests and the DB recovery drill successfully. Current fresh PR runs can fail before executable steps are available through the GitHub integration, while earlier equivalent attempts also reached the real test stage and failed. This is a release-evidence blocker, not permission to weaken the gate. Preserve the full workflow and obtain reliable exact-head execution evidence.
 
 ### Next exact actions
 
-1. Resolve/obtain a reliable exact-head CI execution path for PR #140 and #139 without changing release standards.
-2. Once green, perform final diff audit, merge, verify Backend `main`, then reconcile PR #139 against the new main head and gate it independently.
-3. Finish kiosk capability hardening: token expiry/scope tests, employee revalidation, location-binding decision, brute-force/rate-limit review, exact-head CI.
-4. Audit POS tax/customer/inventory/ledger contracts against existing producers/consumers before calling POS complete.
-5. Continue the earlier shift route authorization package: rotation permission parity, attendance/EWA route-vs-service matrix, and `updateAccruedWages` history/consumer trace.
+1. Reconcile the latest CI attempt(s) for #141 and #140; obtain reliable exact-head green evidence without weakening the release workflow.
+2. Close/supersede duplicate PR #139 deliberately once #141 remains the sole inventory implementation path; then gate #141 independently against current main.
+3. Complete POS contract audit (tax/customer/inventory/ledger/location/replay) before calling POS release-ready.
+4. Finish kiosk capability hardening: expiry/scope tests, rate-limit review, location binding, exact-head CI.
+5. Trace every `updateAccruedWages()` consumer/history before any removal or restriction.
 6. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter, including concurrent payment, idempotency, tab closure, tip authority, realtime and client convergence.
-7. Then proceed to Admin financial mutation coverage and the remaining tenant/state/realtime/production-ops waves.
+7. Continue Admin financial mutation coverage, then tenant/state/realtime/production-ops waves.
 
 ## Duplicate-work prohibition
 
@@ -66,11 +70,12 @@ When CI is running, continue independent research/audit work rather than waiting
 
 ## Last reconciled references
 
-- Backend main: `924807b3742f30f929479d46dba96d9660b61f2d`
-- POS replacement PR #140 head: `c1e4186caac0161fea41f253fd96703bbb3980e8`
-- Inventory PR #139 head: `f3c945204333ccd6074fcfd6571e7336386f249e`
+- Backend main: `924807b3742f30f929479d46bda96d9660b61f2d`
+- POS replacement PR #140 head: `b96bfa64491fb0e8790dcc6c4b1720237e17976c`
+- Inventory replacement PR #141 head: `ae8311f44fb8aef5ceac90ed947d9ab5c37b01d5`
 - Known-good Backend full CI run: `33732480681`
-- Planning reconciliation PR: #28
+- Latest inventory CI run / rerun: `33746364784` (run attempt 2 still zero-step/startup failure)
+- Planning reconciliation branch: `reconcile/2026-09-03-pos-inventory-ci-state`
 
 ## Completion record
 

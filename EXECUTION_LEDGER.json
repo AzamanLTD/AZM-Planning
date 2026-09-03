@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-03T10:36:00Z",
+  "updatedAt": "2026-09-03T10:52:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -59,7 +59,7 @@
       "repo": "AzamanLTD/AZM-backend",
       "status": "verified",
       "pr": 137,
-      "mergeSha": "924807b3742f30f929479d46dba96d9660b61f2d",
+      "mergeSha": "924807b3742f30f929479d46bda96d9660b61f2d",
       "ci": {"workflow": "Azaman Test Suite", "run": 33732480681, "conclusion": "success"},
       "notes": "Canonical Business OS finance routes/runtime repair merged; main verification confirms this is the current Backend head."
     },
@@ -68,36 +68,51 @@
       "repo": "AzamanLTD/AZM-backend",
       "status": "superseded",
       "pr": 138,
-      "notes": "Closed after diagnostic/CI churn. Superseded by PR #140 rather than merged."
+      "notes": "Closed after stale-base/diagnostic CI churn. Superseded by current-main PR #140 rather than merged."
     },
     {
       "id": "backend-pos-atomicity-current",
       "repo": "AzamanLTD/AZM-backend",
       "status": "in-progress",
       "pr": 140,
-      "featureHead": "c1e4186caac0161fea41f253fd96703bbb3980e8",
-      "notes": "Clean current-main POS implementation. Server-authoritative catalog pricing, bounded quantities, CASH/AZM/SPLIT, conditional AZM debit, tenant-aware idempotency, order+ledger atomicity, and authoritative BusinessOrderItem persistence. Exact-head CI is not yet available for this head; do not merge."
+      "branch": "fix/business-os-pos-atomicity-v2",
+      "featureHead": "b96bfa64491fb0e8790dcc6c4b1720237e17976c",
+      "notes": "Current-main POS implementation. Server-authoritative pricing, bounded integer quantities, CASH/AZM/SPLIT, conditional AZM debit, atomic BusinessOrder + BusinessOrderItem + ledger, tenant-aware idempotency. Replay check now occurs before catalog validation so safe offline retries survive catalog changes. Exact-head CI is still unproven/no current pull-request run attached."
     },
     {
-      "id": "backend-inventory-restock-atomicity",
+      "id": "backend-inventory-restock-superseded",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "superseded",
+      "pr": 139,
+      "notes": "Older duplicate inventory branch. Do not merge alongside current PR #141."
+    },
+    {
+      "id": "backend-inventory-restock-atomicity-current",
       "repo": "AzamanLTD/AZM-backend",
       "status": "in-progress",
-      "pr": 139,
-      "featureHead": "f3c945204333ccd6074fcfd6571e7336386f249e",
-      "notes": "Atomic stock mutation plus signed EXPENSE ledger with amountGhs. Prior unit-test contract mismatch fixed. Exact-head CI still unavailable; do not merge."
+      "pr": 141,
+      "branch": "fix/business-os-inventory-restock-atomicity-v2",
+      "featureHead": "ae8311f44fb8aef5ceac90ed947d9ab5c37b01d5",
+      "notes": "Current-main atomic restock. Business-scoped item, positive quantity/non-negative cost validation, stock + signed SUPPLIES expense in one transaction, ledger-failure regression coverage, temporary diagnostic workflow removed. Exact-head CI remains blocked by zero-step/job-startup failures."
     },
     {
       "id": "backend-ci-exact-head-runner-discrepancy",
       "repo": "AzamanLTD/AZM-backend",
       "status": "blocked",
-      "notes": "Recent PR workflow runs can fail before any executable job steps appear, and integration-written new heads are not receiving fresh pull-request runs. Known-good run 33732480681 executes the canonical workflow successfully. Resolve CI execution/dispatch without weakening the release gate."
+      "evidence": {
+        "knownGoodRun": "33732480681",
+        "recentInventoryRuns": ["33746032891", "33746106832", "33746223780", "33746364784"],
+        "latestInventoryRerun": {"run": "33746364784", "attempt": 2, "conclusion": "failure", "jobStepsExposed": false},
+        "posEarlierRun": "33732870706"
+      },
+      "notes": "Recent fresh PR runs can fail before executable job steps are recorded. Preserve canonical tests and exact-head release gate; diagnose GitHub Actions execution/dispatch rather than weakening CI."
     },
     {
       "id": "backend-kiosk-capability",
       "repo": "AzamanLTD/AZM-backend",
       "status": "in-progress",
       "branch": "fix/business-os-kiosk-capability",
-      "notes": "Canonical kiosk PIN capability route exists but still needs token expiry/scope tests, rate-limit review, location-binding decision, and exact-head CI."
+      "notes": "Canonical kiosk PIN capability route exists; still needs expiry/scope tests, rate-limit review, location binding, and exact-head CI."
     },
     {
       "id": "backend-shift-route-authorization",
