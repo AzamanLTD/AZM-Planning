@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-03T10:52:00Z",
+  "updatedAt": "2026-09-03T10:58:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -10,147 +10,23 @@
     "continuationPolicy": "complete the active work package before selecting the next P0"
   },
   "workItems": [
-    {
-      "id": "backend-payroll-p2034-retry",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 131,
-      "featureHead": "e0f63435f4688076146556c969f27c81601ccd30",
-      "mergeSha": "e81e32d83262a27c721ac51de8786b650f6be433",
-      "ci": {"workflow": "Azaman Test Suite", "run": 33720636841, "runNumber": 558, "conclusion": "success"},
-      "notes": "Bounded P2034 retry for payroll disbursement."
-    },
-    {
-      "id": "planning-persistent-continuation",
-      "repo": "AzamanLTD/AZM-Planning",
-      "status": "verified",
-      "pr": 25,
-      "mergeSha": "fbb3ac4cb83f7859e9bdc6a174c71dbd78272532",
-      "artifacts": ["ACTIVE_LOOP.md", "EXECUTION_LEDGER.json"],
-      "notes": "Persistent continuation protocol and machine-readable execution ledger are merged."
-    },
-    {
-      "id": "backend-shift-status-boundary",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 132,
-      "featureHead": "615c6c49360a0f4ccb1c98876774709e399a2207",
-      "mergeSha": "ea52b6b82cc6c703bcc66b2dcf4aa7a34681ea8b",
-      "ci": {"workflow": "Azaman Test Suite", "run": 33724745236, "runNumber": 560, "conclusion": "success"},
-      "notes": "Generic ShiftService.updateShift no longer accepts lifecycle status."
-    },
-    {
-      "id": "backend-dine-in-settlement-hardening",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 135,
-      "mergeSha": "fc24fcc61800e86cad9657b91b59c8d24e93a8ef",
-      "notes": "Dine-in finalization, item-price authority, invoice/payment idempotency and transaction rollback hardening merged; cross-repo reconciliation continues."
-    },
-    {
-      "id": "backend-kyb-gate-fail-closed",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 136,
-      "notes": "KYB gate now fails closed on unavailable Prisma or lookup failures instead of falling through."
-    },
-    {
-      "id": "backend-business-os-finance-runtime",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 137,
-      "mergeSha": "924807b3742f30f929479d46bda96d9660b61f2d",
-      "ci": {"workflow": "Azaman Test Suite", "run": 33732480681, "conclusion": "success"},
-      "notes": "Canonical Business OS finance routes/runtime repair merged; main verification confirms this is the current Backend head."
-    },
-    {
-      "id": "backend-pos-atomicity-superseded",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "superseded",
-      "pr": 138,
-      "notes": "Closed after stale-base/diagnostic CI churn. Superseded by current-main PR #140 rather than merged."
-    },
-    {
-      "id": "backend-pos-atomicity-current",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "in-progress",
-      "pr": 140,
-      "branch": "fix/business-os-pos-atomicity-v2",
-      "featureHead": "b96bfa64491fb0e8790dcc6c4b1720237e17976c",
-      "notes": "Current-main POS implementation. Server-authoritative pricing, bounded integer quantities, CASH/AZM/SPLIT, conditional AZM debit, atomic BusinessOrder + BusinessOrderItem + ledger, tenant-aware idempotency. Replay check now occurs before catalog validation so safe offline retries survive catalog changes. Exact-head CI is still unproven/no current pull-request run attached."
-    },
-    {
-      "id": "backend-inventory-restock-superseded",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "superseded",
-      "pr": 139,
-      "notes": "Older duplicate inventory branch. Do not merge alongside current PR #141."
-    },
-    {
-      "id": "backend-inventory-restock-atomicity-current",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "in-progress",
-      "pr": 141,
-      "branch": "fix/business-os-inventory-restock-atomicity-v2",
-      "featureHead": "ae8311f44fb8aef5ceac90ed947d9ab5c37b01d5",
-      "notes": "Current-main atomic restock. Business-scoped item, positive quantity/non-negative cost validation, stock + signed SUPPLIES expense in one transaction, ledger-failure regression coverage, temporary diagnostic workflow removed. Exact-head CI remains blocked by zero-step/job-startup failures."
-    },
-    {
-      "id": "backend-ci-exact-head-runner-discrepancy",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "blocked",
-      "evidence": {
-        "knownGoodRun": "33732480681",
-        "recentInventoryRuns": ["33746032891", "33746106832", "33746223780", "33746364784"],
-        "latestInventoryRerun": {"run": "33746364784", "attempt": 2, "conclusion": "failure", "jobStepsExposed": false},
-        "posEarlierRun": "33732870706"
-      },
-      "notes": "Recent fresh PR runs can fail before executable job steps are recorded. Preserve canonical tests and exact-head release gate; diagnose GitHub Actions execution/dispatch rather than weakening CI."
-    },
-    {
-      "id": "backend-kiosk-capability",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "in-progress",
-      "branch": "fix/business-os-kiosk-capability",
-      "notes": "Canonical kiosk PIN capability route exists; still needs expiry/scope tests, rate-limit review, location binding, and exact-head CI."
-    },
-    {
-      "id": "backend-shift-route-authorization",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "in-progress",
-      "objective": "Rotation permission parity; attendance/EWA route-vs-service authorization matrix; then exact-head CI and merge."
-    },
-    {
-      "id": "backend-update-accrued-wages-trace",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "in-progress",
-      "objective": "Trace every consumer/history of EmployeeService.updateAccruedWages before removal/restriction."
-    },
-    {
-      "id": "dine-in-confirm-and-pay-contract",
-      "repo": "cross-repo",
-      "status": "in-progress",
-      "objective": "Audit tab/invoice/payment authority, concurrency, idempotency, tip handling, closure, realtime reconciliation and client success/failure semantics."
-    },
-    {
-      "id": "frontend-dine-in-payment-truthfulness",
-      "repo": "AzamanLTD/AZM-frontend",
-      "status": "needs-reverification",
-      "pr": 78,
-      "featureHead": "ce5f29b4d6f52053088693df8c81aa544f5a1ad8",
-      "notes": "Prior session recorded a payTab failure-truthfulness fix, but current main still needs exact re-verification before treating PR #78 as verified."
-    },
-    {
-      "id": "business-portal-finance-v2-reachability",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "investigated",
-      "notes": "FinanceV2.jsx is a one-line re-export of Finance.jsx; reachability must be proven before deletion."
-    },
-    {
-      "id": "admin-financial-mutation-coverage",
-      "repo": "AzamanLTD/AZM-adminPortal",
-      "status": "in-progress",
-      "objective": "Strengthen high-risk mutation coverage: withdrawals, escrow disputes, fee controls, War Room and dashboard/optimistic state."
-    }
+    {"id":"backend-payroll-p2034-retry","repo":"AzamanLTD/AZM-backend","status":"verified","pr":131,"featureHead":"e0f63435f4688076146556c969f27c81601ccd30","mergeSha":"e81e32d83262a27c721ac51de8786b650f6be433","ci":{"workflow":"Azaman Test Suite","run":33720636841,"runNumber":558,"conclusion":"success"},"notes":"Bounded P2034 retry for payroll disbursement."},
+    {"id":"planning-persistent-continuation","repo":"AzamanLTD/AZM-Planning","status":"verified","pr":25,"mergeSha":"fbb3ac4cb83f7859e9bdc6a174c71dbd78272532","artifacts":["ACTIVE_LOOP.md","EXECUTION_LEDGER.json"],"notes":"Persistent continuation protocol and machine-readable execution ledger are merged."},
+    {"id":"backend-shift-status-boundary","repo":"AzamanLTD/AZM-backend","status":"verified","pr":132,"featureHead":"615c6c49360a0f4ccb1c98876774709e399a2207","mergeSha":"ea52b6b82cc6c703bcc66b2dcf4aa7a34681ea8b","ci":{"workflow":"Azaman Test Suite","run":33724745236,"runNumber":560,"conclusion":"success"},"notes":"Generic ShiftService.updateShift no longer accepts lifecycle status."},
+    {"id":"backend-dine-in-settlement-hardening","repo":"AzamanLTD/AZM-backend","status":"verified","pr":135,"mergeSha":"fc24fcc61800e86cad9657b91b59c8d24e93a8ef","notes":"Dine-in finalization, item-price authority, invoice/payment idempotency and transaction rollback hardening merged; cross-repo reconciliation continues."},
+    {"id":"backend-kyb-gate-fail-closed","repo":"AzamanLTD/AZM-backend","status":"verified","pr":136,"notes":"KYB gate now fails closed on unavailable Prisma or lookup failures instead of falling through."},
+    {"id":"backend-business-os-finance-runtime","repo":"AzamanLTD/AZM-backend","status":"verified","pr":137,"mergeSha":"924807b3742f30f929479d46bda96d9660b61f2d","ci":{"workflow":"Azaman Test Suite","run":33732480681,"conclusion":"success"},"notes":"Canonical Business OS finance routes/runtime repair merged; main verification confirms this is the current Backend head."},
+    {"id":"backend-pos-atomicity-superseded","repo":"AzamanLTD/AZM-backend","status":"superseded","pr":138,"notes":"Closed after stale-base/diagnostic CI churn. Superseded by current-main PR #140 rather than merged."},
+    {"id":"backend-pos-atomicity-current","repo":"AzamanLTD/AZM-backend","status":"in-progress","pr":140,"branch":"fix/business-os-pos-atomicity-v2","featureHead":"b96bfa64491fb0e8790dcc6c4b1720237e17976c","notes":"Current-main POS implementation with server-authoritative pricing, bounded integer quantities, CASH/AZM/SPLIT, conditional AZM debit, atomic BusinessOrder + BusinessOrderItem + ledger, tenant-aware idempotency. Replay is resolved before catalog validation. Legacy producer tracing confirms the same 2.5% tax and customer fallback semantics. Exact-head CI still unproven."},
+    {"id":"backend-inventory-restock-superseded","repo":"AzamanLTD/AZM-backend","status":"superseded","pr":139,"notes":"Older duplicate inventory PR deliberately closed on 2026-09-03; do not merge."},
+    {"id":"backend-inventory-restock-atomicity-current","repo":"AzamanLTD/AZM-backend","status":"in-progress","pr":141,"branch":"fix/business-os-inventory-restock-atomicity-v2","featureHead":"ae8311f44fb8aef5ceac90ed947d9ab5c37b01d5","notes":"Current-main atomic restock. Business-scoped item, positive quantity/non-negative cost validation, stock + signed SUPPLIES expense in one transaction, ledger-failure regression coverage, diagnostic workflow removed. Exact-head CI remains blocked by zero-step/job-startup failures."},
+    {"id":"backend-ci-exact-head-runner-discrepancy","repo":"AzamanLTD/AZM-backend","status":"blocked","evidence":{"knownGoodRun":"33732480681","recentInventoryRuns":["33746032891","33746106832","33746223780","33746364784"],"latestInventoryRerun":{"run":"33746364784","attempt":2,"conclusion":"failure","jobStepsExposed":false},"latestKioskRun":{"run":"33746899789","conclusion":"failure","jobStepsExposed":false},"posEarlierRun":"33732870706"},"notes":"Fresh PR runs across independent branches can fail before executable steps appear. Preserve canonical tests and exact-head release gate; diagnose GitHub Actions execution reliability rather than weakening CI."},
+    {"id":"backend-kiosk-capability","repo":"AzamanLTD/AZM-backend","status":"in-progress","pr":142,"branch":"fix/business-os-kiosk-capability","featureHead":"40c78279c87e818071f0b9317149e96904ddc3eb","notes":"Capability helper isolation, expiry/scope tests, business/employee/user/shift binding and location binding. PIN auth validates supplied location belongs to the business. Exact-head run 33746899789 failed before executable steps."},
+    {"id":"backend-shift-route-authorization","repo":"AzamanLTD/AZM-backend","status":"in-progress","objective":"Rotation permission parity; attendance/EWA route-vs-service authorization matrix; then exact-head CI and merge."},
+    {"id":"backend-update-accrued-wages-trace","repo":"AzamanLTD/AZM-backend","status":"in-progress","objective":"Trace every consumer/history of EmployeeService.updateAccruedWages before removal/restriction."},
+    {"id":"dine-in-confirm-and-pay-contract","repo":"cross-repo","status":"in-progress","objective":"Audit tab/invoice/payment authority, concurrency, idempotency, tip handling, closure, realtime reconciliation and client success/failure semantics."},
+    {"id":"frontend-dine-in-payment-truthfulness","repo":"AzamanLTD/AZM-frontend","status":"needs-reverification","pr":78,"featureHead":"ce5f29b4d6f52053088693df8c81aa544f5a1ad8","notes":"Prior session recorded a payTab failure-truthfulness fix, but current main still needs exact re-verification before treating PR #78 as verified."},
+    {"id":"business-portal-finance-v2-reachability","repo":"AzamanLTD/AZM-businessPortal","status":"investigated","notes":"FinanceV2.jsx is a one-line re-export of Finance.jsx; reachability must be proven before deletion."},
+    {"id":"admin-financial-mutation-coverage","repo":"AzamanLTD/AZM-adminPortal","status":"in-progress","objective":"Strengthen high-risk mutation coverage: withdrawals, escrow disputes, fee controls, War Room and dashboard/optimistic state."}
   ]
 }
