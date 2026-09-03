@@ -27,12 +27,12 @@ AZAMAN is ready only when every important journey has one authoritative source o
 - [ ] Close/supersede duplicate PRs rather than carrying parallel fixes.
 - [ ] Delete stale branches only after confirming they contain no unique required work; branch cleanup is part of completion.
 - [ ] Repeat branch audit across Admin, Business Portal and Flutter.
-- [ ] Establish Planning repo as the only active navigation surface.
-- [ ] Keep historical session material in archive/Git history without allowing it to override `CURRENT_STATE.md` or this roadmap.
-- [ ] Record exact `main` SHAs, open PRs, CI evidence and blockers in `CURRENT_STATE.md`.
+- [x] Establish Planning repo as the only active navigation surface — completed in PR #24, merged at `da489d71fbe76f411494315c7e20f2c85d1bbc4b`, with live state subsequently recorded on `main`.
+- [x] Keep historical session material out of the active surface; superseded root journals were removed while exact historical content remains recoverable from Git history.
+- [x] Record exact baseline state and next actions in `CURRENT_STATE.md`.
 - [ ] Verify deployment environments, configuration boundaries and current release mechanism rather than assuming they exist.
 
-**Exit:** no ambiguous canonical PR for active work; active plan is obvious within minutes of entering the repo.
+**Exit:** active plan is obvious within minutes of entering the repo; remaining Wave 0 work is repository-operations/deployment verification.
 
 # WAVE 1 — FINANCIAL + CONCURRENCY CORRECTNESS
 
