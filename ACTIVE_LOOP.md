@@ -27,42 +27,41 @@
 - Backend PR #137 canonical Business OS Finance routing/runtime repair merged/verified.
 - Backend PR #141 inventory restock atomicity merged/verified.
 - Backend PR #143 corrected the real dine-in test mock failure.
-- Backend PR #144 kiosk scoped capability + PIN rate limiting merged at current-main base.
-- Backend PR #145 POS settlement + transaction-time inventory consumption merged at current-main base.
+- Backend PR #144 kiosk scoped capability + PIN rate limiting merged.
+- Backend PR #145 POS settlement/inventory atomicity merged.
+- Backend PR #146 duplicate-line recipe consumption merged.
+- Backend PR #147 transaction-time POS catalog authority merged; exact-head Actions run `33778925260` succeeded through tests and database recovery drill.
 - Frontend PR #78 dine-in payment failure truthfulness merged/verified.
-- Stale Planning PR #27 was closed after becoming obsolete.
+- Business Portal PR #44 customer payment authority fix merged.
+- Stale Planning PR #27 closed after becoming obsolete.
 
 ### Backend main
 
-`301a5795898f4b7de3b69c8156afe027f82e5155`
+`ae74b3fc4738a00b4b64a4e1ac9a545bdbdcf99c`
 
 ### Active implementation
 
-#### POS duplicate-line recipe consumption — PR #146
+#### POS location/table/product boundary hardening — PR #148
 
-- Branch: `fix/pos-recipe-duplicate-line-consumption`
-- Head: `ba4fc6912b35f456cfdde0161a0fb08a36ace230`
-- PR: #146
-- Fix: repeated lines for the same menu product previously used a last-value-wins `Map`, under-consuming recipe ingredients. The implementation now sums quantities by product before recipe requirements are calculated.
-- Regression test added for two duplicate lines of the same restaurant product.
-- Exact-head Actions gate is required before merge.
+- Branch: `fix/pos-location-table-product-boundaries-v3`
+- Head: `449464c4d236b13f8a7210c90f479431e0909f46`
+- PR: #148
+- Fix: settlement now verifies an active business-owned location, requires tableId to be paired with locationId, verifies that the table belongs to that exact location, and filters branch-scoped products to the requested branch while retaining globally available products.
+- Cash customerId is normalized/validated and an explicitly supplied customer must exist.
+- Exact-head Actions run `33779408172` is currently in progress; do not merge until the full tests + recovery drill gate is green.
 
-### Next P0 after #146
+### Next P0 after #148
 
-1. Rework POS authority at the transaction boundary: revalidate catalog/product state inside the Serializable transaction so price/availability cannot become stale between pre-read and settlement.
-2. Complete POS location/table ownership and customer-identity integrity review.
-3. Define and safely encode idempotency payload semantics; same key with different intent must not silently replay unless the API explicitly defines that behavior.
-4. Resolve POS tax authority by tracing actual invoice/tax models and producers; do not assume the legacy 2.5% value is canonical.
-5. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter → Admin visibility.
-6. Trace all `updateAccruedWages()` consumers/history before removal or restriction.
-7. Strengthen Admin financial mutation and optimistic pending-queue coverage.
-8. Then execute tenant/state/realtime matrices, production operations, load and red-team waves.
+1. Bind POS idempotency replay to request intent/payload so the same key with materially different money/items/context cannot silently replay.
+2. Resolve POS tax authority by tracing `BusinessInvoice`, `BusinessInvoiceTaxLine`, `BusinessTaxPreset` and their actual producers/consumers; do not assume the legacy 2.5% POS tax is canonical.
+3. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter → Admin visibility, including tab closure, payment authority, tips, idempotency, realtime and timeout recovery.
+4. Trace every `updateAccruedWages()` producer/consumer/history before removal or restriction.
+5. Strengthen Admin financial mutation and optimistic pending-queue coverage.
+6. Execute tenant/state/realtime matrices, production operations, load and red-team waves.
 
 ## CI / release gate
 
-Backend Actions now executes normally on the public repositories. The required gate remains: exact PR head, full test stage, and database backup/restore drill must be green before merge.
-
-For PR #145, exact-head run `33777699164` completed successfully on head `493d82b32fd8d8d597b6bbccac154a94b2f168e8`, including tests and recovery drill, and PR #145 was then merged.
+Backend Actions executes normally on the public repositories. The required gate remains: exact PR head, full test stage, and database backup/restore drill must be green before merge.
 
 ## Duplicate-work prohibition
 
