@@ -201,3 +201,53 @@ Before declaring this program phase complete:
 The two continuation slices above are merged and CI-verified. Continue with the next high-risk Admin financial consumer, beginning with a full usage/producer audit before editing. Then progress through the Business Portal runtime test foundation, cross-repo contracts, marketplace dead-code audit, and final whole-system branch/PR/duplication audit.
 
 Do not start over. Do not resurrect stale branches. Do not optimize for merely green CI. The standard is production-grade, coherent, scalable, and boringly reliable.
+
+## Verified live-state addendum — 2026-09-03
+
+The state above predates the September 2026 engineering loop. The following is verified against the live repositories and supersedes the stale open-PR statements above.
+
+### Merged production work
+
+- Backend PR #99 — transit Business OS business scoping. Merge commit `ee14a4a5ae46d9966ef4f92f22f1fe954f0a9044`; exact-head Azaman Test Suite #431 passed, including schema, tests, and DB backup/restore.
+- Backend PR #101 — restaurant KDS business scoping. Merge commit `6f0fa2b926555415153ff21ff684f87f02d2fb32`; exact-head Azaman Test Suite #430 passed.
+- Backend PR #104 — KDS creation integrity. Merge commit `e9b2a9002c3265ec2d3354d1d8a4da3a99dace3b`; validates location, business-order, and product ownership/activity and adds focused regression coverage.
+- Backend PR #106 — dine-in guest-search privacy boundary. Merge commit `0b0c23be39176d8c53ea9cc482e08db36170284b`; exact-head Azaman Test Suite #450 passed.
+- Backend PR #105 — hotel Business OS hardening. Merge commit `007bc774a156ba2f9f04d185f02a9d09c8bc2c25`; exact-head Azaman Test Suite #451 passed all 822 tests plus DB backup/restore. The change business-scopes hotel mutations, fixes undefined legacy route service references, requires a registered customer identity for walk-ins, and makes room moves transactional.
+- Business Portal PR #38 — hotel front-desk walk-in identity contract. Merge commit `28a22a37f837d8ea83912820b6bf72341974e0d6`; CI #106 passed smoke, tests, and build. The portal now submits public `customerAzamanId` rather than an internal database ID or free-form guest name.
+- Frontend PR #74 — authoritative hotel room inventory customer flow. Merge commit `1b9be8b292ff2b59b544f01cd54532c564fbf97b`; Flutter Quality #307 passed.
+- Frontend PR #75 — server-authoritative transit booking fare in success UI. Merge commit `9dbe38b0732cb8d45afb6c5a55c409904de3a8be`; Flutter Quality #309 passed after restoring the complete source file from an accidentally truncated automation edit.
+
+### Closed/superseded work
+
+- Backend PR #100, the superseded restaurant KDS business-scope implementation, was closed in favor of the clean PR #101.
+- Backend PR #98, the noisy hotel full-file rewrite, remains closed; its semantic findings were reimplemented surgically in PR #105.
+- Backend PR #107, an attempted shift-operations hardening patch, was closed without merge because the repository's temporary workflow execution path was unavailable; the isolated branch was reset to the production head. Do not treat it as deployed work.
+
+### New in-flight work
+
+Backend PR #108: `fix(business-os): make employee feedback rating aggregation atomic`.
+
+Current intent:
+
+- keep the existing feedback API contract;
+- create feedback and recompute rating inside one Prisma transaction;
+- scope the rating aggregate to `businessProfileId` so another business cannot influence the result;
+- use a business-scoped employee update for the rating write;
+- add focused regression coverage for cross-business rejection and aggregation scope.
+
+At the time of this update, PR #108 is open and its native Azaman Test Suite run is in progress. It must not be merged until the exact current head is green through the DB backup/restore gate.
+
+### Newly verified remaining high-risk area
+
+The HR/shift service still contains raw-ID mutation methods (`updateShift`, `deleteShift`, `clockIn`, `clockOut`, `markNoShow`, and shift-swap claim/approval/rejection) whose service signatures do not consistently require a business scope. Route consumers should be hardened as one coherent slice rather than with isolated checks. This is a known follow-up, not a claimed fix.
+
+The employee service also contains several raw employee-ID methods that should be audited for business scope before being exposed to business operators. In particular, employee stats, EWA operations, and employee CRUD mutations need producer/consumer tracing and concurrency review.
+
+### Updated continuation order
+
+1. Finish PR #108 with exact-head CI and merge only after full verification.
+2. Rework the HR/shift mutation hardening as a clean, directly editable patch path, including route authorization and transactional swap approval; do not use unverified temporary workflow commits.
+3. Audit employee/EWA mutation concurrency and business scope, prioritizing the financial `requestEWA` balance/ledger sequence.
+4. Continue the Business Portal runtime/API testing roadmap against actual production consumers.
+5. Complete the cross-repo event/status contract matrix and marketplace dead-code audit.
+6. Perform final branch/PR/duplication cleanup using only tooling that can prove the state.
