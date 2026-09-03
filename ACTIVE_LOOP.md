@@ -20,56 +20,53 @@
 
 ### Verified completed in this continuation
 
-- Backend PR #131 payroll Serializable retry verified green and merged to main as `e81e32d83262a27c721ac51de8786b650f6be433`.
-- Backend PR #132 shift generic-status mutation boundary verified with exact-head Azaman Test Suite run `33724745236` / run #560 and merged as `ea52b6b82cc6c703bcc66b2dcf4aa7a34681ea8b`.
-- Backend PR #135 dine-in finalization/item-price/payment-idempotency hardening merged as `fc24fcc61800e86cad9657b91b59c8d24e93a8ef`.
+- Backend PR #131 payroll Serializable retry verified green and merged.
+- Backend PR #132 shift generic-status mutation boundary verified green and merged.
+- Backend PR #135 dine-in finalization/item-price/payment-idempotency hardening merged.
 - Backend PR #136 KYB gate fail-closed hardening merged.
-- Backend PR #137 canonical Business OS Finance runtime/route repair merged; current Backend main remains `924807b3742f30f929479d46bda96d9660b61f2d`.
-- Frontend PR #78 dine-in payment failure propagation verified with exact-head Flutter Quality run `33725099978` / run #314 and merged to main as `7cf85fa1942c277f5b2de4578e41d75cf81b20a5`.
-- Planning persistent continuation files are verified present on Planning main.
+- Backend PR #137 canonical Business OS Finance runtime/route repair merged.
+- Backend PR #141 inventory restock atomicity verified green and merged to current Backend main as `a0876b2f61d5bc73acb1a1d76368e019d079fe82`.
+- Backend PR #143 corrected the missing `dineInTabItem` test mock that caused the earlier real Jest failure.
+- Frontend PR #78 dine-in payment failure propagation verified and merged.
+- Planning persistent continuation files are canonical on Planning main lineage.
 
 ### Current active work package: Business OS financial/operational mutation correctness
 
-#### POS — current replacement PR #140
-- Former PR #138 is closed and superseded.
-- PR #140 is open on `fix/business-os-pos-atomicity-v2` at head `6a2947447aec60528033d1ef0a7416bebf5b2b05`; GitHub currently reports `mergeable=false`, `merged=false`.
-- Implementation server-derives catalog prices, validates integer quantities, supports CASH/AZM/SPLIT, conditionally debits AZM, persists `BusinessOrderItem` rows, and commits order/line-items/ledger atomically with Serializable retry.
-- Idempotent replay resolves before catalog validation so safe offline retries survive catalog changes while tenant isolation remains enforced.
-- Legacy producer tracing confirms the existing `/pos/order` used a 2.5% POS tax and `customerId || authenticatedUserId` fallback. Treat these as compatibility findings, not final accounting authority.
-- Remaining contract risks: hardcoded 2.5% tax versus `BusinessTaxPreset`; inventory decrement; location/table integrity; cash customer identity; and replay payload binding.
-- Exact-head green CI is unproven. No merge until a full current-head `Azaman Test Suite` succeeds.
+#### Kiosk — replacement PR #144
+- PR #142 is closed/superseded because it was based on the pre-inventory main head.
+- PR #144 is open on `fix/business-os-kiosk-capability-v2`, head `4fca0d65a416b85cefa22ec4b15256b5a6cff25d` and targets Backend main `a0876b2f...`.
+- Capability signing/verification is isolated; clock-in/out enforce tenant/employee/user/shift/location binding; PIN auth validates business location.
+- Additional hardening adds a second-layer `express-rate-limit` on the public PIN challenge: 10 attempts/15 minutes, successful attempts excluded.
+- Exact-head run `33776303876` is currently executing the Jest test stage. Do not merge before full green test + recovery drill and final diff review.
 
-#### Inventory — current PR #141
-- Older PR #139 is closed/superseded and was never merged.
-- PR #141 is open on `fix/business-os-inventory-restock-atomicity-v2` at current head `fc5b1df14a99a4895860649b850f7c575265b42e`; GitHub reports `mergeable=true`, `merged=false`.
-- The current PR contains only four intended files: the canonical inventory service/route, its focused test, and route registration. The unmerged POS router dependency was removed.
-- Stock plus signed SUPPLIES expense execute in one transaction; business scoping, quantity/cost validation and ledger-failure propagation are covered.
-- Earlier runs reached the real test stage and failed. The newest exact-head run `33749730364` failed in roughly three seconds with no executable steps or log blob, and an immediate rerun again produced no steps. Temporary diagnostic workflows were removed after themselves failing at runner startup.
-- Do not merge until a current exact-head full test run executes and passes.
-
-#### Kiosk — current PR #142
-- PR #142 is open on `fix/business-os-kiosk-capability` at head `40c78279c87e818071f0b9317149e96904ddc3eb`; GitHub reports `mergeable=true`, `merged=false`.
-- Capability signing/verification is isolated; clock-in/out enforce tenant/employee/user/shift binding and location binding; PIN auth validates supplied location belongs to the business.
-- Focused tests cover expiry, non-kiosk scope, tenant, employee and location binding.
-- Exact-head run `33746899789` failed before executable steps were exposed. Do not merge without exact-head green evidence.
+#### POS — replacement PR #145
+- PR #140 is closed/superseded; PR #138 was already superseded.
+- PR #145 is open on `fix/business-os-pos-atomicity-v3`, head `c01ab35692f7cf237387ecf00d5454ad748a2c57`, targeting Backend main `a0876b2f...`.
+- Implementation preserves server-authoritative catalog pricing, integer quantities, CASH/AZM/SPLIT settlement, conditional AZM debit, BusinessOrderItem persistence, Serializable retry and tenant-scoped idempotent replay.
+- New work closes the prior stock-integrity gap: tracked `BusinessProduct.stockQty` and restaurant `RecipeIngredient` quantities are consumed inside the same transaction as the order and ledger. Transaction-time stock predicates prevent overselling; shared ingredients are aggregated before decrement.
+- Remaining semantic risks: legacy-compatible 2.5% tax is not yet proven to be the final tax authority; location/table integrity, customer identity semantics and complete replay payload binding still require evidence.
+- Exact-head run is active: `33776598303` on `c01ab356...`. Do not merge until it completes green.
 
 ### CI / release-gate evidence
 
-The canonical Backend workflow remains unchanged. Known-good PR #137 run `33732480681` executed setup, tests and the DB recovery drill successfully. Current active PRs exhibit both historical test-stage failures and current zero-step startup failures. Preserve the release gate; never weaken tests to manufacture green status.
+Backend repositories are now public. Current evidence shows GitHub-hosted Actions executing the full canonical workflow normally. Successful exact-head runs `33774674487` (POS predecessor), `33774689580` (kiosk predecessor), and `33774699365` (inventory predecessor) all completed through tests and the database recovery drill.
 
-### Exact next actions
+The earlier inventory failure `33749730364` was a real Jest failure (128 suites passed, 1 failed; 898 tests passed, 1 failed), fixed by PR #143. The old zero-step/startup diagnosis is superseded and must not be carried forward.
 
-1. Continue obtaining reliable current-head CI for #140/#141/#142 without changing the release standard.
-2. While CI is unreliable, complete the POS contract audit, especially tax authority, inventory decrement, location/table scope and idempotency payload binding.
-3. Complete kiosk abuse-resistance/rate-limit review.
-4. Trace every `updateAccruedWages()` consumer/history before any removal or restriction.
-5. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter.
-6. Add Admin financial mutation coverage and optimistic pending-queue correctness.
-7. Complete tenant/state/realtime matrices, then production-ops/load/red-team waves.
+## Exact next actions
+
+1. Monitor #144 and #145 until exact-head CI completes; diagnose/fix any failures without weakening the release gate; final-review and merge only when green.
+2. Complete POS tax-authority research/trace against `BusinessTaxPreset` and invoice tax semantics, then add the smallest authoritative regression coverage needed.
+3. Complete POS location/table and customer identity integrity review.
+4. Complete idempotency payload semantics review: decide and document whether replay is allowed for same key with different intent, and encode the policy safely without breaking offline replay.
+5. Trace every `updateAccruedWages()` consumer/history before removal/restriction; `ShiftService.clockOut()` already mutates accrued wages inside a transaction, so avoid duplicate accrual paths.
+6. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter, including payment authority, idempotency, tab closure, tips, realtime and retry-after-timeout.
+7. Strengthen Admin financial mutation coverage and optimistic pending-queue correctness.
+8. After these P0s, execute tenant/state/realtime matrices, then production-ops/load/red-team waves.
 
 ## Duplicate-work prohibition
 
-Do not recreate merged PR #131/#132/#135/#136/#137/#78 or existing POS/inventory/kiosk implementations. Reconcile current GitHub state before adjacent work.
+Do not recreate merged backend hardening work or the superseded POS/inventory/kiosk PRs. #140 and #142 are intentionally closed; #145 and #144 are the current replacements on current main.
 
 ## Continuation rule
 
@@ -77,15 +74,14 @@ When CI is running, continue independent research/audit work rather than waiting
 
 ## Last reconciled references
 
-- Backend main: `924807b3742f30f929479d46bda96d9660b61f2d`
-- POS PR #140 head: `6a2947447aec60528033d1ef0a7416bebf5b2b05`
-- Inventory PR #141 head: `fc5b1df14a99a4895860649b850f7c575265b42e`
-- Latest Inventory exact-head run: `33749730364` — zero-step/job-startup failure
-- Kiosk PR #142 head: `40c78279c87e818071f0b9317149e96904ddc3eb`
-- Latest known Kiosk exact-head run: `33746899789` — zero-step/job-startup failure
+- Backend main: `a0876b2f61d5bc73acb1a1d76368e019d079fe82`
+- Inventory merge: `a0876b2f61d5bc73acb1a1d76368e019d079fe82` / PR #141
+- Kiosk PR #144 head: `4fca0d65a416b85cefa22ec4b15256b5a6cff25d`
+- Kiosk exact-head run: `33776303876` — in progress
+- POS PR #145 head: `c01ab35692f7cf237387ecf00d5454ad748a2c57`
+- POS exact-head run: `33776598303` — in progress
 - Frontend PR #78 merge: `7cf85fa1942c277f5b2de4578e41d75cf81b20a5`
-- Known-good Backend full CI: `33732480681`
 
 ## Completion record
 
-This loop remains active until the current Backend mutation batch has reliable exact-head CI and verified merges are on `main`. Then advance through shift authorization, dine-in payment authority, Admin coverage and production hardening without restarting from scratch.
+This loop remains active until #144 and #145 have reliable exact-head CI and verified merges are on current `main`. Then advance immediately to POS semantic closure, dine-in payment authority, `updateAccruedWages` trace, Admin financial mutation coverage and production hardening.
