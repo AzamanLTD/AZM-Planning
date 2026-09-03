@@ -31,33 +31,32 @@
 - Backend PR #145 POS settlement/inventory atomicity merged.
 - Backend PR #146 duplicate-line recipe consumption merged.
 - Backend PR #147 transaction-time POS catalog authority merged; exact-head Actions run `33778925260` succeeded through tests and database recovery drill.
+- Backend PR #148 POS location/table/product boundary hardening merged as `bb601140f859c4944f5eaae47c907efcd4d8526f`; exact-head Actions run `33795725978` succeeded.
 - Frontend PR #78 dine-in payment failure truthfulness merged/verified.
 - Business Portal PR #44 customer payment authority fix merged.
 - Stale Planning PR #27 closed after becoming obsolete.
 
 ### Backend main
 
-`ae74b3fc4738a00b4b64a4e1ac9a545bdbdcf99c`
+`bb601140f859c4944f5eaae47c907efcd4d8526f`
 
 ### Active implementation
 
-#### POS location/table/product boundary hardening — PR #148
+#### POS idempotency intent binding — PR #149
 
-- Branch: `fix/pos-location-table-product-boundaries-v3`
-- Head: `449464c4d236b13f8a7210c90f479431e0909f46`
-- PR: #148
-- Fix: settlement now verifies an active business-owned location, requires tableId to be paired with locationId, verifies that the table belongs to that exact location, and filters branch-scoped products to the requested branch while retaining globally available products.
-- Cash customerId is normalized/validated and an explicitly supplied customer must exist.
-- Exact-head Actions run `33779408172` is currently in progress; do not merge until the full tests + recovery drill gate is green.
+- Branch: `fix/pos-idempotency-intent-binding`
+- Head: `fe589f0039cf6055aaa03207a44ba7f095d85ec0`
+- PR: #149
+- Fix: derive a canonical request fingerprint from tenant, actor, normalized items, payment inputs, source and location/table/customer context; persist it in the POS ledger metadata; reject a same-key request with a different fingerprint while allowing legacy rows without fingerprints to replay safely.
+- Exact-head Actions run `33795907968` is currently in progress; do not merge until the full tests + recovery drill gate is green.
 
-### Next P0 after #148
+### Next P0 after #149
 
-1. Bind POS idempotency replay to request intent/payload so the same key with materially different money/items/context cannot silently replay.
-2. Resolve POS tax authority by tracing `BusinessInvoice`, `BusinessInvoiceTaxLine`, `BusinessTaxPreset` and their actual producers/consumers; do not assume the legacy 2.5% POS tax is canonical.
-3. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter → Admin visibility, including tab closure, payment authority, tips, idempotency, realtime and timeout recovery.
-4. Trace every `updateAccruedWages()` producer/consumer/history before removal or restriction.
-5. Strengthen Admin financial mutation and optimistic pending-queue coverage.
-6. Execute tenant/state/realtime matrices, production operations, load and red-team waves.
+1. Resolve POS tax authority by tracing `BusinessInvoice`, `BusinessInvoiceTaxLine`, `BusinessTaxPreset` and their actual producers/consumers; do not assume the legacy 2.5% POS tax is canonical.
+2. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter → Admin visibility, including tab closure, payment authority, tips, idempotency, realtime and timeout recovery.
+3. Trace every `updateAccruedWages()` producer/consumer/history before removal or restriction.
+4. Strengthen Admin financial mutation and optimistic pending-queue coverage.
+5. Execute tenant/state/realtime matrices, production operations, load and red-team waves.
 
 ## CI / release gate
 
