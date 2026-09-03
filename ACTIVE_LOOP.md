@@ -42,15 +42,16 @@
 
 ### Active implementation
 
-#### POS idempotency intent binding — PR #149
+#### POS idempotency intent binding — PR #150
 
-- Branch: `fix/pos-idempotency-intent-binding`
-- Head: `fe589f0039cf6055aaa03207a44ba7f095d85ec0`
-- PR: #149
-- Fix: derive a canonical request fingerprint from tenant, actor, normalized items, payment inputs, source and location/table/customer context; persist it in the POS ledger metadata; reject a same-key request with a different fingerprint while allowing legacy rows without fingerprints to replay safely.
-- Exact-head Actions run `33795907968` is currently in progress; do not merge until the full tests + recovery drill gate is green.
+- Branch: `fix/pos-idempotency-intent-binding-v2`
+- Head: `6fb494d834228d1d2194f067db95da1cca4cad7d`
+- PR: #150
+- Fix: derive a canonical request fingerprint from tenant, actor, normalized items, payment inputs, source and location/table/customer context; persist it in POS ledger metadata; reject a same-key request with a different fingerprint; preserve replay for legacy POS rows that have no fingerprint.
+- PR #149 was intentionally closed as stale because its base predated merged #148; no implementation work was lost, and the fix was recreated cleanly on current main.
+- Exact-head Actions run `33796224872` is currently in progress; do not merge until the full tests + recovery drill gate is green.
 
-### Next P0 after #149
+### Next P0 after #150
 
 1. Resolve POS tax authority by tracing `BusinessInvoice`, `BusinessInvoiceTaxLine`, `BusinessTaxPreset` and their actual producers/consumers; do not assume the legacy 2.5% POS tax is canonical.
 2. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter → Admin visibility, including tab closure, payment authority, tips, idempotency, realtime and timeout recovery.
