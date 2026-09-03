@@ -1,83 +1,39 @@
 # AZM Planning — Project Brain
 
-**Status:** IN PROGRESS  
-**Last updated:** 2026-08-30 (UTC)  
-**Purpose:** Central, human-readable engineering memory for the AZM platform.
+**Status:** ACTIVE / CANONICAL ENGINEERING BRAIN  
+**Last reconciled:** 2026-09-03 UTC  
+**Purpose:** Make continuation safe and fast across the five AZAMAN repositories.
 
-This repository is the planning source for the product repositories. It intentionally contains planning and architecture documentation only; it is not an application repository.
+> ## START HERE
+> **Read `START_HERE.md` first. Then read `ROADMAP.md` and `CURRENT_STATE.md`.**
+>
+> `ROADMAP.md` is the **single active execution plan and priority authority**. `CURRENT_STATE.md` tells you what is true now and what to do next. Do not reconstruct the project from dated session journals.
 
-## Documents
+## Canonical documents
 
-- [Master roadmap 2026](MASTER_ROADMAP_2026-08-30.md) — whole-platform execution roadmap, invariants, competition sequence, risks and definition of done.
-- [Pyrax's frontend plan](Pyrax%27s%20frontend%20plan.md) — customer Flutter application.
-- [Pyrax's backend plan](Pyrax%27s%20backend%20plan.md) — APIs, domain services, money, orders, inventory, realtime and trust boundaries.
-- [Pyrax's businessPortal plan](Pyrax%27s%20businessPortal%20plan.md) — merchant/business operations and configuration.
-- [Pyrax's adminPortal plan](Pyrax%27s%20adminPortal%20plan.md) — platform administration, oversight, risk and operations.
-- [Pyrax's planning plan](Pyrax%27s%20planning%20plan.md) — how this repository itself is maintained.
+1. **[`START_HERE.md`](START_HERE.md)** — agent entrypoint, read order, immediate queue and non-negotiable workflow.
+2. **[`ROADMAP.md`](ROADMAP.md)** — total engineering plan, ordered waves and production definition of done.
+3. **[`CURRENT_STATE.md`](CURRENT_STATE.md)** — live cross-repo baseline, verified work, blockers and next exact actions.
+4. **[`CONTRACTS.md`](CONTRACTS.md)** — cross-repo producer/consumer contracts, with dine-in and Experience Blueprint as first-class surfaces.
+5. **[`FINANCIAL_INVARIANTS.md`](FINANCIAL_INVARIANTS.md)** — money, ledger, escrow, checkout and retry invariants.
+6. **[`SECURITY_BOUNDARIES.md`](SECURITY_BOUNDARIES.md)** — actor, permission, tenant and privileged-operation rules.
+7. **[`STATE_MACHINES.md`](STATE_MACHINES.md)** — lifecycle transitions and concurrency/state-test rules.
+8. **[`ARCHITECTURE.md`](ARCHITECTURE.md)** — living system map and authority boundaries.
+9. **[`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)** — executable production release gate.
+10. **[`REPO_GUIDE.md`](REPO_GUIDE.md)** — where to inspect and how to continue safely.
 
-## Master architecture
+## Historical material
 
-AZM is being developed as one platform with many vertical experiences. The target backbone is:
+`archive/` contains historical planning policy and is the destination for durable old assessments/session material. Existing dated files outside the canonical set are historical context; they do not override current repository evidence, `ROADMAP.md`, or `CURRENT_STATE.md`.
 
-**Identity & Trust → Unified Money/Ledger → Domain Verticals → SDUI/Presentation → Realtime/Eventing → Social Graph → Notifications → Observability/Reconciliation**
+## Platform backbone
 
-### Master platform flow
+**Identity & Trust → Unified Money/Ledger → Domain Verticals → Experience/SDUI → Realtime/Eventing → Notifications/Social → Observability/Reconciliation**
 
-```mermaid
-flowchart LR
-    A[Identity & Trust] --> B[Unified Money / Ledger]
-    B --> C[Domain Verticals]
-    C --> D[SDUI / Presentation]
-    D --> E[Realtime / Eventing]
-    E --> F[Social Graph]
-    F --> G[Notifications]
-    G --> H[Observability / Reconciliation]
-    H -. feedback & controls .-> A
-```
+Backend is the authoritative source for persisted business and financial truth. Flutter, Business Portal and Admin Portal are consumers/control surfaces with explicit authority boundaries; they must converge on committed backend outcomes.
 
-The platform must prefer shared primitives over parallel implementations. Retail is the current deep-hardening vertical and establishes reusable commerce primitives for Hotel, Transit, Restaurant and later financial/employee experiences.
+## Engineering loop
 
-### Vertical expansion model
+**Research → trace producers/consumers → inspect schema/authorization/state machine → implement coherent batch → test → exact-head CI → audit final diff → merge → verify `main` → update Planning → continue.**
 
-```mermaid
-flowchart TD
-    P[Shared AZM Platform] --> R[Retail]
-    P --> H[Hotel]
-    P --> T[Transit]
-    P --> N[Restaurant]
-    P --> E[Escrow / Financial]
-    P --> W[Employee / EWA]
-    P --> S[Social / Discovery]
-    R --> SH[Shared commerce primitives]
-    H --> SH
-    T --> SH
-    N --> SH
-    SH --> M[Common identity, money, orders, notifications, realtime]
-```
-
-These diagrams are conceptual architecture maps. The detailed repository plans and the master roadmap remain the source of truth for implementation status and exact flows.
-
-## Current master status
-
-- Whole-platform roadmap: established and active in `MASTER_ROADMAP_2026-08-30.md`.
-- Retail checkout integrity: foundation verified; continued competition-facing product hardening.
-- Backend order/payment/inventory state integrity: foundation verified; financial reconciliation remains a major platform workstream.
-- Customer Flutter startup/performance and navigation: foundation verified; category-specialized experience work remains.
-- Escrow/ticket trust layer: backend foundation verified; shared workspace UX and full dispute experience remain major product work.
-- Control plane: strong foundation verified; deeper workforce and governance operations remain.
-- Social foundations: existing pieces identified; convergence work remains.
-- Business operations: broad surface exists; cross-module contract mapping and operational workflows remain.
-- CI/release discipline: strengthened across active application repositories; infrastructure health must continue to be verified rather than assumed.
-- Central planning brain: established and now maintained as the execution record.
-
-## State vocabulary
-
-Every plan must distinguish **PLANNED**, **IN PROGRESS**, **IMPLEMENTED**, **VERIFIED**, **DEFERRED**, and **REJECTED**. Discussion is never evidence of implementation.
-
-## Update discipline
-
-After substantial work, update the relevant plan before declaring the work complete. Record what changed, why, affected flows, files/areas, tests or verification, remaining risk, and the next intended step. Update timestamps. Never erase history to make the project look cleaner.
-
-## Working principle
-
-Do not optimize for tiny isolated changes. First understand the surrounding architecture, callers, data model, state machine, security boundary and existing tests. Then make coherent batches. Expensive CI should be run after a meaningful batch, not after every micro-change.
+Never manufacture completion. Never create duplicate branches for the same logical fix. Never weaken tests/type checking to obtain green CI.
