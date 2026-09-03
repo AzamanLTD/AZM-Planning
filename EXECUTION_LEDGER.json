@@ -43,7 +43,10 @@
       "id": "backend-shift-route-authorization",
       "repo": "AzamanLTD/AZM-backend",
       "status": "in-progress",
-      "objective": "Add shifts.create permission parity to rotation route and reconcile attendance/EWA route-vs-service authorization."
+      "pr": 133,
+      "featureHead": "c1221f3",
+      "objective": "Add shifts.create permission parity to rotation route and reconcile attendance/EWA route-vs-service authorization.",
+      "notes": "PR #133 applies shifts.create to rotation, shifts.update to manager attendance mutations, ewa.manage to management EWA routes, and preserves owner/admin authority in both service request contexts. Focused Jest suite passed (12 tests); await exact-head CI before merge."
     },
     {
       "id": "backend-update-accrued-wages-trace",

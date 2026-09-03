@@ -42,7 +42,7 @@ Superseded dated root planning files were removed from the active surface; their
 - Time-off approval/rejection made tenant-scoped and concurrency-safe in PR #126.
 - Payroll disbursement bounded P2034 retry is PR #131 and requires exact-head CI verification before merge.
 - Generic shift PATCH status boundary remains an immediate fix.
-- Shift rotation route permission parity remains an immediate audit.
+- Backend PR #133 now covers shift rotation permission parity, manager attendance route permissions and Business OS EWA management route permissions; exact-head CI and merge verification remain required.
 - Legacy `EmployeeService.updateAccruedWages()` requires consumer tracing before removal/restriction.
 
 ## 4. Weakest/highest-risk surfaces

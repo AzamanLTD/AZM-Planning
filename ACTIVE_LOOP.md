@@ -39,11 +39,10 @@
 
 ### Remaining within the current backend shift loop
 
-1. Finish rotation permission parity.
+1. Backend PR #133 adds rotation permission parity, protects management attendance mutations with `shifts.update`, and applies `ewa.manage` to the business EWA management endpoints. It also carries owner/admin authority into both request-context stores used by the service layer. Focused local Jest verification passes (12 tests); do not merge until exact-head CI and a final diff audit pass.
 2. Audit attendance endpoint authorization matrix (`clock-in`, `clock-out`, `no-show`) against service semantics and kiosk exceptions.
-3. Audit route-level EWA permission vs service authorization.
-4. Trace `updateAccruedWages` consumers across code/history before deciding removal/restriction.
-5. Exact-head CI, final diff audit, merge and main verification for the route/authorization batch.
+3. Trace `updateAccruedWages` consumers across code/history before deciding removal/restriction.
+4. Exact-head CI, final diff audit, merge and main verification for the route/authorization batch.
 
 ### Next P0 loop: dine-in cross-repo payment authority
 
