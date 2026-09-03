@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "project": "AZAMAN",
+  "updatedAt": "2026-09-03T06:26:00Z",
+  "rules": {
+    "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
+    "planningRole": "navigation and continuation state",
+    "duplicateWorkPolicy": "verify existing branches, PRs, commits, implementations and tests before creating work",
+    "completionPolicy": "verified main merge plus exact-head CI plus residual-risk record",
+    "continuationPolicy": "complete the active work package before selecting the next P0"
+  },
+  "workItems": [
+    {
+      "id": "backend-payroll-p2034-retry",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "pr": 131,
+      "featureHead": "e0f63435f4688076146556c969f27c81601ccd30",
+      "mergeSha": "e81e32d83262a27c721ac51de8786b650f6be433",
+      "ci": {"workflow": "Azaman Test Suite", "run": 33720636841, "runNumber": 558, "conclusion": "success"},
+      "completedAt": "2026-09-03T06:00:00Z",
+      "notes": "Bounded P2034 retry for payroll disbursement; no API/persistence contract change."
+    },
+    {
+      "id": "planning-persistent-continuation",
+      "repo": "AzamanLTD/AZM-Planning",
+      "status": "in-progress",
+      "branch": "chore/continuation-execution-ledger",
+      "artifacts": ["ACTIVE_LOOP.md", "EXECUTION_LEDGER.json"],
+      "notes": "Establish persistent active-loop and duplicate-work-resistant continuation protocol."
+    },
+    {
+      "id": "backend-shift-mutation-boundary",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "in-progress",
+      "branch": "fix/business-os-shift-mutation-boundary",
+      "baseSha": "e81e32d83262a27c721ac51de8786b650f6be433",
+      "objective": "Reject generic shift status mutation; align rotation route permission; audit attendance authorization."
+    },
+    {
+      "id": "backend-update-accrued-wages-trace",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "queued",
+      "objective": "Trace every consumer of EmployeeService.updateAccruedWages before removal/restriction."
+    },
+    {
+      "id": "dine-in-confirm-and-pay-contract",
+      "repo": "cross-repo",
+      "status": "queued",
+      "objective": "Audit Flutter/Backend/Business Portal authority, transaction boundaries, payment/finalization race, idempotency and realtime reconciliation."
+    }
+  ]
+}
