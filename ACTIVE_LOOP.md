@@ -16,42 +16,70 @@
 
 ## Current loop
 
-**Status:** ACTIVE
+**Status:** ACTIVE — DO NOT CLOSE
 
-**Work package:** Backend → Business OS → shift mutation/state boundary
+**Primary work package:** Backend Business OS shift mutation/state boundary, followed immediately by dine-in payment contract hardening.
 
-**Objective:** Prevent generic shift PATCH from directly mutating lifecycle `status`; restore route permission parity for shift rotation; verify authorization semantics for attendance endpoints as part of the same boundary audit.
+### Verified completed during this continuation
 
-**Repo:** `AzamanLTD/AZM-backend`
+- Backend PR #131 payroll Serializable P2034 retry verified green and merged to main as `e81e32d83262a27c721ac51de8786b650f6be433`.
+- Backend PR #132 shift generic-status mutation boundary verified with exact-head Azaman Test Suite run `33724745236` / run #560 and merged as `ea52b6b82cc6c703bcc66b2dcf4aa7a34681ea8b`.
+- Main verification confirms `ShiftService.updateShift()` rejects `updates.status` before database access and the generic allowlist no longer contains `status`.
+- Planning PR #25 merged, establishing this persistent `ACTIVE_LOOP.md` and `EXECUTION_LEDGER.json` mechanism.
+- Flutter PR #78 is open for a confirmed client truthfulness defect: `DineInTabNotifier.payTab()` now rethrows payment failures instead of swallowing them, so Confirm & Pay cannot show a false success. Exact-head Flutter Quality run `33725099978` is still running; analyze has passed and test/coverage is in progress.
 
-**Branch:** `fix/business-os-shift-mutation-boundary`
+### Important audit findings already established
 
-**Base:** `main` at the verified pre-loop head after payroll PR #131 merge (`e81e32d83262a27c721ac51de8786b650f6be433`)
+- `POST /shifts/rotation` lacks `requirePermission('shifts.create')` while normal shift creation requires it. This remains unresolved and is the next backend route-boundary patch.
+- Attendance route handlers rely on service-level actor/business authorization; do not add middleware blindly until the actor matrix is reconciled.
+- `EmployeeService.updateAccruedWages(employeeId, hoursWorked)` appears to have no in-repo consumers beyond its definition; current canonical `ShiftService.clockOut()` performs employee wage/hour accounting transactionally. Before removal, re-check repository-wide history/consumers and preserve compatibility if external callers cannot be ruled out.
+- Dine-in `confirmAndPay` currently checks tab state before the payment transaction and can create an invoice when none exists. The cross-repo audit must establish idempotency/unique invoice behavior, concurrent confirm-and-pay behavior, tab closure race semantics, tip authority, and realtime reconciliation before implementation.
+- Flutter currently swallowed `/dine-in/tabs/:tabId/pay` failures, which was fixed on PR #78; this is a client-side contract truthfulness fix, not a substitute for backend idempotency.
+- `FinanceV2.jsx` in Business Portal is a one-line re-export of `Finance.jsx`; it is not independently authoritative and should only be removed after route/import reachability is proven.
 
-**Research already established:**
-- `ShiftService.updateShift()` currently accepts `status` in its generic allowed-field list.
-- Dedicated `clockIn`, `clockOut`, and `markNoShow` implement conditional lifecycle transitions and financial/employee side effects.
-- `POST /shifts/rotation` currently lacks the same `shifts.create` permission middleware used by `POST /shifts`.
-- Attendance routes delegate to service-level actor/business checks; their exact route-vs-service permission contract must be preserved or deliberately strengthened after audit.
+### Remaining within the current backend shift loop
 
-**Completed in this loop:**
-- Reconciled Backend PR #131: head `e0f63435f4688076146556c969f27c81601ccd30`, exact-head Azaman Test Suite run `33720636841` / run #558 passed, PR merged with merge SHA `e81e32d83262a27c721ac51de8786b650f6be433`.
+1. Finish rotation permission parity.
+2. Audit attendance endpoint authorization matrix (`clock-in`, `clock-out`, `no-show`) against service semantics and kiosk exceptions.
+3. Audit route-level EWA permission vs service authorization.
+4. Trace `updateAccruedWages` consumers across code/history before deciding removal/restriction.
+5. Exact-head CI, final diff audit, merge and main verification for the route/authorization batch.
 
-**Remaining:**
-- Implement and regression-test status mutation rejection.
-- Add `shifts.create` to rotation route after permission-template compatibility check.
-- Inspect existing test conventions and add focused compatible regression coverage.
-- Run exact-head CI, audit, merge and verify main.
-- Then continue immediately into the next P0: trace `updateAccruedWages()` consumers and begin dine-in `confirmAndPay` cross-repo contract audit.
+### Next P0 loop: dine-in cross-repo payment authority
 
-**Do not redo:** payroll retry implementation in PR #131; it is merged and must be treated as completed unless current main verification disproves that state.
+Backend → Business Portal → Flutter. Start with `confirmAndPay` and trace:
 
-**Last verified backend main:** `e81e32d83262a27c721ac51de8786b650f6be433`
+- tab ownership/tenant scope;
+- item/product price authority;
+- invoice creation and uniqueness/idempotency;
+- payment/debit ledger/balance effects;
+- transaction boundaries;
+- concurrent confirm-and-pay requests;
+- already-paid behavior;
+- tip authority and replay;
+- tab status transition/closure;
+- invoice-to-tab linkage;
+- websocket/realtime events;
+- client success/failure semantics;
+- retry/offline recovery and missed-event reconciliation.
 
-**Last verified Planning main:** `e61c070d94743be152ff46830eb984036305b540c8`
+Implement only after the complete producer/consumer trace is understood; add concurrency/idempotency regression coverage; exact-head CI; merge; verify main.
 
-**Next exact action:** fetch current backend test structure and permission template, then implement the coherent shift boundary batch on the branch above.
+## Duplicate-work prohibition
+
+Do not recreate PR #131, #132, or #78. Reconcile their current GitHub state before touching adjacent code. If another branch/PR contains equivalent work, consolidate rather than duplicate.
+
+## Continuation rule
+
+When a CI job is running, continue independent research/audit work rather than waiting. When CI completes, return to its exact-head gate before merge. When a work package reaches verified main, immediately advance to the next P0. A fresh conversation must resume from this file and current GitHub state, not from memory of a previous conversation.
+
+## Last verified references
+
+- Backend main after PR #132: `ea52b6b82cc6c703bcc66b2dcf4aa7a34681ea8b`
+- Planning main after PR #25: `fbb3ac4cb83f7859e9bdc6a174c71dbd78272532`
+- Flutter PR #78 head: `ce5f29b4d6f52053088693df8c81aa544f5a1ad8`
+- Flutter PR #78 CI: `33725099978` (in progress at last check)
 
 ## Completion record
 
-A loop may be marked `COMPLETE` only after the implementation is on `main`, exact-head CI is green for the final feature head, the merge/main SHA is verified, and `CURRENT_STATE.md` records evidence and residual risk.
+This loop remains active until the unresolved shift route/authorization batch is on main and verified. Then immediately advance to the dine-in payment authority loop. Do not mark work complete merely because a PR exists.
