@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-03T06:55:00Z",
+  "updatedAt": "2026-09-03T10:36:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -37,19 +37,79 @@
       "featureHead": "615c6c49360a0f4ccb1c98876774709e399a2207",
       "mergeSha": "ea52b6b82cc6c703bcc66b2dcf4aa7a34681ea8b",
       "ci": {"workflow": "Azaman Test Suite", "run": 33724745236, "runNumber": 560, "conclusion": "success"},
-      "notes": "Generic ShiftService.updateShift no longer accepts lifecycle status; focused regression proves DB is untouched on rejected status mutation."
+      "notes": "Generic ShiftService.updateShift no longer accepts lifecycle status."
+    },
+    {
+      "id": "backend-dine-in-settlement-hardening",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "pr": 135,
+      "mergeSha": "fc24fcc61800e86cad9657b91b59c8d24e93a8ef",
+      "notes": "Dine-in finalization, item-price authority, invoice/payment idempotency and transaction rollback hardening merged; cross-repo reconciliation continues."
+    },
+    {
+      "id": "backend-kyb-gate-fail-closed",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "pr": 136,
+      "notes": "KYB gate now fails closed on unavailable Prisma or lookup failures instead of falling through."
+    },
+    {
+      "id": "backend-business-os-finance-runtime",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "pr": 137,
+      "mergeSha": "924807b3742f30f929479d46dba96d9660b61f2d",
+      "ci": {"workflow": "Azaman Test Suite", "run": 33732480681, "conclusion": "success"},
+      "notes": "Canonical Business OS finance routes/runtime repair merged; main verification confirms this is the current Backend head."
+    },
+    {
+      "id": "backend-pos-atomicity-superseded",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "superseded",
+      "pr": 138,
+      "notes": "Closed after diagnostic/CI churn. Superseded by PR #140 rather than merged."
+    },
+    {
+      "id": "backend-pos-atomicity-current",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "in-progress",
+      "pr": 140,
+      "featureHead": "c1e4186caac0161fea41f253fd96703bbb3980e8",
+      "notes": "Clean current-main POS implementation. Server-authoritative catalog pricing, bounded quantities, CASH/AZM/SPLIT, conditional AZM debit, tenant-aware idempotency, order+ledger atomicity, and authoritative BusinessOrderItem persistence. Exact-head CI is not yet available for this head; do not merge."
+    },
+    {
+      "id": "backend-inventory-restock-atomicity",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "in-progress",
+      "pr": 139,
+      "featureHead": "f3c945204333ccd6074fcfd6571e7336386f249e",
+      "notes": "Atomic stock mutation plus signed EXPENSE ledger with amountGhs. Prior unit-test contract mismatch fixed. Exact-head CI still unavailable; do not merge."
+    },
+    {
+      "id": "backend-ci-exact-head-runner-discrepancy",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "blocked",
+      "notes": "Recent PR workflow runs can fail before any executable job steps appear, and integration-written new heads are not receiving fresh pull-request runs. Known-good run 33732480681 executes the canonical workflow successfully. Resolve CI execution/dispatch without weakening the release gate."
+    },
+    {
+      "id": "backend-kiosk-capability",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "in-progress",
+      "branch": "fix/business-os-kiosk-capability",
+      "notes": "Canonical kiosk PIN capability route exists but still needs token expiry/scope tests, rate-limit review, location-binding decision, and exact-head CI."
     },
     {
       "id": "backend-shift-route-authorization",
       "repo": "AzamanLTD/AZM-backend",
       "status": "in-progress",
-      "objective": "Add shifts.create permission parity to rotation route and reconcile attendance/EWA route-vs-service authorization."
+      "objective": "Rotation permission parity; attendance/EWA route-vs-service authorization matrix; then exact-head CI and merge."
     },
     {
       "id": "backend-update-accrued-wages-trace",
       "repo": "AzamanLTD/AZM-backend",
       "status": "in-progress",
-      "objective": "Trace every consumer/history of EmployeeService.updateAccruedWages before removal/restriction; current ShiftService.clockOut is canonical transactional accounting path."
+      "objective": "Trace every consumer/history of EmployeeService.updateAccruedWages before removal/restriction."
     },
     {
       "id": "dine-in-confirm-and-pay-contract",
@@ -60,17 +120,22 @@
     {
       "id": "frontend-dine-in-payment-truthfulness",
       "repo": "AzamanLTD/AZM-frontend",
-      "status": "ci-in-progress",
+      "status": "needs-reverification",
       "pr": 78,
       "featureHead": "ce5f29b4d6f52053088693df8c81aa544f5a1ad8",
-      "ci": {"workflow": "Flutter Quality", "run": 33725099978, "runNumber": 314, "lastObserved": "Analyze passed; test with coverage running"},
-      "notes": "payTab now rethrows API failures so Confirm & Pay cannot show false success."
+      "notes": "Prior session recorded a payTab failure-truthfulness fix, but current main still needs exact re-verification before treating PR #78 as verified."
     },
     {
       "id": "business-portal-finance-v2-reachability",
       "repo": "AzamanLTD/AZM-businessPortal",
       "status": "investigated",
-      "notes": "FinanceV2.jsx is a one-line re-export of Finance.jsx; repository search found no direct import, but route reachability must be checked before deletion."
+      "notes": "FinanceV2.jsx is a one-line re-export of Finance.jsx; reachability must be proven before deletion."
+    },
+    {
+      "id": "admin-financial-mutation-coverage",
+      "repo": "AzamanLTD/AZM-adminPortal",
+      "status": "in-progress",
+      "objective": "Strengthen high-risk mutation coverage: withdrawals, escrow disputes, fee controls, War Room and dashboard/optimistic state."
     }
   ]
 }
