@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-03T06:26:00Z",
+  "updatedAt": "2026-09-03T06:55:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -18,36 +18,59 @@
       "featureHead": "e0f63435f4688076146556c969f27c81601ccd30",
       "mergeSha": "e81e32d83262a27c721ac51de8786b650f6be433",
       "ci": {"workflow": "Azaman Test Suite", "run": 33720636841, "runNumber": 558, "conclusion": "success"},
-      "completedAt": "2026-09-03T06:00:00Z",
-      "notes": "Bounded P2034 retry for payroll disbursement; no API/persistence contract change."
+      "notes": "Bounded P2034 retry for payroll disbursement."
     },
     {
       "id": "planning-persistent-continuation",
       "repo": "AzamanLTD/AZM-Planning",
-      "status": "in-progress",
-      "branch": "chore/continuation-execution-ledger",
+      "status": "verified",
+      "pr": 25,
+      "mergeSha": "fbb3ac4cb83f7859e9bdc6a174c71dbd78272532",
       "artifacts": ["ACTIVE_LOOP.md", "EXECUTION_LEDGER.json"],
-      "notes": "Establish persistent active-loop and duplicate-work-resistant continuation protocol."
+      "notes": "Persistent continuation protocol and machine-readable execution ledger are merged."
     },
     {
-      "id": "backend-shift-mutation-boundary",
+      "id": "backend-shift-status-boundary",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "pr": 132,
+      "featureHead": "615c6c49360a0f4ccb1c98876774709e399a2207",
+      "mergeSha": "ea52b6b82cc6c703bcc66b2dcf4aa7a34681ea8b",
+      "ci": {"workflow": "Azaman Test Suite", "run": 33724745236, "runNumber": 560, "conclusion": "success"},
+      "notes": "Generic ShiftService.updateShift no longer accepts lifecycle status; focused regression proves DB is untouched on rejected status mutation."
+    },
+    {
+      "id": "backend-shift-route-authorization",
       "repo": "AzamanLTD/AZM-backend",
       "status": "in-progress",
-      "branch": "fix/business-os-shift-mutation-boundary",
-      "baseSha": "e81e32d83262a27c721ac51de8786b650f6be433",
-      "objective": "Reject generic shift status mutation; align rotation route permission; audit attendance authorization."
+      "objective": "Add shifts.create permission parity to rotation route and reconcile attendance/EWA route-vs-service authorization."
     },
     {
       "id": "backend-update-accrued-wages-trace",
       "repo": "AzamanLTD/AZM-backend",
-      "status": "queued",
-      "objective": "Trace every consumer of EmployeeService.updateAccruedWages before removal/restriction."
+      "status": "in-progress",
+      "objective": "Trace every consumer/history of EmployeeService.updateAccruedWages before removal/restriction; current ShiftService.clockOut is canonical transactional accounting path."
     },
     {
       "id": "dine-in-confirm-and-pay-contract",
       "repo": "cross-repo",
-      "status": "queued",
-      "objective": "Audit Flutter/Backend/Business Portal authority, transaction boundaries, payment/finalization race, idempotency and realtime reconciliation."
+      "status": "in-progress",
+      "objective": "Audit tab/invoice/payment authority, concurrency, idempotency, tip handling, closure, realtime reconciliation and client success/failure semantics."
+    },
+    {
+      "id": "frontend-dine-in-payment-truthfulness",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "ci-in-progress",
+      "pr": 78,
+      "featureHead": "ce5f29b4d6f52053088693df8c81aa544f5a1ad8",
+      "ci": {"workflow": "Flutter Quality", "run": 33725099978, "runNumber": 314, "lastObserved": "Analyze passed; test with coverage running"},
+      "notes": "payTab now rethrows API failures so Confirm & Pay cannot show false success."
+    },
+    {
+      "id": "business-portal-finance-v2-reachability",
+      "repo": "AzamanLTD/AZM-businessPortal",
+      "status": "investigated",
+      "notes": "FinanceV2.jsx is a one-line re-export of Finance.jsx; repository search found no direct import, but route reachability must be checked before deletion."
     }
   ]
 }
