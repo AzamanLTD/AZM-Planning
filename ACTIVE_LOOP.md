@@ -18,68 +18,60 @@
 
 **Status:** ACTIVE — DO NOT CLOSE
 
-**Primary work package:** Backend Business OS shift mutation/state boundary, followed immediately by dine-in payment contract hardening.
+### Verified completed in this continuation
 
-### Verified completed during this continuation
-
-- Backend PR #131 payroll Serializable P2034 retry verified green and merged to main as `e81e32d83262a27c721ac51de8786b650f6be433`.
+- Backend PR #131 payroll Serializable retry verified green and merged to main as `e81e32d83262a27c721ac51de8786b650f6be433`.
 - Backend PR #132 shift generic-status mutation boundary verified with exact-head Azaman Test Suite run `33724745236` / run #560 and merged as `ea52b6b82cc6c703bcc66b2dcf4aa7a34681ea8b`.
-- Main verification confirms `ShiftService.updateShift()` rejects `updates.status` before database access and the generic allowlist no longer contains `status`.
-- Planning PR #25 merged, establishing this persistent `ACTIVE_LOOP.md` and `EXECUTION_LEDGER.json` mechanism.
-- Flutter PR #78 is open for a confirmed client truthfulness defect: `DineInTabNotifier.payTab()` now rethrows payment failures instead of swallowing them, so Confirm & Pay cannot show a false success. Exact-head Flutter Quality run `33725099978` is still running; analyze has passed and test/coverage is in progress.
+- Backend PR #135 dine-in finalization/item-price/payment-idempotency hardening merged as `fc24fcc61800e86cad9657b91b59c8d24e93a8ef`.
+- Backend PR #136 KYB gate fail-closed hardening merged.
+- Backend PR #137 canonical Business OS Finance runtime/route repair merged; current Backend main is `924807b3742f30f929479d46dba96d9660b61f2d`.
+- Planning PR #25 established persistent `ACTIVE_LOOP.md` + `EXECUTION_LEDGER.json` continuation state.
 
-### Important audit findings already established
+### Current active work package: Business OS financial/operational mutation correctness
 
-- `POST /shifts/rotation` lacks `requirePermission('shifts.create')` while normal shift creation requires it. This remains unresolved and is the next backend route-boundary patch.
-- Attendance route handlers rely on service-level actor/business authorization; do not add middleware blindly until the actor matrix is reconciled.
-- `EmployeeService.updateAccruedWages(employeeId, hoursWorked)` appears to have no in-repo consumers beyond its definition; current canonical `ShiftService.clockOut()` performs employee wage/hour accounting transactionally. Before removal, re-check repository-wide history/consumers and preserve compatibility if external callers cannot be ruled out.
-- Dine-in `confirmAndPay` currently checks tab state before the payment transaction and can create an invoice when none exists. The cross-repo audit must establish idempotency/unique invoice behavior, concurrent confirm-and-pay behavior, tab closure race semantics, tip authority, and realtime reconciliation before implementation.
-- Flutter currently swallowed `/dine-in/tabs/:tabId/pay` failures, which was fixed on PR #78; this is a client-side contract truthfulness fix, not a substitute for backend idempotency.
-- `FinanceV2.jsx` in Business Portal is a one-line re-export of `Finance.jsx`; it is not independently authoritative and should only be removed after route/import reachability is proven.
+#### POS — current replacement PR
+- Former PR #138 is closed and superseded because its branch accumulated diagnostic/CI history.
+- PR #140 (`fix(pos): atomic Business OS POS settlement (current main)`) is the current POS branch, `fix/business-os-pos-atomicity-v2`, head `c1e4186caac0161fea41f253fd96703bbb3980e8`.
+- Current implementation server-derives catalog prices, validates integer quantities, handles CASH/AZM/SPLIT, conditionally debits AZM, recovers idempotency races, creates the order and ledger atomically, and now persists authoritative `BusinessOrderItem` rows in the same transaction.
+- Do not merge until an exact-head green `Azaman Test Suite` exists. The known PR run #584 targeted older head `10b8c326...` and failed before normal job steps; integration-written later commits have not produced a new exact-head PR run.
+- Remaining POS contract audit: tax authority, ledger units, customer/payment identity, inventory effects, and replay semantics.
 
-### Remaining within the current backend shift loop
+#### Inventory restock
+- PR #139 remains open at head `f3c945204333ccd6074fcfd6571e7336386f249e`.
+- Restock now mutates stock and records signed expense plus GHS-equivalent ledger amount in one transaction.
+- Do not merge until exact-head CI is green. Recent failures ended before executable job steps were recorded.
+- Remaining audit: retry/idempotency semantics and ledger producer conventions.
 
-1. Finish rotation permission parity.
-2. Audit attendance endpoint authorization matrix (`clock-in`, `clock-out`, `no-show`) against service semantics and kiosk exceptions.
-3. Audit route-level EWA permission vs service authorization.
-4. Trace `updateAccruedWages` consumers across code/history before deciding removal/restriction.
-5. Exact-head CI, final diff audit, merge and main verification for the route/authorization batch.
+### CI blocker
 
-### Next P0 loop: dine-in cross-repo payment authority
+Current integration-driven writes are producing stale/missing pull-request workflow runs for newly written heads, and some recent runs fail with a job object containing no executable steps. The canonical workflow itself remains known-good: Backend run `33732480681` executed all setup, tests and DB recovery stages successfully. The release gate must not be weakened to bypass this discrepancy.
 
-Backend → Business Portal → Flutter. Start with `confirmAndPay` and trace:
+### Next exact actions
 
-- tab ownership/tenant scope;
-- item/product price authority;
-- invoice creation and uniqueness/idempotency;
-- payment/debit ledger/balance effects;
-- transaction boundaries;
-- concurrent confirm-and-pay requests;
-- already-paid behavior;
-- tip authority and replay;
-- tab status transition/closure;
-- invoice-to-tab linkage;
-- websocket/realtime events;
-- client success/failure semantics;
-- retry/offline recovery and missed-event reconciliation.
-
-Implement only after the complete producer/consumer trace is understood; add concurrency/idempotency regression coverage; exact-head CI; merge; verify main.
+1. Resolve/obtain a reliable exact-head CI execution path for PR #140 and #139 without changing release standards.
+2. Once green, perform final diff audit, merge, verify Backend `main`, then reconcile PR #139 against the new main head and gate it independently.
+3. Finish kiosk capability hardening: token expiry/scope tests, employee revalidation, location-binding decision, brute-force/rate-limit review, exact-head CI.
+4. Audit POS tax/customer/inventory/ledger contracts against existing producers/consumers before calling POS complete.
+5. Continue the earlier shift route authorization package: rotation permission parity, attendance/EWA route-vs-service matrix, and `updateAccruedWages` history/consumer trace.
+6. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter, including concurrent payment, idempotency, tab closure, tip authority, realtime and client convergence.
+7. Then proceed to Admin financial mutation coverage and the remaining tenant/state/realtime/production-ops waves.
 
 ## Duplicate-work prohibition
 
-Do not recreate PR #131, #132, or #78. Reconcile their current GitHub state before touching adjacent code. If another branch/PR contains equivalent work, consolidate rather than duplicate.
+Do not recreate merged PR #131/#132/#135/#136/#137 or the existing POS/inventory implementations. Reconcile current GitHub state before creating adjacent work.
 
 ## Continuation rule
 
-When a CI job is running, continue independent research/audit work rather than waiting. When CI completes, return to its exact-head gate before merge. When a work package reaches verified main, immediately advance to the next P0. A fresh conversation must resume from this file and current GitHub state, not from memory of a previous conversation.
+When CI is running, continue independent research/audit work rather than waiting. When CI completes, return to its exact-head gate before merge. When a work package reaches verified main, immediately advance to the next P0. A fresh conversation must resume from this file and current GitHub state, not from memory of a previous conversation.
 
-## Last verified references
+## Last reconciled references
 
-- Backend main after PR #132: `ea52b6b82cc6c703bcc66b2dcf4aa7a34681ea8b`
-- Planning main after PR #25: `fbb3ac4cb83f7859e9bdc6a174c71dbd78272532`
-- Flutter PR #78 head: `ce5f29b4d6f52053088693df8c81aa544f5a1ad8`
-- Flutter PR #78 CI: `33725099978` (in progress at last check)
+- Backend main: `924807b3742f30f929479d46dba96d9660b61f2d`
+- POS replacement PR #140 head: `c1e4186caac0161fea41f253fd96703bbb3980e8`
+- Inventory PR #139 head: `f3c945204333ccd6074fcfd6571e7336386f249e`
+- Known-good Backend full CI run: `33732480681`
+- Planning reconciliation PR: #28
 
 ## Completion record
 
-This loop remains active until the unresolved shift route/authorization batch is on main and verified. Then immediately advance to the dine-in payment authority loop. Do not mark work complete merely because a PR exists.
+This loop remains active until the current Backend mutation batch has reliable exact-head CI and the verified merges are on `main`. Then advance through kiosk/shift authorization and the dine-in payment authority loop without restarting from scratch.
