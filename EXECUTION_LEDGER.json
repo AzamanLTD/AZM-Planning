@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-03T19:25:30Z",
+  "updatedAt": "2026-09-04T00:15:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -22,7 +22,9 @@
     {"id":"backend-pos-transaction-time-catalog-authority","repo":"AzamanLTD/AZM-backend","status":"verified","pr":147,"mergeSha":"ae74b3fc4738a00b4b64a4e1ac9a545bdbdcf99c","featureHead":"9f5c607ce455920bd28725edb63d1584fdbd1254","ci":{"run":33778925260,"conclusion":"success"}},
     {"id":"backend-pos-location-table-product-boundaries","repo":"AzamanLTD/AZM-backend","status":"verified","pr":148,"branch":"fix/pos-location-table-product-boundaries-v3","featureHead":"815f799580ddde5590bf0bab9d350e7e6d1b0d4d","mergeSha":"bb601140f859c4944f5eaae47c907efcd4d8526f","ci":{"run":33795725978,"conclusion":"success"},"notes":"Validates active business-owned location, exact-location table, requested branch product availability and explicit customer existence."},
     {"id":"backend-pos-idempotency-payload-binding-stale","repo":"AzamanLTD/AZM-backend","status":"closed-superseded","pr":149,"featureHead":"fe589f0039cf6055aaa03207a44ba7f095d85ec0","notes":"Closed because its base predated merged PR #148; implementation was recreated cleanly as PR #150."},
-    {"id":"backend-pos-idempotency-payload-binding","repo":"AzamanLTD/AZM-backend","status":"in-progress","pr":150,"branch":"fix/pos-idempotency-intent-binding-v2","featureHead":"6fb494d834228d1d2194f067db95da1cca4cad7d","ci":{"run":33796224872,"status":"in_progress"},"notes":"Canonical SHA-256 request fingerprint stored in POS ledger metadata; mismatched same-key reuse is rejected while legacy rows without fingerprints remain replay-compatible."},
+    {"id":"backend-pos-idempotency-payload-binding","repo":"AzamanLTD/AZM-backend","status":"verified","pr":150,"branch":"fix/pos-idempotency-intent-binding-v2","featureHead":"6fb494d834228d1d2194f067db95da1cca4cad7d","mergeSha":"7bc3f142b7db074843016cd01d21eae070041717","notes":"Canonical SHA-256 request fingerprint stored in POS ledger metadata; mismatched same-key reuse is rejected while legacy rows without fingerprints remain replay-compatible."},
+    {"id":"backend-dine-in-context-boundaries","repo":"AzamanLTD/AZM-backend","status":"verified","pr":151,"branch":"fix/dine-in-context-boundaries","featureHead":"32215aac1cdd00956d105a3c27411014bb2481ab","mergeSha":"f2002fd5681aaa5572c84672ded3adc23c511d72","ci":{"run":33819904137,"conclusion":"success"},"notes":"Propagates location context, validates business-owned active locations/tables, and limits tab products to global or exact-location branches."},
+    {"id":"backend-dine-in-legacy-product-boundary","repo":"AzamanLTD/AZM-backend","status":"in-progress","pr":152,"branch":"fix/dine-in-legacy-product-boundary","featureHead":"6de089f1b319f573aaec505b588bc08fb7076e37","ci":{"run":33820831050,"status":"in_progress"},"notes":"Legacy/locationless dine-in tabs may resolve only global products, closing a compatibility-path branch-product escape hatch."},
     {"id":"backend-pos-tax-authority","repo":"cross-repo","status":"queued","objective":"Trace BusinessInvoice/TaxLine/BusinessTaxPreset producers and consumers; establish canonical tax semantics before changing POS calculation."},
     {"id":"dine-in-confirm-and-pay-contract","repo":"cross-repo","status":"in-progress","objective":"Audit confirmAndPay across Backend → Business Portal → Flutter → Admin visibility, including authority, idempotency, tab closure, tips, realtime and timeout recovery."},
     {"id":"backend-update-accrued-wages-trace","repo":"AzamanLTD/AZM-backend","status":"in-progress","objective":"Trace all updateAccruedWages consumers/history before removal or restriction."},
@@ -30,6 +32,6 @@
     {"id":"business-portal-dine-in-payment-authority","repo":"AzamanLTD/AZM-businessPortal","status":"verified","pr":44,"mergeSha":"c3dc67cfdd1d9e6400df084d56ec8f6daee16f"},
     {"id":"admin-financial-mutation-coverage","repo":"AzamanLTD/AZM-adminPortal","status":"in-progress","objective":"Strengthen withdrawals, escrow disputes, fee controls, War Room, KPI accuracy and optimistic rollback coverage."},
     {"id":"planning-stale-pr-27","repo":"AzamanLTD/AZM-Planning","status":"closed-superseded","pr":27},
-    {"id":"planning-live-main-reconciliation","repo":"AzamanLTD/AZM-Planning","status":"in-progress","branch":"reconcile/pos-idempotency-v2","notes":"Planning reconciled to backend main bb601140f..., verified #148 and active clean post-#148 #150."}
+    {"id":"planning-live-main-reconciliation","repo":"AzamanLTD/AZM-Planning","status":"in-progress","branch":"reconcile/backend-151-152","notes":"Reconciles backend main through PR #151 and tracks active PR #152; merge after PR #152's exact-head gate or before if only recording the verified #151 merge is desired."}
   ]
 }
