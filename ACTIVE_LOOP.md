@@ -34,31 +34,39 @@
 - Backend PR #148 POS location/table/product boundary hardening merged and verified.
 - Backend PR #150 POS idempotency request-intent binding merged as `7bc3f142b7db074843016cd01d21eae070041717`.
 - Backend PR #151 dine-in location/table/branch-product boundary hardening merged as `f2002fd5681aaa5572c84672ded3adc23c511d72`; exact-head Actions run `33819904137` succeeded.
+- Backend PR #152 legacy/locationless dine-in product boundary merged as `e2f9a8e29cf760a2b43e0f2f3429a87ad296391a`; exact-head Actions run `33821697996` succeeded through tests and database recovery drill.
 - Frontend PR #78 dine-in payment failure truthfulness merged/verified.
 - Business Portal PR #44 customer payment authority fix merged.
 - Stale Planning PR #27 closed after becoming obsolete.
 
 ### Backend main
 
-`f2002fd5681aaa5572c84672ded3adc23c511d72`
+`e2f9a8e29cf760a2b43e0f2f3429a87ad296391a`
 
 ### Active implementation
 
-#### Dine-in legacy locationless-product boundary — PR #152
+#### Tax preset tenant boundary — PR #155
 
-- Branch: `fix/dine-in-legacy-product-boundary`.
-- Head: `6de089f1b319f573aaec505b588bc08fb7076e37`.
-- PR: #152.
-- Fix: location-bound tabs may use global or exact-location products; legacy/locationless tabs may use only global products, preventing old rows with missing location context from resolving branch-specific catalog entries.
-- Exact-head Actions run `33820831050` is in progress; do not merge until full tests + database recovery drill are green.
+- Branch: `fix/tax-preset-tenant-boundary-v2`.
+- Head: `ca553255a4ae177f46f8fdd8cace878ce4c542aa`.
+- The BusinessTaxPreset PATCH handler historically updated by bare preset ID; the new resource-level guard in `requirePermission` verifies `{id, businessProfileId}` before the handler runs.
+- Exact-head full CI + database recovery drill required before merge.
+- Stale PR #153 was intentionally closed after PR #152 advanced main; the same fix was recreated cleanly on current main.
 
-### Next P0 after #152
+#### POS global catalog boundary — PR #154
 
-1. Resolve POS tax authority by tracing `BusinessInvoice`, `BusinessInvoiceTaxLine`, `BusinessTaxPreset` and actual producers/consumers; do not assume the legacy 2.5% POS tax is canonical.
-2. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter → Admin visibility, including tab closure, payment authority, tips, idempotency, realtime and timeout recovery.
-3. Trace every `updateAccruedWages()` producer/consumer/history before removal or restriction.
-4. Strengthen Admin financial mutation and optimistic pending-queue coverage.
-5. Execute tenant/state/realtime matrices, production operations, load and red-team waves.
+- Branch: `fix/pos-global-product-boundary`.
+- Head: `2a97cdb52f27f1d2bd003cb1fba709364141e71f`.
+- Locationless POS requests now resolve only globally scoped products. Explicit location requests still allow global or exact-location products.
+- Exact-head full CI + database recovery drill required before merge.
+
+### Next P0 after #154/#155
+
+1. Resolve POS/invoice tax authority by completing the producer/consumer trace for `BusinessInvoice`, `BusinessInvoiceTaxLine`, and `BusinessTaxPreset`; only then change legacy tax behavior.
+2. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter → Admin visibility, especially replay-after-payment closure, tips, timeout recovery, and location/table context.
+3. Bring Business Portal dine-in UI/API onto the location-aware server contract; its current client path still opens tabs without location context and exposes a legacy tax-rate control that the adapter drops.
+4. Trace every `updateAccruedWages()` producer/consumer/history before removal or restriction.
+5. Strengthen Admin financial mutation and optimistic pending-queue coverage, then run tenant/state/realtime, production operations, load and red-team waves.
 
 ## CI / release gate
 
