@@ -7,11 +7,11 @@
 
 | Repo | Current verified state | Immediate concern |
 |---|---|---|
-| `AZM-backend` | Main includes verified PRs #144–#163, plus the previously verified hardening lineage | Cross-client dine-in lifecycle/realtime verification |
+| `AZM-backend` | Main includes verified PRs #144–#163 plus merged PR #165 realtime hardening | Cross-client dine-in lifecycle/realtime verification |
 | `AZM-adminPortal` | Main lineage includes PR #95 and prior financial hardening | High-risk financial mutation and optimistic-state coverage |
 | `AZM-businessPortal` | Main includes merged PR #44, #45 and branch-aware dine-in convergence PR #49 | Post-convergence lifecycle/realtime verification and UI state hardening |
 | `AZM-frontend` | Main includes verified PRs #78 and #79 | Dine-in retry/realtime convergence |
-| `AZM-Planning` | Navigation ledger synchronized through Backend #163, Business Portal #49 and Frontend #79 | Keep navigation synchronized after each verified merge |
+| `AZM-Planning` | Navigation ledger synchronized through Backend #165, Business Portal #49 and Frontend #79 | Keep navigation synchronized after each verified merge |
 
 ## 2. Verified backend hardening now on main
 
@@ -29,7 +29,7 @@
 - PR #148 POS location/table/product boundaries (`bb601140f859c4944f5eaae47c907efcd4d8526f`); exact-head Actions run `33795725978` succeeded.
 - PR #150 POS idempotency intent binding (`7bc3f142b7db074843016cd01d21eae070041717`).
 - PR #151 dine-in location/table/branch-product boundaries (`f2002fd5681aaa5572c84672ded3adc23c511d72`); exact-head Actions run `33819904137` succeeded.
-- PR #152 legacy/locationless dine-in product boundary (`e2f9a8e29cf760a2b43e0f2f3429a87ad296391a`); exact-head run `33821697996` succeeded through tests and database recovery drill.
+- PR #152 legacy/locationless dine-in product boundary (`e2f9a8e29cf760a2b43e0f2f3429a87ad296391a9`); exact-head run `33821697996` succeeded through tests and database recovery drill.
 - PR #154 POS global catalog boundary (`8d1762f707938c648189a19da044ce354c29d32d`); exact-head full CI + recovery verification completed before merge.
 - PR #155 BusinessTaxPreset tenant boundary (`bdbcad1947fbc7db9b9a1c5c750794fbfac36583`); exact-head run `33822836242` succeeded through tests and database recovery drill.
 - PR #157 branch-aware BusinessProduct listing (`4d7d119f5122ab07e51f645b636c961f7bd60ab7`).
@@ -39,6 +39,7 @@
 - PR #161 paid-replay stale-tab closure recovery (`590c9229226e966c29d45b1968102b052140d4e9`); exact-head run `33831227662` succeeded through tests and database recovery drill.
 - PR #162 shared dine-in tab read authorization (`2524f6f649f5785fbd5566669760372962ca5c64`) merged after exact-head Actions run `33838812996` passed both the full test suite and database backup/restore drill. The earlier exact-head run `33836614166` had failed only on a stale test fixture; the fixture was corrected and the replacement run passed before merge.
 - PR #163 business dine-in queue lifecycle filtering (`b0e23c692b2cc372d84daa557282f4644f36fd52`) merged after exact-head Actions run `33839219871` passed the full test suite and database backup/restore drill. With no explicit status, business tab reads now return only `OPEN` and `FINALIZED`; explicit status filters remain authoritative, including `CLOSED`.
+- PR #165 dine-in business realtime lifecycle events (`c3af291a5eff47d8e31ae703953346d201d09f7a`) merged after exact-head Actions run `33841251654` passed dependencies, schema application, tests, and the database backup/restore drill. The failed predecessor was closed after a branch-reset schema corruption was repaired; the merged retry restores the full Prisma schema and uses only schema-supported notification types.
 
 ## 3. Cross-repo dine-in convergence already implemented
 
@@ -48,6 +49,7 @@
 - Paid replay recovery now closes a stale `FINALIZED` dine-in tab without rerunning financial settlement.
 - Shared tab reads are now server-side owner-bound: either the requesting customer owns the tab or the caller has trusted business scope plus canonical `restaurant.dinein.manage` permission.
 - Business tab queue reads now have lifecycle-safe defaults: no-status queries expose only actionable `OPEN` and `FINALIZED` tabs, while explicit status requests remain deterministic.
+- Business queue lifecycle events now persist through the canonical notification service and emit the existing `biz_notification` socket contract for tab opened/finalized/paid events; notification failure remains non-fatal to the underlying transaction.
 
 ### Business Portal
 - PR #49 (`666e2a6adbaa6508a85936f67a4f556163c88db8`) is merged on `main`; push CI run `33836121232` passed. The branch-aware operations flow sends location/table context when opening tabs, uses location-aware product queries, and no longer submits a client-owned tax rate on finalization.
@@ -60,14 +62,14 @@
 
 ## 4. Immediate P0 queue
 
-1. Trace the dine-in lifecycle across business/customer clients for FINALIZED/CLOSED semantics, tip replay, timeout recovery, authoritative refresh, and realtime event ordering now that shared reads are tenant-bound and business queue defaults exclude CLOSED tabs.
+1. Complete the cross-client dine-in lifecycle audit now that backend business notifications cover OPENED/FINALIZED/PAID: verify business/customer refresh, FINALIZED/CLOSED semantics, tip replay, timeout recovery, authoritative refresh, and event ordering; fix Business Portal location-query races and missing Flutter realtime convergence where evidence shows gaps.
 2. Trace every `updateAccruedWages()` producer/consumer/history path before modifying payroll accounting; separately prove the period-vs-cumulative accrual behavior around payroll processing/disbursement before changing money movement.
 3. Strengthen Admin financial mutation and optimistic pending-queue coverage beyond the existing facade contract tests, then execute tenant/state/realtime, production-operations, load and red-team waves.
 4. Reconcile Planning after every verified merge and do not promote in-flight or failed work into the verified baseline.
 
 ## 5. Residual risks
 
-- Business Portal branch-aware convergence is merged, but selected-tab/location state and realtime refresh still need a final race audit.
+- Business Portal branch-aware convergence is merged, but selected-tab/location state can still transiently broaden menu queries while tab detail loads; realtime refresh behavior needs a final race audit.
 - Flutter customer dine-in now requests branch-aware menus, but broader entry-point/retry/realtime behavior still needs cross-screen reconciliation.
 - Kiosk PIN protection is locally rate-limited; distributed topology and enumeration/timing behavior remain open.
 - Dine-in production operations/load/red-team evidence remain open.
@@ -75,4 +77,4 @@
 
 ## 6. Planning hygiene
 
-Stale Planning PR #27 remains closed/superseded. Stale backend PRs #149 and #153 remain closed/superseded. Superseded Business Portal draft PR #48 is closed. Backend PRs #159–#163, Business Portal #45 and #49, and frontend #79 are verified/merged and recorded here. The previous PR #162 failure was a test-fixture issue and was not promoted into the verified baseline; replacement exact-head run `33838812996` is the authoritative verification. PR #163 exact-head run `33839219871` is the authoritative verification for the lifecycle-filtering change. Keep this document synchronized with every verified cross-repo change.
+Stale Planning PR #27 remains closed/superseded. Stale backend PRs #149 and #153 remain closed/superseded. Superseded Business Portal draft PR #48 is closed. Backend PRs #159–#163 and #165, Business Portal #45 and #49, and frontend #79 are verified/merged and recorded here. The previous PR #162 failure was a test-fixture issue and was not promoted into the verified baseline; replacement exact-head run `33838812996` is the authoritative verification. PR #163 exact-head run `33839219871` and PR #165 exact-head run `33841251654` are the authoritative verification evidence for those changes. The prior PR #164 attempt was closed after its branch reset exposed and repaired a mistaken partial Prisma schema replacement; no broken schema change is retained. Keep this document synchronized with every verified cross-repo change.
