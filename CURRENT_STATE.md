@@ -10,8 +10,8 @@
 | `AZM-backend` | Main includes verified PRs #144–#163 plus merged PR #165 realtime hardening | Cross-client dine-in lifecycle/realtime verification |
 | `AZM-adminPortal` | Main lineage includes PR #95 and prior financial hardening | High-risk financial mutation and optimistic-state coverage |
 | `AZM-businessPortal` | Main includes merged PR #44, #45 and branch-aware dine-in convergence PR #49 plus realtime/location race fix #50 | Verify post-convergence lifecycle/realtime behavior against the customer app and backend |
-| `AZM-frontend` | Main includes verified PRs #78 and #79; PR #80 is under exact-head CI | Customer-side dine-in authoritative refresh convergence |
-| `AZM-Planning` | Navigation ledger synchronized through Backend #165 and Business Portal #50; Flutter #80 remains in flight | Keep navigation synchronized after each verified merge |
+| `AZM-frontend` | Main includes verified PRs #78, #79 and #80; PR #81 is under exact-head CI | Customer-side dine-in realtime convergence |
+| `AZM-Planning` | Navigation ledger synchronized through Backend #165, Business Portal #50 and Frontend #80; PR #81 remains in flight | Keep navigation synchronized after each verified merge |
 
 ## 2. Verified backend hardening now on main
 
@@ -60,24 +60,24 @@
 ### Flutter customer app
 - Main includes PR #79 (`e91e247e559ac9f0168ebd57a64e8c96a965c434`); exact-head Flutter Quality run `33831102056` passed analysis and tests.
 - Dine-in ordering passes the existing tab `locationId` to the public menu endpoint and tolerates the canonical `uncategorised` menu response while preserving legacy compatibility.
-- PR #80 (`fix/dinein-authoritative-refresh`) is currently under exact-head Flutter Quality run `33844855657`. The customer tab screen now invalidates the canonical tab query every 10 seconds while mounted and immediately on app resume, with timer/observer cleanup, to converge after waiter-side finalization and after background/reconnect gaps. It is not yet part of the verified baseline until CI completes.
+- PR #80 merged as `739c03df714967f27c4b2f17d1741793f6ca737d` after exact-head Flutter Quality run `33844855657` completed analysis, tests with coverage, and coverage upload successfully. The customer tab screen now invalidates the canonical tab query every 10 seconds while mounted and immediately on app resume, with timer/observer cleanup, to converge after waiter-side finalization and background/reconnect gaps.
+- PR #81 (`fix/dinein-socket-convergence`) remains in flight under exact-head Flutter Quality run `33846674689`. It uses the existing unified SocketService singleton to consume customer-specific dine-in lifecycle events and trigger an authoritative tab API reload only when the event `tabId` matches the provider's active tab; polling/resume refresh remains as resilience.
 
 ## 4. Immediate P0 queue
 
-1. Finish cross-client dine-in lifecycle verification after Backend #165 and Business Portal #50: verify customer-specific event ordering against API refresh, FINALIZED/CLOSED semantics, tip replay, timeout/reconnect behavior, and ensure no UI can act on stale state.
-2. Complete Flutter #80 exact-head verification. After it passes, reconcile Planning with the merge SHA. Then inspect whether the existing SocketService should surface customer-specific dine-in events to the provider, preferring the existing singleton rather than introducing another socket connection.
-3. Trace every `updateAccruedWages()` producer/consumer/history path before modifying payroll accounting; separately prove the period-vs-cumulative accrual behavior around payroll processing/disbursement before changing money movement.
-4. Strengthen Admin financial mutation and optimistic pending-queue coverage beyond the existing facade contract tests, then execute tenant/state/realtime, production-operations, load and red-team waves.
-5. Reconcile Planning after every verified merge and do not promote in-flight or failed work into the verified baseline.
+1. Complete the remaining cross-client dine-in lifecycle audit: verify customer-specific socket events against API refresh, FINALIZED/CLOSED semantics, tip replay, timeout/reconnect behavior, and multi-tab behavior; merge #81 only after exact-head CI is green and reconcile Planning immediately.
+2. Finish the payroll accounting proof and stale-snapshot hardening on Backend PR #166: verify all `updateAccruedWages()` producer/consumer/history paths, period-vs-cumulative semantics, and merge only after full tests plus database recovery evidence.
+3. Strengthen Admin financial mutation and optimistic pending-queue coverage beyond the existing facade contract tests, then execute tenant/state/realtime, production-operations, load and red-team waves.
+4. Reconcile Planning after every verified merge and do not promote in-flight or failed work into the verified baseline.
 
 ## 5. Residual risks
 
 - Business Portal branch-aware convergence and realtime cache invalidation are now hardened, but production event ordering and multi-tab UI behavior still require end-to-end verification.
-- Flutter customer dine-in currently has authoritative active/resume refresh in PR #80, while direct consumption of customer-specific Socket.IO dine-in events remains a separate optimization/design check.
+- Flutter customer dine-in has authoritative active/resume refresh from PR #80 and direct SocketService convergence is in PR #81 pending exact-head verification.
 - Kiosk PIN protection is locally rate-limited; distributed topology and enumeration/timing behavior remain open.
 - Dine-in production operations/load/red-team evidence remain open.
-- Payroll still contains both a canonical clock-out accrual path and a legacy `updateAccruedWages()` implementation; callers and accounting semantics must be proven before removal or consolidation.
+- Payroll still contains both a canonical clock-out accrual path and a legacy `updateAccruedWages()` implementation; PR #166 adds a disbursement snapshot guard but caller/semantic proof is still required before broader consolidation.
 
 ## 6. Planning hygiene
 
-Stale Planning PR #27 remains closed/superseded. Stale backend PRs #149 and #153 remain closed/superseded. Superseded Business Portal draft PR #48 is closed. Backend PRs #159–#163 and #165, Business Portal #45, #49 and #50, and frontend #79 are verified/merged and recorded here. Frontend PR #80 is intentionally recorded as in flight until exact-head CI completes. The previous PR #162 failure was a test-fixture issue and was not promoted into the verified baseline; replacement exact-head run `33838812996` is the authoritative verification. PR #163 exact-head run `33839219871` and PR #165 exact-head run `33841251654` are the authoritative verification evidence for those changes. The prior PR #164 attempt was closed after its branch reset exposed and repaired a mistaken partial Prisma schema replacement; no broken schema change is retained. Keep this document synchronized with every verified cross-repo change.
+Stale Planning PR #27 remains closed/superseded. Stale backend PRs #149 and #153 remain closed/superseded. Superseded Business Portal draft PR #48 is closed. Backend PRs #159–#163 and #165, Business Portal #45, #49 and #50, and frontend #79 and #80 are verified/merged and recorded here. Frontend PR #81 is intentionally recorded as in flight until exact-head CI completes. The previous PR #162 failure was a test-fixture issue and was not promoted into the verified baseline; replacement exact-head run `33838812996` is the authoritative verification. PR #163 exact-head run `33839219871` and PR #165 exact-head run `33841251654` are the authoritative verification evidence for those changes. The prior PR #164 attempt was closed after its branch reset exposed and repaired a mistaken partial Prisma schema replacement; no broken schema change is retained. Keep this document synchronized with every verified cross-repo change.
