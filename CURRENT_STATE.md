@@ -7,11 +7,11 @@
 
 | Repo | Current verified state | Immediate concern |
 |---|---|---|
-| `AZM-backend` | Main includes verified PRs #144–#155, #157–#158; PR #159 active | Dine-in tax authority; cross-repo convergence |
+| `AZM-backend` | Main includes verified PRs #144–#155, #157–#161 | Cross-repo dine-in UX convergence |
 | `AZM-adminPortal` | Main lineage includes PR #95 and prior financial hardening | High-risk financial mutation and optimistic-state coverage |
-| `AZM-businessPortal` | Main includes merged PR #44 and PR #45 dine-in permission-contract fix | Location/table UX and tax/default convergence |
-| `AZM-frontend` | Main includes verified PR #78 payment-failure truthfulness | Dine-in retry/realtime convergence |
-| `AZM-Planning` | This reconciliation updates navigation through verified backend #158 and Business Portal #45 | Keep navigation synchronized after each verified merge |
+| `AZM-businessPortal` | Main includes merged PR #44 and #45 dine-in permission-contract fix | Location/table UX and misleading tax-rate controls |
+| `AZM-frontend` | Main includes verified PRs #78 and #79 | Dine-in retry/realtime convergence |
+| `AZM-Planning` | Reconciled through backend #161 and frontend #79 | Keep navigation synchronized after each verified merge |
 
 ## 2. Verified backend hardening now on main
 
@@ -34,34 +34,36 @@
 - PR #155 BusinessTaxPreset tenant boundary (`bdbcad1947fbc7db9b9a1c5c750794fbfac36583`); exact-head run `33822836242` succeeded through tests and database recovery drill.
 - PR #157 branch-aware BusinessProduct listing (`4d7d119f5122ab07e51f645b636c961f7bd60ab7`).
 - PR #158 dine-in permission + trusted tenant scope (`55f1166a6e17364797c4b1a36981032c1679aa4c`); exact-head run `33829241262` succeeded through tests and database recovery drill.
+- PR #159 BusinessTaxPreset default application to dine-in (`07e20fee3dab743d7e113500ce1d08b169d025b2`); exact-head run `33830884690` succeeded through tests and database recovery drill.
+- PR #160 public dine-in menu location boundary (`35ee92840527f1743b4974db72b5fdfd708bf5e8`); exact-head run `33831023259` succeeded through tests and database recovery drill.
+- PR #161 paid-replay stale-tab closure recovery (`590c9229226e966c29d45b1968102b052140d4e9`); exact-head run `33831227662` succeeded through tests and database recovery drill.
 
-## 3. Active implementation
+## 3. Cross-repo dine-in convergence already implemented
 
-### Dine-in/default invoice tax authority — PR #159
+### Backend
+- `BusinessTaxPreset.isDefault` is now consulted by invoice creation only when `taxLines` is omitted; explicit `taxLines: []` remains an intentional tax-free contract.
+- Public `/api/business/:bizId/menu` supports an explicit active `locationId`, keeps global products/sections visible, and excludes entries belonging to other branches.
+- Paid replay recovery now closes a stale `FINALIZED` dine-in tab without rerunning financial settlement.
 
-- Branch: `fix/dine-in-default-tax-preset-v3`.
-- Head: `9f47d2ff36219504dca6c0d950a0d5a857174c74`.
-- Runtime change: `BusinessTaxPreset.isDefault` is now consulted by `createInvoice()` only when tax lines are omitted; explicit `taxLines: []` remains tax-free by contract.
-- Dine-in invoice creation no longer sends an explicit empty tax array, so the business default can actually apply.
-- Focused regression coverage added for both default-tax and explicit-tax-free behavior.
-- Exact-head full CI + database recovery drill required before merge.
+### Flutter customer app
+- Main includes PR #79 (`e91e247e559ac9f0168ebd57a64e8c96a965c434`); exact-head Flutter Quality run `33831102056` passed analysis and tests.
+- Dine-in ordering now passes the existing tab `locationId` to the public menu endpoint and tolerates the canonical `uncategorised` menu response while preserving legacy compatibility.
 
-## 4. Immediate P0 queue after #159
+## 4. Immediate P0 queue
 
-1. Finish cross-repo dine-in convergence: wire Business Portal location/table selection to the branch-aware API, eliminate the misleading tax-rate UI path, and reconcile Flutter customer flows.
-2. Deep-audit `confirmAndPay` replay/closure semantics, including already-paid replay behavior, customer-visible state, tip handling, idempotency and timeout recovery.
-3. Trace every `updateAccruedWages()` producer/consumer/history before removal or restriction.
+1. Finish Business Portal dine-in convergence: wire actual location/table selection into `openDineInTab`, make product selection branch-aware, and remove the misleading client-owned tax-rate path now that invoice tax authority lives server-side.
+2. Trace dine-in lifecycle across business/customer clients for FINALIZED/CLOSED semantics, tip replay, timeout recovery, and realtime reconciliation after the paid-replay fix.
+3. Trace every `updateAccruedWages()` producer/consumer/history path before modifying payroll accounting.
 4. Strengthen Admin financial mutation and optimistic pending-queue coverage, then execute tenant/state/realtime, production-operations, load and red-team waves.
 
 ## 5. Residual risks
 
-- PR #159 is pending exact-head full CI + database recovery verification.
-- BusinessTaxPreset is now a runtime default source for invoices when tax lines are omitted; explicit tax lines still remain caller-authoritative. POS legacy 2.5% behavior has not been replaced without a separate policy trace.
-- Dine-in server boundaries and permission gates are enforced, but Business Portal still does not provide complete location/table selection in the current UI.
-- Flutter customer dine-in still needs an endpoint/model/context reconciliation against the current branch-aware server contract.
+- Business Portal still does not provide complete location/table selection in the current UI; its dine-in product list is not branch-scoped.
+- Business Portal still exposes `taxRatePct` as a client control during tab finalization even though dine-in invoice tax is now server-authoritative via `BusinessTaxPreset`.
+- Flutter customer dine-in now requests branch-aware menus, but broader entry-point/retry/realtime behavior still needs cross-screen reconciliation.
 - Kiosk PIN protection is locally rate-limited; distributed topology and enumeration/timing behavior remain open.
-- Dine-in realtime/reconciliation and production operations/load/red-team evidence remain open.
+- Dine-in production operations/load/red-team evidence remain open.
 
 ## 6. Planning hygiene
 
-Stale Planning PR #27 remains closed/superseded. Stale backend PRs #149 and #153 remain closed/superseded. Backend PRs #154, #155, #157 and #158 are now verified on main; Business Portal PR #45 is also merged. This reconciliation tracks those merges and the active #159 implementation. Merge this Planning reconciliation after the repository changes are reviewed.
+Stale Planning PR #27 remains closed/superseded. Stale backend PRs #149 and #153 remain closed/superseded. Backend PRs #159, #160 and #161 and Business Portal #45/frontend #79 are now verified/merged and recorded here. Keep this document synchronized with every verified cross-repo change.
