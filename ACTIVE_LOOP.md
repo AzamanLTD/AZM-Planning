@@ -31,29 +31,30 @@
 - Backend PR #145 POS settlement/inventory atomicity merged.
 - Backend PR #146 duplicate-line recipe consumption merged.
 - Backend PR #147 transaction-time POS catalog authority merged; exact-head Actions run `33778925260` succeeded through tests and database recovery drill.
-- Backend PR #148 POS location/table/product boundary hardening merged as `bb601140f859c4944f5eaae47c907efcd4d8526f`; exact-head Actions run `33795725978` succeeded.
+- Backend PR #148 POS location/table/product boundary hardening merged and verified.
+- Backend PR #150 POS idempotency request-intent binding merged as `7bc3f142b7db074843016cd01d21eae070041717`.
+- Backend PR #151 dine-in location/table/branch-product boundary hardening merged as `f2002fd5681aaa5572c84672ded3adc23c511d72`; exact-head Actions run `33819904137` succeeded.
 - Frontend PR #78 dine-in payment failure truthfulness merged/verified.
 - Business Portal PR #44 customer payment authority fix merged.
 - Stale Planning PR #27 closed after becoming obsolete.
 
 ### Backend main
 
-`bb601140f859c4944f5eaae47c907efcd4d8526f`
+`f2002fd5681aaa5572c84672ded3adc23c511d72`
 
 ### Active implementation
 
-#### POS idempotency intent binding — PR #150
+#### Dine-in legacy locationless-product boundary — PR #152
 
-- Branch: `fix/pos-idempotency-intent-binding-v2`
-- Head: `6fb494d834228d1d2194f067db95da1cca4cad7d`
-- PR: #150
-- Fix: derive a canonical request fingerprint from tenant, actor, normalized items, payment inputs, source and location/table/customer context; persist it in POS ledger metadata; reject a same-key request with a different fingerprint; preserve replay for legacy POS rows that have no fingerprint.
-- PR #149 was intentionally closed as stale because its base predated merged #148; no implementation work was lost, and the fix was recreated cleanly on current main.
-- Exact-head Actions run `33796224872` is currently in progress; do not merge until the full tests + recovery drill gate is green.
+- Branch: `fix/dine-in-legacy-product-boundary`.
+- Head: `6de089f1b319f573aaec505b588bc08fb7076e37`.
+- PR: #152.
+- Fix: location-bound tabs may use global or exact-location products; legacy/locationless tabs may use only global products, preventing old rows with missing location context from resolving branch-specific catalog entries.
+- Exact-head Actions run `33820831050` is in progress; do not merge until full tests + database recovery drill are green.
 
-### Next P0 after #150
+### Next P0 after #152
 
-1. Resolve POS tax authority by tracing `BusinessInvoice`, `BusinessInvoiceTaxLine`, `BusinessTaxPreset` and their actual producers/consumers; do not assume the legacy 2.5% POS tax is canonical.
+1. Resolve POS tax authority by tracing `BusinessInvoice`, `BusinessInvoiceTaxLine`, `BusinessTaxPreset` and actual producers/consumers; do not assume the legacy 2.5% POS tax is canonical.
 2. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter → Admin visibility, including tab closure, payment authority, tips, idempotency, realtime and timeout recovery.
 3. Trace every `updateAccruedWages()` producer/consumer/history before removal or restriction.
 4. Strengthen Admin financial mutation and optimistic pending-queue coverage.
