@@ -1,0 +1,1 @@
+Canonical evidence is in DINE_IN_P0_PROOF.md and WAVE_B_2D_DECISION.md.
