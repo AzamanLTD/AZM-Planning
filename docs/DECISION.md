@@ -1,0 +1,1 @@
+Wave A complete; dine-in implementation proof verified with explicit four-surface E2E/Admin residual; Wave B 2D legacy snap deferred pending a canonical V2 spatial contract.
