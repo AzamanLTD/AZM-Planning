@@ -1,71 +1,43 @@
 # AZAMAN Current Engineering State
 
 **Last reconciled:** 2026-09-05 UTC  
-**Authority:** current repository `main` + exact CI/evidence; this document is the navigation ledger.
+**Authority:** current repository `main` + exact CI/evidence.
 
-## 1. Current verified baseline
+## Current verified baseline
 
-| Repo | Current main | Current situation |
-|---|---|---|
-| `AZM-backend` | `b2d74f6bc5b4730ed998e4c42bf1efaf6a7032da` | Tracking concurrency work #220/#221 merged; CI action modernization #223 merged. Financial provider-attempt integrity #222 is open after a failed test-stage run and is not verified. |
-| `AZM-businessPortal` | latest verified main includes #81 | Storefront/Studio hardening and API error/multipart contract work are merged; no open PR. |
-| `AZM-frontend` | `a1b17dc92671f67ad0b5696ec05029ddbddd650d` | Canonical USDC/GHS FX presentation is enforced across core customer flows; PR #88 updates checkout action version and remains open. |
-| `AZM-adminPortal` | `44b3588b5a134b84a528c533e39ba36b9a9c297f` | Withdrawal optimistic mutation concurrency safety is merged; no open PR. |
-| `AZM-Planning` | current main | Active loop and current-state navigation have been reconciled to September 5. |
+- Backend main: `7a24a380bf6a5da4641dc4de3bc904ed31476197` — includes OrderTracking atomic initialization/serialization, storefront availability and Studio hardening, provider-attempt identity foundation, and BusinessTaxPreset default-authority serialization + database uniqueness migration. Backend PR #223 CI modernization and #224 tax authority are merged.
+- Flutter main: `c13481a37184d602d4555a92306bd7b73a2d8db9` — canonical USDC/GHS FX convergence plus CI checkout modernization. Flutter PR #88 is merged.
+- Business Portal main: latest verified main includes #81 API/storefront hardening; no open PR.
+- Admin Portal main: latest verified main includes withdrawal optimistic concurrency hardening; no open PR.
+- Planning main: active loop/ledger reconciled to this state.
 
-## 2. Verified backend progress since the previous planning snapshot
+## Verified recent work
 
-- PR #205 storefront safe-publish/draft-mutation serialization merged.
-- PR #206 Studio geometry/tree ownership validation merged.
-- PR #207 safe storefront discovery query correction merged.
-- PR #208 removed unsafe storefront route shadows and serialized experience mutation.
-- PR #209 repaired render-cache Redis readiness.
-- PR #210 invalidated storefront cache on re-enable.
-- PR #216 disabled checkout enforcement merged.
-- PR #218 public storefront availability gate merged across checkout/products/theme/public-theme/render.
-- PR #219 discovery now filters suspended, owner-paused and disabled businesses.
-- PR #220 atomically initializes missing `OrderTracking` with unique-order upsert; merged.
-- PR #221 serializes tracking mutations per order, creates event timestamps inside the serialization boundary, safely initializes ETA writes, and validates mutation payload types/lengths; merged after exact-head verification.
-- PR #223 updates backend Actions checkout/setup-node majors to v7; exact-head run #847 succeeded and the PR is merged.
+Backend PRs #220, #221, #223 and #224 are verified/merged. #224 exact-head test run #849 passed. Flutter #88 exact-head Flutter Quality run #343 passed before merge.
 
-## 3. Provider-attempt integrity status
+## Active unresolved work
 
-PR #222 (`fix(finance): bind provider references to one transaction`) remains **open and unverified**.
+Backend PR #222 (`fix(finance): bind provider references to one transaction`) remains open and unmerged. Exact-head Actions run `33943464182` reached the database/test phase successfully but failed during `Run tests`; the connector exposes the failed job summary but not its underlying test output. The migration establishes the provider-attempt table/unique provider-reference identity, so the intended correlation invariant remains valid, but the PR must not be promoted until the concrete test failure is deterministically obtained or reproduced.
 
-The migration `20260830_provider_settlement_attempt_identity` confirms the durable table and unique `(provider, providerReference)` identity are present in the database. The PR correctly attempts to ensure that identity is bound to one canonical `TransactionHistory` row and rejects cross-transaction reuse, including the concurrent `ON CONFLICT` path.
+Flutter PR #89 (`fix/dine-in-payment-replay-convergence`) is open at exact head `e17951afed6c2262436bb90eac239fba2f9aa140`; its Flutter Quality run is still in progress. It changes only the payment error/recovery path so a committed CLOSED tab converges to success after a lost payment response.
 
-Its latest Actions run completed environment setup, dependency installation, database schema application and Prisma generation successfully, but the `Run tests` step failed. The connector can expose the failed step summary but not the underlying test log text. Therefore the change is intentionally not promoted until the exact failure can be obtained or otherwise deterministically reproduced.
+## Next P0 sequence
 
-## 4. Cross-repo customer/storefront progress
+1. Diagnose/fix backend #222 without weakening its invariant.
+2. Prove dine-in cross-client lifecycle end-to-end: finalize → invoice creation → payment → CLOSED, including idempotent replay, tips, duplicate/concurrent payment attempts, timeout/reconnect/background recovery, and Business Portal/Admin visibility.
+3. Complete POS/invoice tax-authority producer/consumer audit now that BusinessTaxPreset default authority is locked down.
+4. Continue financial/control-plane integrity across withdrawals, wallet, escrow, trades, payroll/EWA, refunds/voids, reservations and admin approvals.
+5. Complete tenant/actor/state-machine coverage across remaining Business OS resources.
+6. Expand Admin financial mutation and operational coverage.
+7. Production readiness: deployment/configuration separation, secrets rotation, migration rollback, observability, worker recovery, anomaly/reconciliation alerts.
+8. Concurrency/load/adversarial waves and release rehearsal.
 
-### Business Portal
+## Important discovered contract
 
-Merged storefront/Studio hardening includes responsive breakpoint inheritance, keyboard tile nudging, responsive preview viewports, custom-HTML sanitization, four-column collision-safe tile geometry, session/socket lifecycle cleanup, multi-page tree ownership preservation, business-category policy aliases, deterministic legacy migration IDs, and typed backend error/multipart upload handling. No open Business Portal PR currently exists.
+`DineInService.finalizeTab()` computes subtotal/grand total from authoritative tab items and transitions OPEN→FINALIZED transactionally; `confirmAndPay()` creates/sends the invoice as needed, pays through the canonical invoice service and transaction-scoped Prisma client, then CAS-closes FINALIZED→CLOSED. Flutter's customer tab is intentionally API-authoritative with socket signals plus 10-second polling. Flutter PR #89 adds an authoritative reread after payment errors to avoid false failure UX when a payment may already be committed.
 
-### Flutter customer app
+The remaining dine-in audit must verify that the Business Portal and Admin Portal observe the same authoritative invoice/payment/tip state without introducing second sources of truth.
 
-The FX layer now treats canonical `USDC/GHS` retail provenance as authoritative for live conversion and customer display; legacy fields remain compatibility data but are non-canonical. Home market rate/history, rate alerts and Susu display align with the same canonical pair contract. PR #88 is limited to CI action maintenance and is still open.
-
-### Admin Portal
-
-The withdrawal queue uses targeted optimistic updates and rollback protection so stale responses/refetches do not overwrite newer state. Batch approval uses the same concurrency-safe protection. No open Admin Portal PR currently exists.
-
-## 5. Active P0 queue
-
-1. Diagnose and repair backend PR #222; exact-head full CI and required recovery evidence before merge.
-2. Finish the canonical POS/invoice tax-authority trace across `BusinessInvoice`, `BusinessInvoiceTaxLine`, `BusinessTaxPreset`, and all producers/consumers before changing legacy tax policy.
-3. Complete the cross-client dine-in lifecycle proof: `confirmAndPay`, finalize/payment replay, tips, timeout recovery, reconnect/background ordering, multi-tab races, location/table context, and authoritative customer/business/admin convergence.
-4. Continue financial mutation integrity: wallet, escrow, trades, EWA/payroll, orders/invoices, reservations and Admin approvals/releases. For every mutation audit read → decision → write and require atomic/idempotent/state-safe behavior.
-5. Complete tenant/actor/state-machine matrix across remaining Business OS resources, reports, notifications, invoices, orders, reservations and administrative actions.
-6. Expand Admin financial mutation tests and operational evidence beyond withdrawals.
-7. Prove production operations: environment separation, secrets/rotation, migration rollback, observability, worker recovery and reconciliation alerts.
-8. Execute concurrency/load/red-team waves only after the critical correctness gates above are green.
-9. Finish remaining Experience Blueprint and cross-repo API contract convergence, then move to measured UX/performance and release rehearsal.
-
-## 6. Release definition
-
-AZAMAN is not considered ready because the application builds. Release readiness requires authoritative sources of truth, tenant-safe authorization, atomic/idempotent mutations, enforced state transitions, realtime convergence with authoritative refetch, auditable operations, migration/deployment/rollback evidence, critical Admin safeguards, and demonstrated concurrency/load/adversarial resilience.
-
-## 7. Planning hygiene
+## Planning hygiene
 
 Never promote failed or merely opened PRs into the verified baseline. Never recreate work already present on current `main`. After every verified merge, reconcile this file, `ACTIVE_LOOP.md` and `EXECUTION_LEDGER.json` before selecting the next P0. Historical superseded PRs remain historical evidence only.
