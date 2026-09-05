@@ -1,0 +1,1 @@
+Scratch branch only. Not a release artifact. Canonical Planning main remains authoritative.
