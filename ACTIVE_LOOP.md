@@ -21,15 +21,15 @@
 
 - Backend main: `ad6110213f5a859fd9e47db75d0f36682c32974e`; invoice creation/payment concurrency proofs are merged and verified with green exact-head tests and database recovery.
 - Flutter main: `bf0589583522b44965a63379486ab33cb9d484e2`; durable dine-in recovery proof is merged and verified.
-- Business Portal main: `a1002e0846f7160298dc58e3f8261e675a9a1c5f`; PR #88 pointer palette insertion, PR #89 first Wave A token slice, and PR #91 second Flutter-grounded token slice are merged. PR #91 exact-head run #258 passed smoke, tests and build.
+- Business Portal main: `83c1749e887f20846ec7af4876e5291816115ec7`; PR #88 pointer palette insertion, PR #89 first Wave A token slice, PR #91 second token-grounding slice, PR #92 renderer wiring, and PR #93 bounded device-frame scroll are merged and verified. PR #92 exact-head run #261 and PR #93 exact-head run #262 passed smoke, tests and build.
 - PR #87 is closed/superseded; its exact-head fix run #252 passed, but the branch was over the change budget and none of that implementation counts as main.
 - Admin Portal main retains the verified withdrawal concurrency and financial API/settings boundary work.
 
 ### Studio acceptance gates
 
-- **Wave A — REOPENED / partial:** the preview must use shared token data routed through `toPreviewPx()` with zero numeric inline pixel literals in preview style objects. Current main has a verified first slice (HeroHeader, QuickInfoBar, ProductGrid, ReviewCarousel, ContactCard) and a second grounded token slice (Showcase Gallery, Location Map, Video Player). Those second-slice tokens still need renderer wiring. Remaining renderer and frame/chrome geometry must be tokenized in budgeted slices, with every token grounded against current Flutter source before completion.
-- **Wave B — REOPENED / partial:** palette insertion is now Pointer Events on main with capture, pointermove/up/cancel, before/after hit testing and click suppression. Acceptance still requires rechecking the historical magnetic snap/fuse/settle criteria against current Studio V2 code with executable evidence.
-- **Wave C — REOPENED / partial:** current main retains device emulation tokens/stage but does not yet have the unmerged PR #87 scroll implementation. Acceptance requires a bounded real-overflow phone frame, executable scroll proof, responsive relayout, and demonstrable clipping/overflow.
+- **Wave A — REOPENED / partial:** current main has verified tokenized slices for HeroHeader/QuickInfoBar/ProductGrid/ReviewCarousel/ContactCard and now Showcase/Location/Video, with the latter wired through shared token helpers. Remaining renderer and frame/chrome geometry must be tokenized in budgeted slices, with every token grounded against current Flutter source before completion.
+- **Wave B — REOPENED / partial:** current V2 uses Pointer Events for palette insertion with capture, pointermove/up/cancel, before/after hit testing and click suppression. The historical 2D `StorefrontCanvas` magnetic snap/fuse/settle engine is not mounted by V2, so it is not to be reintroduced merely to satisfy a historical acceptance path; keep V2 semantic-tree interaction as the current authority.
+- **Wave C — REOPENED / partial:** main now has a bounded `studio-device-scroll-viewport` around the transformed device preview with vertical auto-scroll, horizontal clipping and overscroll containment. End-to-end rendered scroll, responsive relayout and clipping evidence still need execution on current UI.
 
 ### Priority after Studio acceptance
 
