@@ -10,7 +10,7 @@
 4. Never duplicate work already on current main.
 5. CI failures are defects to diagnose and fix, not reasons to weaken tests.
 6. While CI runs, perform independent audits instead of waiting idle.
-7. After verified completion, advance immediately to the next unchecked P0.
+7. **Studio wave completion requires a criterion-by-criterion acceptance audit against current code and matching executable evidence; a historical green run is insufficient.**
 
 ## Current loop
 
@@ -18,47 +18,28 @@
 
 ### Verified current GitHub state — 2026-09-05 UTC
 
-- Backend main: `ad6110213f5a859fd9e47db75d0f36682c32974e`; PR #230 security, #231 retail catalog, #232 dine-in recovery notification, #233 executable invoice-to-closure proof, #234 concurrent invoice-payment replay proof, and #235 concurrent invoice-creation replay proof are merged and verified. PR #234 exact tested head `97709b8d...` passed full tests and database recovery; PR #235 exact tested head `d18e486f...` passed full tests and database recovery.
-- Flutter main: `bf0589583522b44965a63379486ab33cb9d484e2`; PR #90 durable dine-in client recovery proof is merged and verified.
-- Business Portal main: `62ceb099cafd1832cb45ba7cb14f14e18d4c2c1f`; Studio Wave A/B/C are merged and verified. PR #86 exact tested head `85bf12bb...` passed smoke, 148/148 tests, production build.
-- Admin Portal main: latest verified withdrawal optimistic concurrency hardening and financial API/settings boundary work remain on main.
-- Planning main: reconciled through Backend PR #235 merge.
+- Backend main: `ad6110213f5a859fd9e47db75d0f36682c32974e`; invoice creation/payment concurrency proofs are merged and verified with green exact-head tests and database recovery.
+- Flutter main: `bf0589583522b44965a63379486ab33cb9d484e2`; durable dine-in recovery proof is merged and verified.
+- Business Portal main: `62ceb099cafd1832cb45ba7cb14f14e18d4c2c1f`. Historical Studio Wave A/B/C implementation is merged, but acceptance is **REOPENED**.
+- Business Portal PR #87 is the active Studio remediation slice; it is not verified or complete.
+- Admin Portal main retains the verified withdrawal concurrency and financial API/settings boundary work.
 
-### Active P0 work
+### Studio acceptance gates
 
-#### 1. Cross-client dine-in lifecycle executable proof
+- **Wave A — REOPENED:** `StorefrontPhonePreview.jsx` renderer geometry is being routed through `toPreviewPx()` and shared tokens. Acceptance requires exact-head CI plus final token-grounding review against Flutter widget implementations and zero numeric inline pixel geometry in preview style objects.
+- **Wave B — REOPENED / partial:** Studio V2 palette insertion now uses Pointer Events with capture and before/after hit testing. Acceptance still requires complete pointer capture/snap/fuse/settle executable evidence and no HTML5 drag surface.
+- **Wave C — REOPENED / partial:** the phone frame is now bounded and scrollable using real overflow. Acceptance still requires executable proof of scrolling, responsive relayout, and demonstrable clipping/overflow behavior.
 
-Core server orchestration, concurrent payment replay behavior, concurrent invoice creation replay behavior, and Flutter durable recovery are proven. Remaining work is stronger executable cross-client evidence: tip propagation through all views, lost-response/reconnect/background recovery, multi-tab races, and authoritative Business/Admin convergence.
+### Priority after Studio acceptance
 
-Existing Business Portal notification projection already invalidates legacy `openTabs` and `dineInTab` roots for `DINE_IN_TAB_*` events, so do not duplicate that implementation; strengthen missing executable behavior only.
-
-#### 2. Canonical business-invoice caller/idempotency audit
-
-Concurrent payment and creation race behavior now have executable proofs at the canonical boundaries. The inspected business routes expose a single `POST /invoices` creation producer, and the controller delegates it to the canonical creation boundary. Continue repository-tree/file inspection only for genuinely unaccounted runtime creation paths; do not duplicate the existing boundary.
-
-#### 3. Financial/control-plane integrity
-
-Now the next engineering frontier: advance through withdrawals, escrow disputes, fee profiles, War Room, KPI accuracy, tenant/state/realtime correctness and operational/load evidence. Prioritize money-moving/admin-authority mutations over cosmetic UI.
-
-#### 4. Production readiness and adversarial verification
-
-Prove configuration separation, secret handling/rotation, migration rollback discipline, observability, worker recovery, anomaly alerts, concurrency/load behavior and release rehearsal.
-
-## Verified architectural contracts
-
-- Dine-in authority is backend-owned: `OPEN → FINALIZED → CLOSED`.
-- Socket messages are invalidation/convergence signals, never payment proof.
-- Business Portal refetches authoritative API state after relevant notifications.
-- Flutter accepts ambiguous payment outcomes as success only after durable reread proves the requested tab is `CLOSED`.
-- POS tax authority comes from the business default `BusinessTaxPreset` through the canonical invoice calculation path; authoritative tax lines persist with ledger metadata.
-- Studio is semantic-tree based. Wave A/B/C include no AI generation, prompt compiler, free-form canvas or localStorage persistence.
-- Studio Wave C keeps measured Flutter geometry separate from display presets and uses token-driven phone/tablet/desktop stage emulation.
-- Business invoice creation and payment both use deterministic durable idempotency anchors with replay rather than duplicate money movement.
+1. Finish cross-client dine-in executable proof: tips, lost-response/reconnect/background recovery, multi-tab races, Business/Admin authoritative convergence.
+2. Advance financial/control-plane integrity: withdrawals, escrow disputes, fee controls, War Room, KPI accuracy, tenant/state/realtime and operational/load evidence.
+3. Production readiness and adversarial/release rehearsal.
 
 ## Merge gate
 
-No financial, tenant, state-machine or cross-repo authority change is complete until exact-head CI is green and required database recovery evidence passes, followed by verification on main. Studio changes require exact-head smoke/test/build success.
+No financial, tenant, state-machine or cross-repo authority change is complete until exact-head CI is green and required database recovery evidence passes, followed by verification on main. Studio changes require exact-head smoke/test/build success **and the wave acceptance list must be rechecked against current code before status becomes complete**.
 
 ## Planning synchronization
 
-After each verified merge, reconcile `CURRENT_STATE.md`, this file, and `EXECUTION_LEDGER.json` before selecting the next P0.
+After every verified merge, reconcile `CURRENT_STATE.md`, this file and `EXECUTION_LEDGER.json`. Never write `complete` for a Studio wave unless every listed acceptance criterion is explicitly satisfied by current code plus matching executable evidence.
