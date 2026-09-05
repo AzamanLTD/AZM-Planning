@@ -20,37 +20,33 @@
 
 ### Verified current GitHub state (2026-09-05 UTC)
 
-- Backend main: `d230aa0d5e865f3b39b828f2101a01afb20ac762`; security remediation PR #230 and storefront catalog PR #231 are merged and verified.
+- Backend main: `7afbe1a7318402519aafed6142fdb7364f9df86d`; security remediation PR #230, retail catalog PR #231, and dine-in recovery notification PR #232 are merged and verified.
 - Flutter main: `c13481a37184d602d4555a92306bd7b73a2d8db9`; durable dine-in payment recovery PR #89 is merged.
-- Business Portal main: `563bfecf8187e93a6b5990505ecfee64efd81a34`; Studio Wave A retail preview completion PR #84 is merged after exact-head CI passed smoke tests, full tests, and build.
+- Business Portal main: `73b9763aa90c258ab496c2c355b78384bbe53568`; Studio Wave A and Wave B are merged. Wave B PR #85 exact-head CI run #239 passed smoke, 46/46 test files / 146 tests, and production build.
 - Admin Portal main: latest verified withdrawal optimistic-concurrency hardening remains on main.
-- Planning main: reconciled through this update.
+- Planning main: reconciliation is in progress for these newly verified merges.
 
 ### Active P0 work
 
-#### 1. Dine-in payment recovery notification proof
+#### 1. Cross-client dine-in lifecycle executable proof
 
-PR #232 is the current active backend slice. The durable recovery path now emits the same `DINE_IN_TAB_PAID` business-owner notification as the normal success path. Exact-head CI must pass before merge; then verify backend main.
+The underlying authority is now hardened through `OPEN → FINALIZED → CLOSED`, durable payment replay, concurrent payment recovery, and business-owner notification on recovered payment. The next package is executable proof across Flutter → Backend → Business Portal → Admin: finalize/invoice/payment/CLOSED, replay/races/tips, lost-response/reconnect/background recovery, multi-tab races, and authoritative read-model convergence.
 
-#### 2. Cross-client dine-in lifecycle executable proof
+#### 2. Canonical business-invoice idempotency/replay audit
 
-Convert the hardened authority into end-to-end proof across Flutter → Backend → Business Portal → Admin. Cover finalize/invoice/payment/CLOSED, idempotent replay, duplicate/concurrent payment attempts, tips, lost-response timeout/reconnect/background recovery, multi-tab races, and authoritative read-model convergence.
+Map remaining runtime `createInvoice` callers outside POS using repository-tree/file inspection where GitHub search is unavailable. Preserve tenant/customer binding, canonical invoice math, and replay semantics; change only concrete gaps.
 
-#### 3. Canonical business-invoice idempotency/replay audit
+#### 3. Storefront Studio continuation
 
-Map all runtime `createInvoice` callers outside POS, preserve tenant/customer binding and canonical invoice math, and harden durable replay where the current service contract is still only uniqueness-based.
+Wave B is verified and merged. Do not broaden behavior until a concrete gap is identified. Next Studio target is Wave C device emulation: actual 412x892 phone frame, scrollable content, and expanded-width breakpoint behavior while preserving Wave A/B contracts.
 
-#### 4. Storefront Studio Wave B
+#### 4. Financial/control-plane integrity
 
-Wave A is verified and merged. Reuse its immutable measured token source and semantic/runtime adapter. Wave B may now introduce pointer capture, magnetic snap, connected-group fusion, and deterministic settle animation, but must preserve the semantic-tree model and avoid any AI/free-canvas/localStorage behavior.
+Continue tenant/state/realtime waves across withdrawals, escrow disputes, fee controls, War Room, KPI accuracy, payroll/EWA, refunds/voids, reservations, approvals and operational/load evidence.
 
-#### 5. Financial/control-plane integrity
+#### 5. Production readiness and adversarial verification
 
-Continue tenant/state/realtime waves across withdrawals, wallet, escrow, trades, payroll/EWA, refunds/voids, reservations and admin approvals.
-
-#### 6. Production readiness and adversarial verification
-
-Prove deployment/configuration separation, secret handling/rotation, migration rollback discipline, observability, worker recovery, reconciliation/anomaly alerts, concurrency/load behavior, and release rehearsal.
+Prove deployment/configuration separation, secret handling/rotation, migration rollback discipline, observability, worker recovery, anomaly alerts, concurrency/load behavior and release rehearsal.
 
 ## Parallel execution rule
 
@@ -60,7 +56,7 @@ When a CI run is active, perform independent audits, contract tracing, or reposi
 
 No financial, tenant, state-machine or cross-repo authority change is considered complete until its exact PR head has passed the relevant full test/type/build gate and all required database recovery evidence, followed by verification on `main`.
 
-Studio UI changes must pass the Business Portal smoke/test/build gate and targeted Storefront Studio contract tests before merge.
+Studio UI changes must pass the Business Portal smoke/test/build gate and targeted Studio contract tests before merge.
 
 ## Planning synchronization
 
@@ -69,7 +65,7 @@ After every verified merge:
 1. reconcile current repo main SHAs;
 2. update `CURRENT_STATE.md` with evidence and residual risk;
 3. update `ACTIVE_LOOP.md` to the next P0;
-4. update `EXECUTION_LEDGER.json` with the verified implementation/CI evidence;
+4. update `EXECUTION_LEDGER.json` with verified implementation/CI evidence;
 5. continue immediately to the next unchecked P0.
 
 ## Duplicate-work prohibition
