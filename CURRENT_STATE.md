@@ -5,15 +5,17 @@
 
 ## Current verified baseline
 
-- Backend main: `205bfae0082303253638c40828df9928f820d7cb` — security remediation, storefront retail catalog alignment, recovered dine-in payment notification hardening, executable invoice-to-closure orchestration proof, and concurrent business-invoice payment replay proof are merged and verified.
+- Backend main: `ad6110213f5a859fd9e47db75d0f36682c32974e` — security remediation, storefront retail catalog alignment, recovered dine-in payment notification hardening, executable invoice-to-closure orchestration proof, concurrent invoice payment replay proof, and concurrent invoice creation replay proof are merged and verified.
 - Flutter main: `bf0589583522b44965a63379486ab33cb9d484e2` — canonical USDC/GHS FX convergence, CI modernization, durable dine-in payment recovery, and recovery parsing proof are merged and verified.
 - Business Portal main: `62ceb099cafd1832cb45ba7cb14f14e18d4c2c1f` — Studio Wave A, Wave B, and Wave C device emulation are merged and verified. Wave C exact-head CI passed smoke, 148/148 tests, and production build.
-- Admin Portal main: latest verified main includes withdrawal optimistic concurrency hardening.
-- Planning main: reconciled with Backend PR #234 and all prior verified merges.
+- Admin Portal main: latest verified main includes withdrawal optimistic concurrency hardening plus the earlier financial API/settings boundary work.
+- Planning main: reconciled with Backend PR #235 and all prior verified merges.
 
 ## Verified recent work
 
-Backend PR #234 (`test(invoice): prove concurrent payment replay safety`) merged at `205bfae0...` from exact tested head `97709b8d...`. Exact-head run #904 passed the full test suite and the database backup/restore drill. The test proves two concurrent payment requests share one atomic invoice claim: exactly one settlement and one durable replay, with no duplicate balance/history/fee mutations.
+Backend PR #235 (`test: prove concurrent invoice creation replays committed invoice`) merged at `ad611021...` from exact tested head `d18e486f...`. Exact-head run #905 passed the full test suite and database backup/restore drill. The test proves two concurrent creation callers that both miss the preflight lookup converge through the durable unique idempotency-key race: one creates and one replays the same committed invoice.
+
+Backend PR #234 (`test(invoice): prove concurrent payment replay safety`) merged at `205bfae0...` from exact tested head `97709b8d...`. Exact-head run #904 passed full tests and database backup/restore. It proves one atomic settlement and one durable payment replay without duplicate financial mutations.
 
 Business Portal PR #86 (`feat(studio): add deterministic device emulation`) merged at `62ceb099...` from exact tested head `85bf12bb...`. It adds token-driven Phone/Tablet/Desktop stage emulation while preserving the measured Flutter `device.phone` contract and semantic responsive runtime model.
 
@@ -26,8 +28,8 @@ Flutter PR #90 (`test(dine-in): prove durable client payment recovery`) merged a
 ## Active unresolved work
 
 - Cross-client dine-in lifecycle still needs broader executable evidence across real client boundaries: duplicate/concurrent payment, tips, lost response, reconnect/background, multi-tab races, and Business/Admin convergence.
-- Canonical business-invoice caller/idempotency audit is now actively under executable proof: PR #235 tests concurrent requests against the canonical creation boundary; remaining caller discovery continues through repository-tree/file inspection because GitHub code search is unreliable.
-- Financial/control-plane integrity remains the next engineering frontier after invoice proof: withdrawals beyond existing optimistic concurrency, escrow disputes, fee controls, War Room, KPI accuracy, tenant/state/realtime and load evidence.
+- Canonical business-invoice creation/payment idempotency now has executable concurrent proofs. Remaining caller discovery continues through repository-tree/file inspection because GitHub code search is unreliable; no concrete second production creation path has been identified in the inspected business routes.
+- Financial/control-plane integrity is now the next engineering frontier: withdrawals beyond existing optimistic concurrency, escrow disputes, fee controls, War Room, KPI accuracy, tenant/state/realtime and load evidence.
 - Production readiness remains future P0.
 
 ## Important discovered contracts
@@ -51,10 +53,10 @@ Flutter PR #90 (`test(dine-in): prove durable client payment recovery`) merged a
 
 ## Next P0 sequence
 
-1. Finish cross-client dine-in executable proof, emphasizing duplicate/concurrent payment, recovery/reconnect/background and Business/Admin authoritative convergence.
-2. Complete canonical business-invoice caller/idempotency audit and verify PR #235 with exact-head CI + DB recovery; then perform any evidence-driven production fix only.
-3. Advance financial/control-plane integrity across withdrawals, escrow disputes, fee controls, War Room, KPI accuracy, tenant/state/realtime and operational/load evidence.
-4. Production readiness and adversarial/release rehearsal.
+1. Finish cross-client dine-in executable proof, emphasizing tips, lost-response/reconnect/background and Business/Admin authoritative convergence.
+2. Advance financial/control-plane integrity across withdrawals, escrow disputes, fee controls, War Room, KPI accuracy, tenant/state/realtime and operational/load evidence.
+3. Production readiness and adversarial/release rehearsal.
+4. Studio legacy-geometry tokenization and bundle-size performance can proceed as isolated slices without displacing money/state authority work.
 
 ## Planning hygiene
 
