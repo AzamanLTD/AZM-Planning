@@ -20,31 +20,29 @@
 
 ### Verified current GitHub state (2026-09-05 UTC)
 
-- Backend main: `b82c995646ee930dfa3b901b012ce3bd07e92f73`; POS tax authority PR #229 is merged after exact-head CI passed.
+- Backend main: `b103c28e6a89dce79feb72b332523828d8065963`; PR #230 security remediation is merged and post-merge main CI run #896 is green.
 - Flutter main: `c13481a37184d602d4555a92306bd7b73a2d8db9`; durable dine-in payment recovery PR #89 is merged.
-- Business Portal main: `eb7b4c004d666f1263987b07219deb58d44a7b44`; Studio Wave A token-foundation PR #82 is merged after Business Portal CI run #229 passed smoke tests, full tests, and build.
+- Business Portal main: `563bfecf8187e93a6b5990505ecfee64efd81a34`; Studio Wave A retail preview completion PR #84 is merged after exact-head CI run #234 passed smoke tests, full tests, and build.
 - Admin Portal main: latest verified withdrawal optimistic-concurrency hardening remains on main.
-- Planning main: reconciled through this file update and the matching `CURRENT_STATE.md` reconciliation.
+- Planning main: reconciled through this update.
 
 ### Active P0 work
 
-#### 1. Storefront Studio Wave A completion
+#### 1. Backend storefront retail catalog alignment
 
-Complete the existing deterministic Studio editor-quality package without changing the customer runtime contract or adding AI. The remaining Wave A slice is to move every preview geometry/type-scale literal in `StorefrontPhonePreview.jsx` behind `storefrontStudioTokens.js`, use the one explicit `PREVIEW_SCALE`, and add a real `retail_collection_box` preview so all 16 registered Flutter widget types are represented.
+PR #231 is the current active backend slice. It adds the already-supported `retail_collection_box` to the persistent storefront widget catalog as a FREE commerce widget, keeps display order contiguous, and adds a focused contract test. Do not promote it to verified until exact-head backend CI and post-merge main verification succeed.
 
-Ground every new token in the actual Flutter storefront widget implementations. Do not estimate tablet/desktop geometry or invent new responsive behavior; only encode values supported by the source or existing Studio semantics. Keep `storefrontStudioRuntimeAdapter` pure and contract-compatible.
+#### 2. Cross-client dine-in lifecycle executable proof
 
-#### 2. Backend production dependency security
+Convert the already-implemented authority into executable proof across Flutter → Backend → Business Portal → Admin. Cover finalize/invoice/payment/CLOSED, idempotent replay, duplicate/concurrent payment attempts, tips, lost-response timeout/reconnect/background recovery, multi-tab races, and authoritative read-model convergence.
 
-Run the current lockfile's production dependency audit and remediate only confirmed findings on a dedicated backend branch. Include the known esbuild finding and verify all remaining production advisories rather than relying on package declarations alone. Each remediation stays independently testable and under the diff cap.
-
-#### 3. Cross-client dine-in lifecycle executable proof
-
-Convert the already-implemented authority into executable proof across Flutter → Backend → Business Portal → Admin. Cover finalize/invoice/payment/close, idempotent replay, duplicate/concurrent payment attempts, tips, lost-response timeout/reconnect/background recovery, multi-tab races, and authoritative read-model convergence.
-
-#### 4. Canonical business-invoice idempotency/replay audit
+#### 3. Canonical business-invoice idempotency/replay audit
 
 Map all runtime `createInvoice` callers outside POS, preserve tenant/customer binding and canonical invoice math, and harden durable replay where the current service contract is still only uniqueness-based.
+
+#### 4. Storefront Studio Wave B
+
+Wave A is verified and merged. Reuse its immutable measured token source and semantic/runtime adapter. Wave B may now introduce pointer capture, magnetic snap, connected-group fusing, and deterministic settle animation, but must preserve the semantic-tree model and avoid any AI/free-canvas/localStorage behavior.
 
 #### 5. Financial/control-plane integrity
 
@@ -62,7 +60,7 @@ When a CI run is active, perform independent audits, contract tracing, or reposi
 
 No financial, tenant, state-machine or cross-repo authority change is considered complete until its exact PR head has passed the relevant full test/type/build gate and all required database recovery evidence, followed by verification on `main`.
 
-Studio UI changes must pass the Business Portal smoke/test/build gate and the targeted Storefront Studio contract tests before merge.
+Studio UI changes must pass the Business Portal smoke/test/build gate and targeted Storefront Studio contract tests before merge.
 
 ## Planning synchronization
 
