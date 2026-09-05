@@ -116,3 +116,31 @@ Refactor the mini-widget renderers, `storefrontStudioResponsive.js`, and the vie
 ## Why this matters (for prioritization)
 
 The Storefront/Experience Studio is the merchant-facing product surface that makes AZAMAN sellable as a commerce OS. It is currently the weakest felt-quality surface while being one of the best-tested. This upgrade converts it from "functional editor" to "editor merchants enjoy using", with no new authority, no new backend surface, and no AI anywhere.
+
+---
+
+## Appendix — verified Flutter runtime constants (measured 2026-09-05)
+
+Source: `AZM-frontend/lib/storefront/` — the registry (`core/storefront_widget_registry.dart`) has **16 widget types**; the Business Portal preview (`StorefrontPhonePreview.jsx`) covers **15**. `retail_collection_box` renders as the dashed FallbackTile in the Studio — merchants currently see a placeholder for a real Nitro widget. Fix as part of Wave A.
+
+### Drift measured against the real runtime
+
+| Constant | Flutter (real, dp) | Business Portal preview (CSS px) | Ratio |
+|---|---|---|---|
+| Hero height compact | 140 | 60 | 2.33x |
+| Hero height standard | 200 | 80 | 2.50x |
+| Hero height tall | 260 | 100 | 2.60x |
+| Hero title fontSize | 24 | 11 | 2.18x |
+| Hero subtitle fontSize | 14 | 9 | 1.56x |
+| QuickInfoBar padding | 16h / 10v | 6 / 10 | — |
+| QuickInfoBar label fontSize | 12 | 9 | 1.33x |
+| Product grid spacing | 10 / 10, aspect 0.75 | guessed per-renderer | — |
+
+The scale factors are inconsistent per widget — the preview is not a miniaturization of the real app, it is a different layout. Proportions lie, which is worse than being small.
+
+### Wave A grounding rule
+
+- `storefrontStudioTokens.js` must hold **the Flutter dp values as the source of truth** (hero 140/200/260, title 24, subtitle 14, quick-info 12, grid 10/10 aspect 0.75, hero radius 12, etc.) plus **one explicit `PREVIEW_SCALE` factor** applied uniformly for the canvas.
+- Extract remaining constants by reading each `lib/storefront/widgets/*_widget.dart` before writing its token — never estimate.
+- Add `retail_collection_box` to the Business Portal `WIDGET_RENDERERS` map so preview coverage reaches 16/16.
+- The responsive/viewport module and the runtime adapter read the same tokens; adapter output shape is unchanged (tokens affect Studio preview only, not the customer runtime contract).
