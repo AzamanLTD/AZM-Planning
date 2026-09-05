@@ -1,0 +1,1 @@
+Wave A complete; dine-in implementation proof correlated; four-surface E2E/Admin projection residual explicit; Wave B 2D restoration deferred pending V2 spatial contract.
