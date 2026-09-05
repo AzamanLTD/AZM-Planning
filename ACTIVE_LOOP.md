@@ -18,23 +18,23 @@
 
 ### Verified current GitHub state — 2026-09-05 UTC
 
-- Backend main: `526f659f83af5d7fc708a0de964abad707d5a6a7`; PR #230 security, #231 retail catalog, #232 dine-in recovery notification, and #233 executable invoice-to-closure proof are merged and verified.
+- Backend main: `205bfae0082303253638c40828df9928f820d7cb`; PR #230 security, #231 retail catalog, #232 dine-in recovery notification, #233 executable invoice-to-closure proof, and #234 concurrent invoice-payment replay proof are merged and verified. PR #234 exact tested head `97709b8d...` passed full tests and database recovery.
 - Flutter main: `bf0589583522b44965a63379486ab33cb9d484e2`; PR #90 durable dine-in client recovery proof is merged and verified.
-- Business Portal main: `62ceb099cafd1832cb45ba7cb14f14e18d4c2c1f`; Studio Wave A/B/C are merged and verified. PR #86 exact tested head `85bf12bb...` passed run #245: smoke, 148/148 tests, production build.
+- Business Portal main: `62ceb099cafd1832cb45ba7cb14f14e18d4c2c1f`; Studio Wave A/B/C are merged and verified. PR #86 exact tested head `85bf12bb...` passed smoke, 148/148 tests, production build.
 - Admin Portal main: latest verified withdrawal optimistic concurrency hardening remains on main.
-- Planning main: reconciled through Studio Wave C merge.
+- Planning main: reconciled through Backend PR #234 merge.
 
 ### Active P0 work
 
 #### 1. Cross-client dine-in lifecycle executable proof
 
-Core server orchestration and Flutter durable recovery are proven. Remaining work is stronger executable cross-client evidence: duplicate/concurrent payment, tip propagation through all views, lost-response/reconnect/background recovery, multi-tab races, and authoritative Business/Admin convergence.
+Core server orchestration, concurrent payment replay behavior, and Flutter durable recovery are proven. Remaining work is stronger executable cross-client evidence: tip propagation through all views, lost-response/reconnect/background recovery, multi-tab races, and authoritative Business/Admin convergence.
 
 Existing Business Portal notification projection already invalidates legacy `openTabs` and `dineInTab` roots for `DINE_IN_TAB_*` events, so do not duplicate that implementation; strengthen missing executable behavior only.
 
 #### 2. Canonical business-invoice caller/idempotency audit
 
-Map remaining runtime invoice creation paths through repository-tree/file inspection because GitHub code search is unreliable. Preserve the existing canonical creation boundary, replay validation, tenant binding and canonical tax math. Implement only proven gaps.
+PR #234 proved concurrent payment settlement/replay safety. PR #235 now adds executable proof that two concurrent creation callers converge through the canonical idempotency boundary when one wins the durable unique-key race. Continue repository-tree/file inspection for any remaining runtime callers and implement only proven gaps.
 
 #### 3. Financial/control-plane integrity
 
@@ -53,6 +53,7 @@ Prove configuration separation, secret handling/rotation, migration rollback dis
 - POS tax authority comes from the business default `BusinessTaxPreset` through the canonical invoice calculation path; authoritative tax lines persist with ledger metadata.
 - Studio is semantic-tree based. Wave A/B/C include no AI generation, prompt compiler, free-form canvas or localStorage persistence.
 - Studio Wave C keeps measured Flutter geometry separate from display presets and uses token-driven phone/tablet/desktop stage emulation.
+- Business invoice creation and payment both use deterministic durable idempotency anchors with replay rather than duplicate money movement.
 
 ## Merge gate
 
