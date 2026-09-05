@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-05T09:20:00Z",
+  "updatedAt": "2026-09-05T09:44:00Z",
   "rules": {"sourceOfImplementationTruth":"GitHub main plus exact CI evidence","planningRole":"navigation and continuation state","duplicateWorkPolicy":"verify branches, open PRs, commits, implementations and tests before creating work","completionPolicy":"verified main merge plus exact-head CI plus residual-risk record","continuationPolicy":"complete the active work package before selecting the next P0"},
   "workItems": [
     {"id":"backend-provider-attempt-reference-integrity","repo":"AzamanLTD/AZM-backend","status":"verified","pr":222,"mergeSha":"f8c433be22fa29dd7e0ce7134257020aa56736a8","ci":{"conclusion":"success"}},
@@ -14,6 +14,7 @@
     {"id":"backend-storefront-retail-collection-catalog","repo":"AzamanLTD/AZM-backend","status":"verified","pr":231,"mergeSha":"d230aa0d5e865f3b39b828f2101a01afb20ac762","ci":{"productionAudit":"success","tests":"success","dbRecovery":"success"}},
     {"id":"backend-dine-in-payment-recovery-notification","repo":"AzamanLTD/AZM-backend","status":"verified","pr":232,"mergeSha":"7afbe1a7318402519aafed6142fdb7364f9df86d","ci":{"exactHead":"186ac370bc75c60d5980a0bb8c3d308f812b94f0","productionAudit":"success","tests":"success","dbRecovery":"success","postMergeMain":"verified"}},
     {"id":"backend-dine-in-lifecycle-orchestration-proof","repo":"AzamanLTD/AZM-backend","status":"verified","pr":233,"mergeSha":"526f659f83af5d7fc708a0de964abad707d5a6a7","ci":{"exactHead":"2453729846cf15d95bf6ab637d26ae19f3b735fa","conclusion":"success","postMergeMain":"verified"}},
+    {"id":"backend-invoice-payment-concurrency-proof","repo":"AzamanLTD/AZM-backend","status":"verified","pr":234,"mergeSha":"205bfae0082303253638c40828df9928f820d7cb","ci":{"exactHead":"97709b8d5d42494c460997dd0053eabfc7a2dea6","run":33958597915,"conclusion":"success","tests":"success","dbRecovery":"success"}},
     {"id":"frontend-dine-in-payment-replay-convergence","repo":"AzamanLTD/AZM-frontend","status":"verified","pr":89,"mergeSha":"362594350127acf2a9ae55695d2320c41c729e33"},
     {"id":"frontend-dine-in-client-recovery-proof","repo":"AzamanLTD/AZM-frontend","status":"verified","pr":90,"mergeSha":"bf0589583522b44965a63379486ab33cb9d484e2","ci":{"exactHead":"e479e07546d723afb48d6d841ebfecde452b30f8","conclusion":"success"}},
     {"id":"business-portal-api-contract-hardening","repo":"AzamanLTD/AZM-businessPortal","status":"verified","pr":81,"mergeSha":"6d56ac3af347b3f0cc494218a5709ba55efa383e"},
@@ -24,7 +25,7 @@
     {"id":"admin-withdrawal-optimistic-concurrency","repo":"AzamanLTD/AZM-adminPortal","status":"verified","pr":96,"mergeSha":"44b3588b5a134b84a528c533e39ba36b9a9c297f"},
     {"id":"cross-repo-dine-in-lifecycle-proof","repo":"cross-repo","status":"implementation-verified-residual-proof","objective":"Implementation hardened across finalize/payment/close and customer recovery; executable cross-client evidence remains."},
     {"id":"cross-repo-dine-in-lifecycle-executable-proof","repo":"cross-repo","status":"active-p0","objective":"Add executable cross-client proof for finalize/invoice/payment/CLOSED, replay/races/tips/reconnect/background recovery and Business/Admin authoritative convergence."},
-    {"id":"backend-business-invoice-idempotency-audit","repo":"AzamanLTD/AZM-backend","status":"queued-next","objective":"Map remaining createInvoice callers and harden durable idempotency/replay outside POS without duplicating invoice math."},
+    {"id":"backend-business-invoice-idempotency-audit","repo":"AzamanLTD/AZM-backend","status":"active","pr":235,"objective":"Prove concurrent canonical business-invoice creation converges on one committed invoice without duplicate creation or intent drift."},
     {"id":"admin-financial-mutation-coverage","repo":"AzamanLTD/AZM-adminPortal","status":"queued","objective":"Expand withdrawals, escrow disputes, fee controls, War Room, KPI accuracy, tenant/state/realtime and operational/load evidence."},
     {"id":"production-release-readiness","repo":"cross-repo","status":"future-p0","objective":"Prove deployment/configuration separation, secrets/rotation, migration rollback, observability, worker recovery, anomaly alerts and release rehearsal."}
   ]
