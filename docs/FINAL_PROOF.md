@@ -1,0 +1,1 @@
+Wave A complete. Dine-in implementation proof verified; live four-surface E2E/Admin projection remains residual. Wave B legacy 2D snap deferred until V2 has canonical spatial authority.
