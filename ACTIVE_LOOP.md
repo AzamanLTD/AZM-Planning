@@ -18,64 +18,77 @@
 
 **Status:** ACTIVE — DO NOT CLOSE
 
-### Verified on current GitHub main
+### Verified current GitHub state (2026-09-05 UTC)
 
-- Backend PR #131 payroll Serializable retry merged/verified.
-- Backend PR #132 shift generic-status mutation boundary merged/verified.
-- Backend PR #135 dine-in settlement/finalization/payment-idempotency hardening merged.
-- Backend PR #136 KYB gate fail-closed hardening merged.
-- Backend PR #137 canonical Business OS Finance routing/runtime repair merged/verified.
-- Backend PR #141 inventory restock atomicity merged/verified.
-- Backend PR #143 corrected the real dine-in test mock failure.
-- Backend PR #144 kiosk scoped capability + PIN rate limiting merged.
-- Backend PR #145 POS settlement/inventory atomicity merged.
-- Backend PR #146 duplicate-line recipe consumption merged.
-- Backend PR #147 transaction-time POS catalog authority merged; exact-head Actions run `33778925260` succeeded through tests and database recovery drill.
-- Backend PR #148 POS location/table/product boundary hardening merged and verified.
-- Backend PR #150 POS idempotency request-intent binding merged as `7bc3f142b7db074843016cd01d21eae070041717`.
-- Backend PR #151 dine-in location/table/branch-product boundary hardening merged as `f2002fd5681aaa5572c84672ded3adc23c511d72`; exact-head Actions run `33819904137` succeeded.
-- Backend PR #152 legacy/locationless dine-in product boundary merged as `e2f9a8e29cf760a2b43e0f2f3429a87ad296391a`; exact-head Actions run `33821697996` succeeded through tests and database recovery drill.
-- Frontend PR #78 dine-in payment failure truthfulness merged/verified.
-- Business Portal PR #44 customer payment authority fix merged.
-- Stale Planning PR #27 closed after becoming obsolete.
+- Backend PR #220 atomically initializes missing `OrderTracking` rows and is merged.
+- Backend PR #221 serializes tracking mutations per order, moves event timestamps inside the serialization boundary, initializes ETA writes safely, and validates tracking mutation payloads; merged/verified exact-head.
+- Backend PR #223 modernizes backend Actions checkout/setup-node major versions; merged after exact-head Actions run #847 passed.
+- Business Portal latest main includes storefront responsive inheritance, keyboard tile movement, responsive preview viewports, custom-HTML preview sanitization, legacy tile collision safety, socket/session lifecycle cleanup, multi-page tree ownership, category policy aliases, deterministic Studio migration IDs, and API error/multipart contract hardening.
+- Flutter latest main uses canonical USDC/GHS retail-rate provenance for live FX, home-market display/history, rate alerts, and Susu display.
+- Admin Portal latest main includes concurrency-safe withdrawal optimistic mutations plus refresh interaction hardening.
+- Backend PR #222 (`fix(finance): bind provider references to one transaction`) is OPEN and intentionally NOT merged; its setup/schema/Prisma stages passed but the test stage failed. Do not promote it until the actual test failure is diagnosed and exact-head CI is green.
+- Flutter PR #88 (`chore(ci): update frontend checkout action`) is OPEN; verify exact-head quality/Android workflows before merge.
+- Business Portal and Admin Portal currently have no open PRs.
 
-### Backend main
+### Current backend baseline
 
-`e2f9a8e29cf760a2b43e0f2f3429a87ad296391a`
+`b2d74f6bc5b4730ed998e4c42bf1efaf6a7032da`
 
-### Active implementation
+### Active P0 work
 
-#### Tax preset tenant boundary — PR #155
+#### 1. Resolve provider-attempt correlation failure — PR #222
 
-- Branch: `fix/tax-preset-tenant-boundary-v2`.
-- Head: `ca553255a4ae177f46f8fdd8cace878ce4c542aa`.
-- The BusinessTaxPreset PATCH handler historically updated by bare preset ID; the new resource-level guard in `requirePermission` verifies `{id, businessProfileId}` before the handler runs.
-- Exact-head full CI + database recovery drill required before merge.
-- Stale PR #153 was intentionally closed after PR #152 advanced main; the same fix was recreated cleanly on current main.
+Branch: `fix/provider-attempt-reference-integrity`  
+Head: `d3a5a43e60c895eeda0171b6c702a45b279db993`
 
-#### POS global catalog boundary — PR #154
+- Inspect the failed test output through every available GitHub Actions/check interface before changing behavior.
+- Preserve the intended invariant: one `(provider, providerReference)` must remain bound to exactly one canonical `TransactionHistory` row.
+- Keep the conditional `ON CONFLICT` behavior and deterministic collision failure if the implementation remains correct; fix only the proven failure.
+- Exact-head full CI and database recovery drill are mandatory before merge.
 
-- Branch: `fix/pos-global-product-boundary`.
-- Head: `2a97cdb52f27f1d2bd003cb1fba709364141e71f`.
-- Locationless POS requests now resolve only globally scoped products. Explicit location requests still allow global or exact-location products.
-- Exact-head full CI + database recovery drill required before merge.
+#### 2. Complete the canonical tax/commerce authority wave
 
-### Next P0 after #154/#155
+After #222 is resolved, resume the highest-value unfinished roadmap items:
 
-1. Resolve POS/invoice tax authority by completing the producer/consumer trace for `BusinessInvoice`, `BusinessInvoiceTaxLine`, and `BusinessTaxPreset`; only then change legacy tax behavior.
-2. Deep-audit dine-in `confirmAndPay` across Backend → Business Portal → Flutter → Admin visibility, especially replay-after-payment closure, tips, timeout recovery, and location/table context.
-3. Bring Business Portal dine-in UI/API onto the location-aware server contract; its current client path still opens tabs without location context and exposes a legacy tax-rate control that the adapter drops.
-4. Trace every `updateAccruedWages()` producer/consumer/history before removal or restriction.
-5. Strengthen Admin financial mutation and optimistic pending-queue coverage, then run tenant/state/realtime, production operations, load and red-team waves.
+- audit POS/invoice tax authority across `BusinessInvoice`, `BusinessInvoiceTaxLine`, `BusinessTaxPreset` and all producers/consumers;
+- verify location/global product authority and tenant boundaries across POS and dine-in;
+- audit order/invoice payment, settlement, refund/void and duplicate-request behavior;
+- inspect reservation/booking payment and capacity races.
 
-## CI / release gate
+#### 3. Cross-client dine-in lifecycle proof
 
-Backend Actions executes normally on the public repositories. The required gate remains: exact PR head, full test stage, and database backup/restore drill must be green before merge.
+Trace and test the complete contract:
+
+`Flutter → Backend → Business Portal → Admin visibility`
+
+Focus on FINALIZED/CLOSED semantics, tips, paid replay, reconnect/background ordering, multi-tab races, timeout recovery, authoritative refresh, and socket/poll convergence.
+
+#### 4. Financial/control-plane integrity
+
+Continue tenant/state/realtime waves for withdrawals, escrow, trades, wallet mutation, payroll/EWA and admin approvals/releases. Every read → decision → write path must be protected by conditional writes, transactions, unique constraints or deterministic state claims as appropriate.
+
+#### 5. Production readiness
+
+After correctness gates are substantially complete, prove deployment/configuration separation, secrets handling/rotation, migration rollback discipline, observability, worker recovery, anomaly detection, load behavior and adversarial scenarios required by `ROADMAP.md`.
+
+## Parallel execution rule
+
+When a CI run is active, perform independent audits, contract tracing, or repository reconciliation instead of waiting idle. Do not parallelize two changes that modify the same logical authority boundary without first selecting one canonical implementation.
+
+## Merge gate
+
+No financial, tenant, state-machine or cross-repo authority change is considered complete until its exact PR head has passed the relevant full test/type/build gate and all required database recovery evidence, followed by verification on `main`.
+
+## Planning synchronization
+
+After every verified merge:
+
+1. reconcile current repo main SHAs;
+2. update `CURRENT_STATE.md` with evidence and residual risk;
+3. update `ACTIVE_LOOP.md` to the next P0;
+4. update `EXECUTION_LEDGER.json` with the verified implementation/CI evidence;
+5. continue immediately to the next unchecked P0.
 
 ## Duplicate-work prohibition
 
-Do not resurrect superseded POS #138/#140 or kiosk #142 work, and do not reopen Planning #27. Build from current `main` and consolidate into the canonical active path.
-
-## Continuation rule
-
-When CI is running, continue independent audits instead of waiting idle. When CI completes, return to the exact-head gate. After every verified merge, reconcile `CURRENT_STATE.md`, `ACTIVE_LOOP.md` and `EXECUTION_LEDGER.json`, then continue to the next P0.
+Do not resurrect superseded PRs/branches when current `main` already contains the required work. In particular, do not revive old POS, kiosk, dine-in, storefront or Planning attempts that were explicitly superseded.
