@@ -11,6 +11,7 @@
 5. CI failures are defects to diagnose and fix, not reasons to weaken tests.
 6. While CI runs, perform independent audits instead of waiting idle.
 7. **Studio wave completion requires a criterion-by-criterion acceptance audit against current code and matching executable evidence; a historical green run is insufficient.**
+8. Keep every PR <=500 changed lines and include at least one test; split large work before merge.
 
 ## Current loop
 
@@ -20,15 +21,15 @@
 
 - Backend main: `ad6110213f5a859fd9e47db75d0f36682c32974e`; invoice creation/payment concurrency proofs are merged and verified with green exact-head tests and database recovery.
 - Flutter main: `bf0589583522b44965a63379486ab33cb9d484e2`; durable dine-in recovery proof is merged and verified.
-- Business Portal main: `62ceb099cafd1832cb45ba7cb14f14e18d4c2c1f`. Historical Studio Wave A/B/C implementation is merged, but acceptance is **REOPENED**.
-- Business Portal PR #87 is the active Studio remediation slice; it is not verified or complete.
+- Business Portal main: `76e39eb6ba937082684cc72189c34f7157b967a8`; PR #88 pointer palette insertion is merged after exact-head CI run #253 passed smoke, tests and build.
+- PR #87 is closed/superseded; its exact-head fix run #252 passed but the PR was over the change-budget and is not part of main.
 - Admin Portal main retains the verified withdrawal concurrency and financial API/settings boundary work.
 
 ### Studio acceptance gates
 
-- **Wave A — REOPENED:** `StorefrontPhonePreview.jsx` renderer geometry is being routed through `toPreviewPx()` and shared tokens. Acceptance requires exact-head CI plus final token-grounding review against Flutter widget implementations and zero numeric inline pixel geometry in preview style objects.
-- **Wave B — REOPENED / partial:** Studio V2 palette insertion now uses Pointer Events with capture and before/after hit testing. Acceptance still requires complete pointer capture/snap/fuse/settle executable evidence and no HTML5 drag surface.
-- **Wave C — REOPENED / partial:** the phone frame is now bounded and scrollable using real overflow. Acceptance still requires executable proof of scrolling, responsive relayout, and demonstrable clipping/overflow behavior.
+- **Wave A — REOPENED:** the preview must use shared token data routed through `toPreviewPx()` with zero numeric inline pixel literals in preview style objects. Reimplementation must be surgically split into budgeted PR(s), then every renderer token must be grounded against the corresponding Flutter widget source before completion.
+- **Wave B — REOPENED / partial:** palette insertion is now Pointer Events on main with capture, pointermove/up/cancel, before/after hit testing and click suppression. Acceptance still requires rechecking the full historical magnetic snap/fuse/settle criteria against current Studio V2 code with executable evidence.
+- **Wave C — REOPENED / partial:** the current main has device emulation tokens/stage but not the unmerged PR #87 scrolling implementation. Acceptance requires a bounded real-overflow phone frame, executable scroll proof, responsive relayout, and demonstrable clipping/overflow.
 
 ### Priority after Studio acceptance
 
