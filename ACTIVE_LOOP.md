@@ -23,49 +23,56 @@
 - Backend PR #220 atomically initializes missing `OrderTracking` rows and is merged.
 - Backend PR #221 serializes tracking mutations per order, moves event timestamps inside the serialization boundary, initializes ETA writes safely, and validates tracking mutation payloads; merged/verified exact-head.
 - Backend PR #223 modernizes backend Actions checkout/setup-node major versions; merged after exact-head Actions run #847 passed.
+- Backend PR #224 serializes BusinessTaxPreset default authority with a transaction-scoped advisory lock and database uniqueness migration; merged/verified.
+- Backend PR #222 binds external provider references to exactly one canonical `TransactionHistory`; exact-head Actions run #855 passed tests and database recovery, then the PR was merged at `f8c433be22fa29dd7e0ce7134257020aa56736a8`.
+- Backend PR #225 serializes dine-in item writes against tab finalization; its initial test failure was corrected at the adapter-test boundary, exact-head run #856 passed, then it was merged at `bb542f68404e095ac0438be0747d73ebeb23cc05`.
 - Business Portal latest main includes storefront responsive inheritance, keyboard tile movement, responsive preview viewports, custom-HTML preview sanitization, legacy tile collision safety, socket/session lifecycle cleanup, multi-page tree ownership, category policy aliases, deterministic Studio migration IDs, and API error/multipart contract hardening.
-- Flutter latest main uses canonical USDC/GHS retail-rate provenance for live FX, home-market display/history, rate alerts, and Susu display.
+- Flutter latest main uses canonical USDC/GHS retail-rate provenance for live FX, home-market display/history, rate alerts, and Susu display; PR #89 additionally converges ambiguous dine-in payment responses from durable CLOSED state.
 - Admin Portal latest main includes concurrency-safe withdrawal optimistic mutations plus refresh interaction hardening.
-- Backend PR #222 (`fix(finance): bind provider references to one transaction`) is OPEN and intentionally NOT merged; its setup/schema/Prisma stages passed but the test stage failed. Do not promote it until the actual test failure is diagnosed and exact-head CI is green.
-- Flutter PR #88 (`chore(ci): update frontend checkout action`) is OPEN; verify exact-head quality/Android workflows before merge.
 - Business Portal and Admin Portal currently have no open PRs.
 
 ### Current backend baseline
 
-`b2d74f6bc5b4730ed998e4c42bf1efaf6a7032da`
+`f8c433be22fa29dd7e0ce7134257020aa56736a8`
 
 ### Active P0 work
 
-#### 1. Resolve provider-attempt correlation failure — PR #222
+#### 1. Cross-client dine-in lifecycle proof
 
-Branch: `fix/provider-attempt-reference-integrity`  
-Head: `d3a5a43e60c895eeda0171b6c702a45b279db993`
-
-- Inspect the failed test output through every available GitHub Actions/check interface before changing behavior.
-- Preserve the intended invariant: one `(provider, providerReference)` must remain bound to exactly one canonical `TransactionHistory` row.
-- Keep the conditional `ON CONFLICT` behavior and deterministic collision failure if the implementation remains correct; fix only the proven failure.
-- Exact-head full CI and database recovery drill are mandatory before merge.
-
-#### 2. Complete the canonical tax/commerce authority wave
-
-After #222 is resolved, resume the highest-value unfinished roadmap items:
-
-- audit POS/invoice tax authority across `BusinessInvoice`, `BusinessInvoiceTaxLine`, `BusinessTaxPreset` and all producers/consumers;
-- verify location/global product authority and tenant boundaries across POS and dine-in;
-- audit order/invoice payment, settlement, refund/void and duplicate-request behavior;
-- inspect reservation/booking payment and capacity races.
-
-#### 3. Cross-client dine-in lifecycle proof
-
-Trace and test the complete contract:
+Trace and prove the complete contract:
 
 `Flutter → Backend → Business Portal → Admin visibility`
 
-Focus on FINALIZED/CLOSED semantics, tips, paid replay, reconnect/background ordering, multi-tab races, timeout recovery, authoritative refresh, and socket/poll convergence.
+Cover the authoritative path `OPEN → FINALIZED → invoice DRAFT/SENT → payment → CLOSED`, including:
+
+- duplicate/concurrent item mutations versus finalization;
+- invoice creation and payment idempotency/replay;
+- tips and fee coverage economics;
+- lost response / timeout / reconnect / background ordering;
+- multi-tab and repeated payment races;
+- Business Portal and Admin read models observing the same invoice/payment truth.
+
+The item/finalization race and Flutter ambiguous-payment recovery have already been hardened. The remaining work is contract proof and any additional invariant uncovered by tracing.
+
+#### 2. POS/invoice tax-authority producer/consumer audit
+
+Now that `BusinessTaxPreset` default authority is transactionally serialized and database-unique, trace every tax producer/consumer across:
+
+- `BusinessTaxPreset`;
+- `BusinessInvoice` / `BusinessInvoiceTaxLine`;
+- POS checkout and product/location flows;
+- dine-in invoice creation;
+- legacy Business OS finance routes.
+
+Do not introduce a second tax authority. Preserve the existing contract where omitted `taxLines` selects the oldest default preset and explicit `[]` means tax-free unless the producer/consumer audit proves otherwise.
+
+#### 3. Canonical business-invoice creation idempotency/replay
+
+After caller mapping and tax-authority tracing, harden `createInvoice` so a client-supplied idempotency key is a durable replay boundary rather than merely a unique database field. Preserve business/customer tenant binding and avoid duplicating invoice math or creating a competing service authority.
 
 #### 4. Financial/control-plane integrity
 
-Continue tenant/state/realtime waves for withdrawals, escrow, trades, wallet mutation, payroll/EWA and admin approvals/releases. Every read → decision → write path must be protected by conditional writes, transactions, unique constraints or deterministic state claims as appropriate.
+Continue tenant/state/realtime waves for withdrawals, wallet mutation, escrow, trades, payroll/EWA, refunds/voids, reservations and admin approvals. Every read → decision → write path must be protected by conditional writes, transactions, unique constraints or deterministic state claims as appropriate.
 
 #### 5. Production readiness
 
