@@ -5,36 +5,44 @@
 
 ## Current verified baseline
 
-- Backend main: `f8c433be22fa29dd7e0ce7134257020aa56736a8` — includes OrderTracking atomic initialization/serialization, storefront availability and Studio hardening, BusinessTaxPreset default-authority serialization + database uniqueness migration, provider-attempt reference integrity, and dine-in item/finalization serialization. Backend PR #222 and #225 are now merged after exact-head CI passed.
-- Flutter main: `c13481a37184d602d4555a92306bd7b73a2d8db9` — canonical USDC/GHS FX convergence plus CI checkout modernization; Flutter PR #88 and dine-in payment convergence PR #89 are merged.
-- Business Portal main: latest verified main includes #81 API/storefront hardening; no open PR.
-- Admin Portal main: latest verified main includes withdrawal optimistic concurrency hardening; no open PR.
-- Planning main: active loop/ledger reconciled to this state.
+- Backend main: `b82c995646ee930dfa3b901b012ce3bd07e92f73` — includes OrderTracking atomic initialization/serialization, provider-attempt reference integrity, dine-in item/finalization serialization, canonical invoice idempotency/replay hardening, and POS business-tax authority resolution/persistence after exact-head CI passed. Backend PR #229 is merged at this SHA.
+- Flutter main: `c13481a37184d602d4555a92306bd7b73a2d8db9` — canonical USDC/GHS FX convergence plus CI checkout modernization and durable dine-in payment recovery; PR #89 merged.
+- Business Portal main: `eb7b4c004d666f1263987b07219deb58d44a7b44` — API/storefront hardening plus the first Storefront Studio Wave A token-foundation slice; PR #82 merged after exact-head Business Portal CI run #229 passed tests and build.
+- Admin Portal main: latest verified main includes withdrawal optimistic concurrency hardening; no open PR verified in this loop.
+- Planning main: this reconciliation records the current P0 frontier and residual security/release work.
 
 ## Verified recent work
 
-Backend PR #222 (`fix(finance): bind provider references to one transaction`) exact-head Actions run #855 passed all test and database recovery steps before merge. Backend PR #225 (`fix(dine-in): serialize item mutations with finalization`) was corrected after its first failed suite and its exact-head run #856 passed before merge at `bb542f68404e095ac0438be0747d73ebeb23cc05`. Flutter PR #89 exact-head Flutter Quality passed before merge at `362594350127acf2a9ae55695d2320c41c729e33`.
+Backend POS PR #229 (`fix(pos): use business tax authority for POS totals`) was rebuilt from current backend main and merged only after exact-head CI passed. It resolves the transactional default `BusinessTaxPreset`, delegates tax math to canonical `computeTaxLines`, fails closed on unsupported types, persists authoritative tax lines in ledger metadata, and preserves POS idempotency/replay semantics.
+
+Business Portal PR #82 (`feat(studio): establish measured visual token foundation`) introduced the immutable Studio token contract, measured from the Flutter storefront runtime, with one explicit `PREVIEW_SCALE`; responsive resolution and the runtime adapter now consume the shared token source for their existing defaults. Exact-head Business Portal CI run #229 passed smoke tests, the full test suite, and build before merge.
 
 ## Active unresolved work
 
-No currently verified financial/dine-in PR is blocked. The previous #222 failure (`33943464182`) was reproduced as stale provider-attempt fixture expectations; the corrected fixtures use the canonical `TransactionHistory` id and exact-head run #855 passed. The previous #225 failure (`#852`) was reproduced as two legacy adapter expectations that had not been updated for the new atomic mutation boundary; corrected test wiring passed on exact head.
+The two originally prioritized correctness packages — cross-client dine-in lifecycle hardening and POS/invoice tax-authority correctness — are now implementation-complete on their relevant mains. Residual work is proof/release hardening, Studio Wave A completion, dependency security, and broader financial/control-plane coverage.
 
 ## Next P0 sequence
 
-1. Complete cross-client dine-in lifecycle proof: finalize → invoice creation → payment → CLOSED, including idempotent replay, tips, duplicate/concurrent payment attempts, timeout/reconnect/background recovery, and Business Portal/Admin visibility.
-2. Complete POS/invoice tax-authority producer/consumer audit now that `BusinessTaxPreset` default authority is transactional and database-unique.
-3. Harden canonical business-invoice creation idempotency/replay, after mapping all runtime callers and preserving tenant/customer binding.
-4. Continue financial/control-plane integrity across withdrawals, wallet, escrow, trades, payroll/EWA, refunds/voids, reservations and admin approvals.
-5. Complete tenant/actor/state-machine coverage across remaining Business OS resources.
-6. Expand Admin financial mutation and operational coverage.
+1. Complete Storefront Studio Wave A: tokenize the remaining `StorefrontPhonePreview.jsx` renderer geometry and add the missing `retail_collection_box` preview so the Studio covers all 16 runtime widget types.
+2. Run the backend production dependency audit and remediate the confirmed npm vulnerabilities on current main, including the known esbuild finding; do not upgrade by guesswork.
+3. Advance the cross-client dine-in proof from implementation evidence to executable end-to-end/contract evidence across Flutter → Backend → Business Portal → Admin visibility, including replay/race/reconnect/tips paths.
+4. Trace and harden canonical business-invoice creation idempotency/replay callers that remain outside the now-fixed POS boundary.
+5. Continue financial/control-plane integrity across withdrawals, wallet, escrow, trades, payroll/EWA, refunds/voids, reservations and admin approvals.
+6. Complete tenant/actor/state-machine coverage across remaining Business OS resources.
 7. Production readiness: deployment/configuration separation, secrets rotation, migration rollback, observability, worker recovery, anomaly/reconciliation alerts.
 8. Concurrency/load/adversarial waves and release rehearsal.
 
-## Important discovered contract
+## Important discovered contracts
 
-`DineInService.finalizeTab()` computes subtotal/grand total from authoritative tab items and transitions OPEN→FINALIZED transactionally; `confirmAndPay()` creates/sends the invoice as needed, pays through the canonical invoice service and transaction-scoped Prisma client, then CAS-closes FINALIZED→CLOSED. Flutter's customer tab is intentionally API-authoritative with socket signals plus 10-second polling, and PR #89 adds an authoritative reread after ambiguous payment errors.
+- Dine-in remains backend-authoritative: `OPEN → FINALIZED → CLOSED`; customer Flutter converges through API state plus socket signals and durable reread after ambiguous payment outcomes.
+- POS tax math is now business-authoritative: the transactional default `BusinessTaxPreset` is resolved and passed to the canonical invoice tax calculator; authoritative tax lines are recorded with the POS ledger entry.
+- Storefront Studio remains a semantic-tree editor with `storefrontStudioRuntimeAdapter` as the customer-facing compatibility boundary. Studio Wave A must not alter that runtime contract or introduce AI/free-canvas/persistence substitutes.
 
-The remaining dine-in audit must verify that Business Portal and Admin Portal observe the same authoritative invoice/payment/tip state without introducing second sources of truth.
+## Residual risks / hygiene
+
+- Backend production dependency findings still require an actual lockfile/`npm audit --omit=dev` evidence pass and controlled remediation.
+- Business Portal Studio Wave A still needs the renderer-wide tokenization and 16/16 widget preview coverage.
+- Repository branch hygiene (the previously identified fully merged backend branches) remains cleanup work only if the connected GitHub mutation surface permits safe deletion.
 
 ## Planning hygiene
 
