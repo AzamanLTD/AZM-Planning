@@ -20,17 +20,17 @@
 
 ### Verified current GitHub state (2026-09-05 UTC)
 
-- Backend main: `7afbe1a7318402519aafed6142fdb7364f9df86d`; security remediation PR #230, retail catalog PR #231, and dine-in recovery notification PR #232 are merged and verified.
-- Flutter main: `c13481a37184d602d4555a92306bd7b73a2d8db9`; durable dine-in payment recovery PR #89 is merged.
+- Backend main: `526f659f83af5d7fc708a0de964abad707d5a6a7`; security remediation PR #230, retail catalog PR #231, dine-in recovery notification PR #232, and executable dine-in invoice-to-closure proof PR #233 are merged and verified.
+- Flutter main: `bf0589583522b44965a63379486ab33cb9d484e2`; durable dine-in payment recovery proof PR #90 is merged and verified.
 - Business Portal main: `73b9763aa90c258ab496c2c355b78384bbe53568`; Studio Wave A and Wave B are merged. Wave B PR #85 exact-head CI run #239 passed smoke, 46/46 test files / 146 tests, and production build.
 - Admin Portal main: latest verified withdrawal optimistic-concurrency hardening remains on main.
-- Planning main: reconciliation is in progress for these newly verified merges.
+- Planning main: reconciliation has been applied for the verified backend and Flutter proof merges; the current Studio Wave C gate is not yet verified.
 
 ### Active P0 work
 
 #### 1. Cross-client dine-in lifecycle executable proof
 
-The underlying authority is now hardened through `OPEN → FINALIZED → CLOSED`, durable payment replay, concurrent payment recovery, and business-owner notification on recovered payment. The next package is executable proof across Flutter → Backend → Business Portal → Admin: finalize/invoice/payment/CLOSED, replay/races/tips, lost-response/reconnect/background recovery, multi-tab races, and authoritative read-model convergence.
+The backend now has executable FINALIZED → invoice → PAID → CLOSED orchestration coverage, and Flutter has durable CLOSED-state recovery proof. The remaining package is cross-client convergence evidence: Business Portal realtime/read-model behavior, duplicate/concurrent payment races, tips, lost-response/reconnect/background recovery, multi-tab races, and authoritative Business/Admin read-model convergence.
 
 #### 2. Canonical business-invoice idempotency/replay audit
 
@@ -38,7 +38,7 @@ Map remaining runtime `createInvoice` callers outside POS using repository-tree/
 
 #### 3. Storefront Studio continuation
 
-Wave B is verified and merged. Do not broaden behavior until a concrete gap is identified. Next Studio target is Wave C device emulation: actual 412x892 phone frame, scrollable content, and expanded-width breakpoint behavior while preserving Wave A/B contracts.
+Wave B is verified and merged. Wave C device emulation is actively gated in Business Portal PR #86. It adds token-driven phone/tablet/desktop stage geometry while preserving the semantic responsive runtime model. Do not mark the package complete until exact-head CI is green, then diff-audit and merge.
 
 #### 4. Financial/control-plane integrity
 
