@@ -1,0 +1,1 @@
+Wave A: complete. Dine-in: implementation-verified, live four-surface E2E/Admin projection residual explicit. Wave B legacy 2D snap: deferred pending canonical V2 spatial contract.
