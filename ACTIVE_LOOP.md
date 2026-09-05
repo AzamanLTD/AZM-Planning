@@ -20,21 +20,21 @@
 
 ### Verified current GitHub state (2026-09-05 UTC)
 
-- Backend main: `b103c28e6a89dce79feb72b332523828d8065963`; PR #230 security remediation is merged and post-merge main CI run #896 is green.
+- Backend main: `d230aa0d5e865f3b39b828f2101a01afb20ac762`; security remediation PR #230 and storefront catalog PR #231 are merged and verified.
 - Flutter main: `c13481a37184d602d4555a92306bd7b73a2d8db9`; durable dine-in payment recovery PR #89 is merged.
-- Business Portal main: `563bfecf8187e93a6b5990505ecfee64efd81a34`; Studio Wave A retail preview completion PR #84 is merged after exact-head CI run #234 passed smoke tests, full tests, and build.
+- Business Portal main: `563bfecf8187e93a6b5990505ecfee64efd81a34`; Studio Wave A retail preview completion PR #84 is merged after exact-head CI passed smoke tests, full tests, and build.
 - Admin Portal main: latest verified withdrawal optimistic-concurrency hardening remains on main.
 - Planning main: reconciled through this update.
 
 ### Active P0 work
 
-#### 1. Backend storefront retail catalog alignment
+#### 1. Dine-in payment recovery notification proof
 
-PR #231 is the current active backend slice. It adds the already-supported `retail_collection_box` to the persistent storefront widget catalog as a FREE commerce widget, keeps display order contiguous, and adds a focused contract test. Do not promote it to verified until exact-head backend CI and post-merge main verification succeed.
+PR #232 is the current active backend slice. The durable recovery path now emits the same `DINE_IN_TAB_PAID` business-owner notification as the normal success path. Exact-head CI must pass before merge; then verify backend main.
 
 #### 2. Cross-client dine-in lifecycle executable proof
 
-Convert the already-implemented authority into executable proof across Flutter → Backend → Business Portal → Admin. Cover finalize/invoice/payment/CLOSED, idempotent replay, duplicate/concurrent payment attempts, tips, lost-response timeout/reconnect/background recovery, multi-tab races, and authoritative read-model convergence.
+Convert the hardened authority into end-to-end proof across Flutter → Backend → Business Portal → Admin. Cover finalize/invoice/payment/CLOSED, idempotent replay, duplicate/concurrent payment attempts, tips, lost-response timeout/reconnect/background recovery, multi-tab races, and authoritative read-model convergence.
 
 #### 3. Canonical business-invoice idempotency/replay audit
 
@@ -42,7 +42,7 @@ Map all runtime `createInvoice` callers outside POS, preserve tenant/customer bi
 
 #### 4. Storefront Studio Wave B
 
-Wave A is verified and merged. Reuse its immutable measured token source and semantic/runtime adapter. Wave B may now introduce pointer capture, magnetic snap, connected-group fusing, and deterministic settle animation, but must preserve the semantic-tree model and avoid any AI/free-canvas/localStorage behavior.
+Wave A is verified and merged. Reuse its immutable measured token source and semantic/runtime adapter. Wave B may now introduce pointer capture, magnetic snap, connected-group fusion, and deterministic settle animation, but must preserve the semantic-tree model and avoid any AI/free-canvas/localStorage behavior.
 
 #### 5. Financial/control-plane integrity
 
