@@ -1,537 +1,561 @@
 {
-  "schemaVersion": 1,
-  "project": "AZAMAN",
-  "updatedAt": "2026-09-14T14:45:00Z",
-  "rules": {
-    "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
-    "planningRole": "navigation and continuation state",
-    "duplicateWorkPolicy": "verify branches, open PRs, commits, implementations and tests before creating work",
-    "completionPolicy": "verified main merge plus exact-head CI plus residual-risk record",
-    "continuationPolicy": "complete the active work package before selecting the next P0",
-    "prBudget": "<=500 changed lines and at least one test"
+ "schemaVersion": 1,
+ "project": "AZAMAN",
+ "updatedAt": "2026-09-14T16:40:00Z",
+ "rules": {
+  "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
+  "planningRole": "navigation and continuation state",
+  "duplicateWorkPolicy": "verify branches, open PRs, commits, implementations and tests before creating work",
+  "completionPolicy": "verified main merge plus exact-head CI plus residual-risk record",
+  "continuationPolicy": "complete the active work package before selecting the next P0",
+  "prBudget": "<=500 changed lines and at least one test"
+ },
+ "workItems": [
+  {
+   "id": "backend-provider-attempt-reference-integrity",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 222,
+   "mergeSha": "f8c433be22fa29dd7e0ce7134257020aa56736a8",
+   "ci": {
+    "conclusion": "success"
+   }
   },
-  "workItems": [
-    {
-      "id": "backend-provider-attempt-reference-integrity",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 222,
-      "mergeSha": "f8c433be22fa29dd7e0ce7134257020aa56736a8",
-      "ci": {
-        "conclusion": "success"
-      }
-    },
-    {
-      "id": "backend-ci-action-modernization",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 223,
-      "mergeSha": "b2d74f6bc5b4730ed998e4c42bf1efaf6a7032da",
-      "ci": {
-        "conclusion": "success"
-      }
-    },
-    {
-      "id": "backend-business-tax-preset-default-integrity",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 224,
-      "mergeSha": "7a24a380bf6a5da4641dc4de3bc904ed31476197",
-      "ci": {
-        "conclusion": "success"
-      }
-    },
-    {
-      "id": "backend-dine-in-item-finalization-race",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 225,
-      "mergeSha": "bb542f68404e095ac0438be0747d73ebeb23cc05",
-      "ci": {
-        "conclusion": "success"
-      }
-    },
-    {
-      "id": "backend-invoice-tax-type-fail-closed",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "closed-superseded",
-      "pr": 227,
-      "notes": "Superseded by current canonical invoice/POS implementation; do not resurrect."
-    },
-    {
-      "id": "backend-pos-tax-authority-current",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 229,
-      "mergeSha": "b82c995646ee930dfa3b901b012ce3bd07e92f73",
-      "ci": {
-        "conclusion": "success"
-      }
-    },
-    {
-      "id": "backend-security-dependency-remediation",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 230,
-      "mergeSha": "b103c28e6a89dce79feb72b332523828d8065963",
-      "ci": {
-        "exactHead": "a0009caec76302b84fb84d05b72a28f0171bd6c2",
-        "productionAudit": "success",
-        "tests": "success",
-        "dbRecovery": "success",
-        "postMergeMainRun": 896,
-        "postMergeMainConclusion": "success"
-      }
-    },
-    {
-      "id": "backend-storefront-retail-collection-catalog",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 231,
-      "mergeSha": "d230aa0d5e865f3b39b828f2101a01afb20ac762",
-      "ci": {
-        "productionAudit": "success",
-        "tests": "success",
-        "dbRecovery": "success"
-      }
-    },
-    {
-      "id": "backend-dine-in-payment-recovery-notification",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 232,
-      "mergeSha": "7afbe1a7318402519aafed6142fdb7364f9df86d",
-      "ci": {
-        "exactHead": "186ac370bc75c60d5980a0bb8c3d308f812b94f0",
-        "productionAudit": "success",
-        "tests": "success",
-        "dbRecovery": "success",
-        "postMergeMain": "verified"
-      }
-    },
-    {
-      "id": "backend-dine-in-lifecycle-orchestration-proof",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 233,
-      "mergeSha": "526f659f83af5d7fc708a0de964abad707d5a6a7",
-      "ci": {
-        "exactHead": "2453729846cf15d95bf6ab637d26ae19f3b735fa",
-        "run": 33957019469,
-        "conclusion": "success",
-        "productionAudit": "success",
-        "tests": "success",
-        "dbRecovery": "success",
-        "postMergeMain": "verified"
-      },
-      "notes": "Proof scope: FINALIZED\u2192invoice\u2192PAID\u2192CLOSED with tip/idempotency/socket assertions plus durable PAID/CLOSED replay without a second payment call."
-    },
-    {
-      "id": "backend-invoice-payment-concurrency-proof",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 234,
-      "mergeSha": "205bfae0082303253638c40828df9928f820d7cb",
-      "ci": {
-        "exactHead": "97709b8d5d42494c460997dd0053eabfc7a2dea6",
-        "run": 33958597915,
-        "conclusion": "success",
-        "tests": "success",
-        "dbRecovery": "success"
-      }
-    },
-    {
-      "id": "backend-invoice-creation-concurrency-proof",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 235,
-      "mergeSha": "ad6110213f5a859fd9e47db75d0f36682c32974e",
-      "ci": {
-        "exactHead": "d18e486fb1bd3bd07f2c3973113e9a422c9c0a1d",
-        "run": 33958702348,
-        "conclusion": "success",
-        "tests": "success",
-        "dbRecovery": "success"
-      }
-    },
-    {
-      "id": "frontend-dine-in-payment-replay-convergence",
-      "repo": "AzamanLTD/AZM-frontend",
-      "status": "verified",
-      "pr": 89,
-      "mergeSha": "362594350127acf2a9ae55695d2320c41c729e33"
-    },
-    {
-      "id": "frontend-dine-in-client-recovery-proof",
-      "repo": "AzamanLTD/AZM-frontend",
-      "status": "verified",
-      "pr": 90,
-      "mergeSha": "bf0589583522b44965a63379486ab33cb9d484e2",
-      "ci": {
-        "exactHead": "e479e07546d723afb48d6d841ebfecde452b30f8",
-        "conclusion": "success"
-      }
-    },
-    {
-      "id": "frontend-dine-in-p0-convergence-contract",
-      "repo": "AzamanLTD/AZM-frontend",
-      "status": "verified",
-      "pr": 91,
-      "mergeSha": "c750562d26499346e7c43315fba9912951e590d1",
-      "ci": {
-        "exactHead": "d1dbc94ed890583241a4d338fc2a045cf5cec4a3",
-        "run": 33967426867,
-        "conclusion": "success"
-      },
-      "notes": "Test-only contract proof: payment POST \u2192 authoritative tab reread \u2192 durable CLOSED decision; socket payloads are convergence signals only; original payment failure remains authoritative absent durable proof."
-    },
-    {
-      "id": "business-portal-api-contract-hardening",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 81,
-      "mergeSha": "6d56ac3af347b3f0cc494218a5709ba55efa383e"
-    },
-    {
-      "id": "business-portal-studio-token-foundation",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 82,
-      "mergeSha": "eb7b4c004d666f1263987b07219deb58d44a7b44",
-      "ci": {
-        "conclusion": "success"
-      }
-    },
-    {
-      "id": "business-portal-studio-wave-a-retail-preview",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified-but-reopened",
-      "pr": 84,
-      "mergeSha": "563bfecf8187e93a6b5990505ecfee64efd81a34",
-      "ci": {
-        "run": 33955923219,
-        "conclusion": "success",
-        "smoke": "success",
-        "tests": "success",
-        "build": "success"
-      },
-      "notes": "Historical implementation retained as evidence; current Wave A was re-established by later grounded token slices and PR #96."
-    },
-    {
-      "id": "business-portal-studio-wave-b-drag-snap-fusion",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified-but-reopened",
-      "pr": 85,
-      "mergeSha": "73b9763aa90c258ab496c2c355b78384bbe53568",
-      "ci": {
-        "run": 33956703424,
-        "conclusion": "success",
-        "smoke": "success",
-        "tests": "46/46 files; 146/146 tests",
-        "build": "success"
-      },
-      "notes": "Current V2 is semantic-tree based and does not mount historical StorefrontCanvas magnetic snap. Snap remains deferred pending an intentional V2 2D surface with its own coordinate/persistence authority."
-    },
-    {
-      "id": "business-portal-studio-wave-c-device-emulation",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified-but-reopened",
-      "pr": 86,
-      "mergeSha": "62ceb099cafd1832cb45ba7cb14f14e18d4c2c1f",
-      "ci": {
-        "exactHead": "85bf12bbf95af059a9ca23fb4318cfa8d18b1adc",
-        "run": 33957554769,
-        "conclusion": "success",
-        "smoke": "success",
-        "tests": "148/148",
-        "build": "success"
-      },
-      "notes": "Device emulation baseline merged; current Wave C still needs rendered scroll, responsive relayout and clipping evidence."
-    },
-    {
-      "id": "business-portal-studio-wave-a-c-reopen-remediation",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "closed-superseded",
-      "pr": 87,
-      "baseSha": "62ceb099cafd1832cb45ba7cb14f14e18d4c2c1f",
-      "headSha": "e62b6c7ae99ca8771ad3ee1e177d4321f3c1ec73",
-      "ci": {
-        "run": 33960517385,
-        "conclusion": "success"
-      },
-      "notes": "Closed because the PR diff exceeded the <=500 change budget."
-    },
-    {
-      "id": "business-portal-studio-wave-b-pointer-palette-insertion",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 88,
-      "mergeSha": "76e39eb6ba937082684cc72189c34f7157b967a8",
-      "ci": {
-        "exactHead": "fc77d21575c828a447b3d2264be3caa35948f6d3",
-        "run": 33960579364,
-        "conclusion": "success",
-        "smoke": "success",
-        "tests": "success",
-        "build": "success"
-      },
-      "notes": "Pointer Events palette insertion with capture, cleanup, before/after insertion and click suppression."
-    },
-    {
-      "id": "business-portal-studio-wave-a-preview-token-slice-1",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 89,
-      "mergeSha": "59d9567d72b4eb0798a1a97f2fc9877381725a26",
-      "ci": {
-        "exactHead": "cc37a2058b8c68ba1ddcbe6663f86e1474af110d3",
-        "run": 33960898335,
-        "conclusion": "success",
-        "smoke": "success",
-        "tests": "success",
-        "build": "success"
-      },
-      "notes": "Budgeted Wave A slice covering HeroHeader, QuickInfoBar, ProductGrid, ReviewCarousel and ContactCard."
-    },
-    {
-      "id": "business-portal-studio-wave-a-preview-token-slice-2",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 91,
-      "mergeSha": "a1002e0846f7160298dc58e3f8261e675a9a1c5f",
-      "ci": {
-        "exactHead": "df1bcd0d2f6903d396bc95affec9311b306fbfa9",
-        "run": 33961463513,
-        "conclusion": "success",
-        "smoke": "success",
-        "tests": "success",
-        "build": "success"
-      },
-      "notes": "Budgeted Flutter-grounded token contract for Showcase Gallery, Location Map, and Video Player."
-    },
-    {
-      "id": "business-portal-studio-wave-a-preview-wiring-2",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 92,
-      "mergeSha": "fc4536492c2c879ad2ff2b47aefe5c6c83dcc226",
-      "ci": {
-        "exactHead": "08955de01a48bcbcac3e621c7741e2781a3d4843",
-        "run": 33961944664,
-        "conclusion": "success",
-        "smoke": "success",
-        "tests": "success",
-        "build": "success"
-      },
-      "notes": "Wired Showcase Gallery, Location Map and Video Player geometry through shared preview token helpers."
-    },
-    {
-      "id": "business-portal-studio-wave-c-bounded-device-scroll",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 93,
-      "mergeSha": "83c1749e887f20846ec7af4876e5291816115ec7",
-      "ci": {
-        "exactHead": "0952e426dfcf451ebfecd51c8ea3ee9afa2d8a16",
-        "run": 33962010722,
-        "conclusion": "success",
-        "smoke": "success",
-        "tests": "success",
-        "build": "success"
-      },
-      "notes": "Added bounded studio-device-scroll-viewport; rendered overflow behavior, responsive relayout and clipping evidence remain open."
-    },
-    {
-      "id": "business-portal-studio-wave-a-preview-token-slice-3",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 94,
-      "mergeSha": "f5e8470898b87462d9febb152e0d8faafef4569e",
-      "ci": {
-        "conclusion": "success"
-      },
-      "notes": "Grounded/wired Promo Banner, Social Feed and Live Stats."
-    },
-    {
-      "id": "business-portal-studio-wave-a-preview-token-slice-4",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 95,
-      "mergeSha": "c64a2f78e68781402beb7a89ec90340097ac9503",
-      "ci": {
-        "conclusion": "success"
-      },
-      "notes": "Grounded remaining Animated Counter, Custom HTML and Gradient Hero token maps."
-    },
-    {
-      "id": "business-portal-studio-wave-a-preview-renderer-completion",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 96,
-      "mergeSha": "2ef57f22b1dcae45334dd5f30e896e448073f10b",
-      "ci": {
-        "exactHead": "fb20134bdd0ae622c8937e29c01f5e11a33a0abf",
-        "conclusion": "success",
-        "smoke": "success",
-        "tests": "success",
-        "build": "success"
-      },
-      "notes": "Completed current Wave A token consumption across all 16 widget renderers plus action/fallback/selection/chrome/frame geometry. Completion guard rejects inline numeric CSS px literals and verifies all 16 registry renderers."
-    },
-    {
-      "id": "business-portal-studio-wave-a-preview-token-slices-remaining",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified-complete",
-      "pr": 96,
-      "mergeSha": "2ef57f22b1dcae45334dd5f30e896e448073f10b",
-      "objective": "Finish shared preview token consumption and close Wave A against current code and Flutter-grounded acceptance.",
-      "notes": "Closed after exact-head CI and criterion-by-criterion code/test audit."
-    },
-    {
-      "id": "business-portal-dine-in-notification-invalidation-proof",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 98,
-      "mergeSha": "7140658f4d66cada3d6c3155c085638105fe484e",
-      "ci": {
-        "exactHead": "85560129a19470e40a70175a8049eb3cffde8655",
-        "run": 33975428983,
-        "conclusion": "success",
-        "smoke": "success",
-        "tests": "success",
-        "build": "success"
-      },
-      "notes": "Executable coverage for all supported DINE_IN_TAB_* business notification events and rejection of unrelated-event dine-in refresh."
-    },
-    {
-      "id": "admin-withdrawal-optimistic-concurrency",
-      "repo": "AzamanLTD/AZM-adminPortal",
-      "status": "verified",
-      "pr": 96,
-      "mergeSha": "44b3588b5a134b84a528c533e39ba36b9a9c297f"
-    },
-    {
-      "id": "cross-repo-dine-in-lifecycle-proof",
-      "repo": "cross-repo",
-      "status": "verified-contract-scope",
-      "objective": "Implementation hardened across finalize/payment/close and customer recovery, with current Business Portal owner-notification/query convergence proof.",
-      "notes": "Cross-client contract evidence is current and executable; this is not a deployed four-surface E2E claim."
-    },
-    {
-      "id": "cross-repo-dine-in-lifecycle-executable-proof",
-      "repo": "cross-repo",
-      "status": "residual-integration-partial",
-      "objective": "Correlate Flutter, Backend, Business Portal and Admin-visible state for finalize/payment/replay, tips, ambiguous response and reconnect/background recovery only if a deployed harness or explicit Admin projection requirement justifies it.",
-      "residual": "Admin-side dine-in lifecycle visibility is now verified (backend GET /api/admin/dine-in/overview at main 94dfd31, adminPortal Dashboard projection at 730cb18; exact-head CI green on both). The remaining residual is only the single deployed four-surface E2E harness correlating live Backend, Flutter, Business Portal and Admin state through one finalize/payment/replay/reconnect scenario."
-    },
-    {
-      "id": "backend-business-invoice-idempotency-audit",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified-proof-complete",
-      "pr": 235,
-      "objective": "Prove concurrent canonical business-invoice creation converges on one committed invoice without duplicate creation or intent drift.",
-      "notes": "Creation boundary inventory continues for non-standard runtime paths; inspected business route has a single POST /invoices producer path."
-    },
-    {
-      "id": "admin-financial-mutation-coverage",
-      "repo": "AzamanLTD/AZM-adminPortal",
-      "status": "active-p0",
-      "objective": "Expand withdrawals, escrow disputes, fee controls, War Room, KPI accuracy, tenant/state/realtime and operational/load evidence."
-    },
-    {
-      "id": "production-release-readiness",
-      "repo": "cross-repo",
-      "status": "future-p0",
-      "objective": "Prove deployment/configuration separation, secrets/rotation, migration rollback, observability, worker recovery, anomaly alerts and release rehearsal."
-    },
-    {
-      "id": "backend-route-checker-mount-registry-fix",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "mergeSha": "6b7a884",
-      "ci": {
-        "conclusion": "success"
-      },
-      "notes": "route-checker.js now parses the src/routes/index.js mountRoutes registry (the backend route-mounting refactor had left it reading only legacy server.js app.use style, reporting 0 mounts/0 handlers and failing with 291 unmatched frontend calls). Restored tool verified 102 mounts / 959 handlers / all 291 frontend calls matched at the time of the fix; run via scripts/route-checker.js."
-    },
-    {
-      "id": "business-portal-dine-in-realtime-projection-executable",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 97,
-      "mergeSha": "bb18fec",
-      "ci": {
-        "exactHead": "2f2b83f",
-        "conclusion": "success"
-      },
-      "notes": "Idle PR re-checked and merged 2026-09-14: replaces the non-executable dineIn .jsx test with a runtime .js suite for useBizNotifications. Main-head ddabea4 validate also green."
-    },
-    {
-      "id": "business-portal-studio-phone-frame-scroll",
-      "repo": "AzamanLTD/AZM-businessPortal",
-      "status": "verified",
-      "pr": 99,
-      "mergeSha": "ddabea4",
-      "ci": {
-        "exactHead": "3b2a0ab",
-        "conclusion": "success"
-      },
-      "notes": "Idle PR re-checked and merged 2026-09-14: genuinely scrollable studio phone frame (bounded viewport + scroll test + studioWaveC.css wiring). Advances the open Wave C rendered-scroll evidence. Main-head validate green."
-    },
-    {
-      "id": "backend-dine-in-p0-adapter-authority-proof",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "pr": 236,
-      "mergeSha": "94dfd31",
-      "ci": {
-        "exactHead": "29c213e-branch-head post-fix",
-        "conclusion": "success"
-      },
-      "notes": "PR was failing CI on a jest.mock hoisting bug (module factory referenced out-of-scope variables). Fixed with mock-prefixed factories and explicit service-shape keys; 3/3 tests pass locally (canonical payment authority, ambiguous-response durable CLOSED+PAID recovery without recharge, recovery denied for a paid tab owned by another customer). Exact-head CI success; merged 2026-09-14 (main-head run pending at time of writing)."
-    },
-    {
-      "id": "backend-admin-dine-in-lifecycle-projection",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "mergeSha": "117cebe",
-      "objective": "Admin-side dine-in lifecycle visibility per CONTRACTS.md (Admin is a dine-in consumer; backend-authoritative stats, no client aggregation).",
-      "notes": "GET /api/admin/dine-in/overview (protect+adminOnly): full OPEN/FINALIZED/CLOSED/CANCELLED tabsByStatus zero-defaulted, openTabs/finalizedTabs/closedToday, 24h closed volume+tips (USDC), 15 recent tabs with business+invoice joins. Mounted in src/routes registry before the legacy admin router. Jest contract tests 3/3 locally. Exact-head CI verified: the post-merge main-head run at 94dfd31 (which includes this commit) passed tests + audit + database recovery.",
-      "ci": {
-        "conclusion": "success",
-        "coveredByMainHead": "94dfd31"
-      }
-    },
-    {
-      "id": "admin-portal-dine-in-lifecycle-dashboard",
-      "repo": "AzamanLTD/AZM-adminPortal",
-      "status": "verified",
-      "mergeSha": "730cb18",
-      "objective": "Consume the backend dine-in projection in the Admin dashboard without client-side aggregation.",
-      "notes": "admin.dineInOverview() API + useDineInOverview hook + Dashboard Dine-in Lifecycle panel (lifecycle mini-stats, recent tabs table with status/invoice badges, empty state) + vitest contract test. Local verification: vitest 13/13 (new test + 3 existing lib suites), tsc clean, vite build clean, eslint clean. Exact-head CI verified: validate passed at main head 730cb18.",
-      "ci": {
-        "conclusion": "success",
-        "exactHead": "730cb18"
-      }
-    },
-    {
-      "id": "admin-portal-dead-test-suite-hygiene",
-      "repo": "AzamanLTD/AZM-adminPortal",
-      "status": "open-hygiene",
-      "objective": "Wire the four vitest lib suites into CI.",
-      "notes": "adminPortal has vitest-shaped test files but vitest is not a dependency and CI runs lint+typecheck+build only \u2014 the suites never execute in CI. All four pass locally under vitest 4.1.11 (13/13), so adding vitest as a devDependency and a test step to ci.yml is safe and cheap. Not done in the 2026-09-14 batch to keep the dine-in slice reviewable."
-    },
-    {
-      "id": "backend-control-plane-integrity-atomic-mutations",
-      "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "mergeSha": "6d8da48",
-      "objective": "Control-plane integrity batch (2026-09-13 handoff findings A-D): every privileged control-plane mutation and its STAFF audit event become one atomic transaction; TOCTOU windows on authority-sensitive staff updates close with guarded UPDATEs; concurrent permission replacement is serialized by a row lock.",
-      "notes": "PR #241 (squash 6d8da48 on main): PUT /staff/:id/permissions full replacement (validation reads, delete, inserts, STAFF_PERMISSIONS_REPLACED audit) in one $transaction; department create/update, staff create, lifecycle (suspend/activate/deactivate + PATCH), duty assign/revoke each commit mutation+audit atomically via recordActivity(tx,...); lifecycle/PATCH UPDATEs guarded by the validated authority state (zero rows -> deliberate 409, not silent overwrite); department/staff unique races map to the existing 409s; ON CONFLICT duty upsert and all authorization gates (global-super-admin, self-protection, possession) unchanged. Tests: admin-control-plane-integrity.test.js \u2014 10 SQL-fragment unit tests + 11 real-PostgreSQL tests (rollback on late-insert/audit failure, one-audit-per-committed-mutation, three concurrency races). Two defects found by the work itself: (1) the control-plane tables exist only in migration 20260828040000_control_plane_staff_access, not as schema.prisma models, so CI's prisma db push test DB lacked them \u2014 the suite now applies that exact migration DDL idempotently before seeding (prod schema parity; ALSO means prisma db push CANNOT be used to provision a DB with control-plane tables \u2014 use migrate deploy or the raw migration file); (2) the new concurrency test exposed a real race: two parallel permission replacements under READ COMMITTED committed a UNION of both grant sets (4 keys) \u2014 fixed with SELECT ... FOR UPDATE on the target StaffProfile row inside the transaction, so the final set is always exactly the last committed replacement. Exact-head CI green at f5aabaa (1149 tests); post-merge main-head run green at 6d8da48. Prod azm-backend.onrender.com healthy (200). PR size ~930 changed lines \u2014 over the 500 target, dominated by the required 16-case test matrix and transaction re-indentation; kept as one PR per the no-multiple-tiny-PRs rule.",
-      "ci": {
-        "conclusion": "success",
-        "coveredByMainHead": "6d8da48"
-      }
-    }
-  ]
+  {
+   "id": "backend-ci-action-modernization",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 223,
+   "mergeSha": "b2d74f6bc5b4730ed998e4c42bf1efaf6a7032da",
+   "ci": {
+    "conclusion": "success"
+   }
+  },
+  {
+   "id": "backend-business-tax-preset-default-integrity",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 224,
+   "mergeSha": "7a24a380bf6a5da4641dc4de3bc904ed31476197",
+   "ci": {
+    "conclusion": "success"
+   }
+  },
+  {
+   "id": "backend-dine-in-item-finalization-race",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 225,
+   "mergeSha": "bb542f68404e095ac0438be0747d73ebeb23cc05",
+   "ci": {
+    "conclusion": "success"
+   }
+  },
+  {
+   "id": "backend-invoice-tax-type-fail-closed",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "closed-superseded",
+   "pr": 227,
+   "notes": "Superseded by current canonical invoice/POS implementation; do not resurrect."
+  },
+  {
+   "id": "backend-pos-tax-authority-current",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 229,
+   "mergeSha": "b82c995646ee930dfa3b901b012ce3bd07e92f73",
+   "ci": {
+    "conclusion": "success"
+   }
+  },
+  {
+   "id": "backend-security-dependency-remediation",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 230,
+   "mergeSha": "b103c28e6a89dce79feb72b332523828d8065963",
+   "ci": {
+    "exactHead": "a0009caec76302b84fb84d05b72a28f0171bd6c2",
+    "productionAudit": "success",
+    "tests": "success",
+    "dbRecovery": "success",
+    "postMergeMainRun": 896,
+    "postMergeMainConclusion": "success"
+   }
+  },
+  {
+   "id": "backend-storefront-retail-collection-catalog",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 231,
+   "mergeSha": "d230aa0d5e865f3b39b828f2101a01afb20ac762",
+   "ci": {
+    "productionAudit": "success",
+    "tests": "success",
+    "dbRecovery": "success"
+   }
+  },
+  {
+   "id": "backend-dine-in-payment-recovery-notification",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 232,
+   "mergeSha": "7afbe1a7318402519aafed6142fdb7364f9df86d",
+   "ci": {
+    "exactHead": "186ac370bc75c60d5980a0bb8c3d308f812b94f0",
+    "productionAudit": "success",
+    "tests": "success",
+    "dbRecovery": "success",
+    "postMergeMain": "verified"
+   }
+  },
+  {
+   "id": "backend-dine-in-lifecycle-orchestration-proof",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 233,
+   "mergeSha": "526f659f83af5d7fc708a0de964abad707d5a6a7",
+   "ci": {
+    "exactHead": "2453729846cf15d95bf6ab637d26ae19f3b735fa",
+    "run": 33957019469,
+    "conclusion": "success",
+    "productionAudit": "success",
+    "tests": "success",
+    "dbRecovery": "success",
+    "postMergeMain": "verified"
+   },
+   "notes": "Proof scope: FINALIZED\u2192invoice\u2192PAID\u2192CLOSED with tip/idempotency/socket assertions plus durable PAID/CLOSED replay without a second payment call."
+  },
+  {
+   "id": "backend-invoice-payment-concurrency-proof",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 234,
+   "mergeSha": "205bfae0082303253638c40828df9928f820d7cb",
+   "ci": {
+    "exactHead": "97709b8d5d42494c460997dd0053eabfc7a2dea6",
+    "run": 33958597915,
+    "conclusion": "success",
+    "tests": "success",
+    "dbRecovery": "success"
+   }
+  },
+  {
+   "id": "backend-invoice-creation-concurrency-proof",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 235,
+   "mergeSha": "ad6110213f5a859fd9e47db75d0f36682c32974e",
+   "ci": {
+    "exactHead": "d18e486fb1bd3bd07f2c3973113e9a422c9c0a1d",
+    "run": 33958702348,
+    "conclusion": "success",
+    "tests": "success",
+    "dbRecovery": "success"
+   }
+  },
+  {
+   "id": "frontend-dine-in-payment-replay-convergence",
+   "repo": "AzamanLTD/AZM-frontend",
+   "status": "verified",
+   "pr": 89,
+   "mergeSha": "362594350127acf2a9ae55695d2320c41c729e33"
+  },
+  {
+   "id": "frontend-dine-in-client-recovery-proof",
+   "repo": "AzamanLTD/AZM-frontend",
+   "status": "verified",
+   "pr": 90,
+   "mergeSha": "bf0589583522b44965a63379486ab33cb9d484e2",
+   "ci": {
+    "exactHead": "e479e07546d723afb48d6d841ebfecde452b30f8",
+    "conclusion": "success"
+   }
+  },
+  {
+   "id": "frontend-dine-in-p0-convergence-contract",
+   "repo": "AzamanLTD/AZM-frontend",
+   "status": "verified",
+   "pr": 91,
+   "mergeSha": "c750562d26499346e7c43315fba9912951e590d1",
+   "ci": {
+    "exactHead": "d1dbc94ed890583241a4d338fc2a045cf5cec4a3",
+    "run": 33967426867,
+    "conclusion": "success"
+   },
+   "notes": "Test-only contract proof: payment POST \u2192 authoritative tab reread \u2192 durable CLOSED decision; socket payloads are convergence signals only; original payment failure remains authoritative absent durable proof."
+  },
+  {
+   "id": "business-portal-api-contract-hardening",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 81,
+   "mergeSha": "6d56ac3af347b3f0cc494218a5709ba55efa383e"
+  },
+  {
+   "id": "business-portal-studio-token-foundation",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 82,
+   "mergeSha": "eb7b4c004d666f1263987b07219deb58d44a7b44",
+   "ci": {
+    "conclusion": "success"
+   }
+  },
+  {
+   "id": "business-portal-studio-wave-a-retail-preview",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified-but-reopened",
+   "pr": 84,
+   "mergeSha": "563bfecf8187e93a6b5990505ecfee64efd81a34",
+   "ci": {
+    "run": 33955923219,
+    "conclusion": "success",
+    "smoke": "success",
+    "tests": "success",
+    "build": "success"
+   },
+   "notes": "Historical implementation retained as evidence; current Wave A was re-established by later grounded token slices and PR #96."
+  },
+  {
+   "id": "business-portal-studio-wave-b-drag-snap-fusion",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified-but-reopened",
+   "pr": 85,
+   "mergeSha": "73b9763aa90c258ab496c2c355b78384bbe53568",
+   "ci": {
+    "run": 33956703424,
+    "conclusion": "success",
+    "smoke": "success",
+    "tests": "46/46 files; 146/146 tests",
+    "build": "success"
+   },
+   "notes": "Current V2 is semantic-tree based and does not mount historical StorefrontCanvas magnetic snap. Snap remains deferred pending an intentional V2 2D surface with its own coordinate/persistence authority."
+  },
+  {
+   "id": "business-portal-studio-wave-c-device-emulation",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified-but-reopened",
+   "pr": 86,
+   "mergeSha": "62ceb099cafd1832cb45ba7cb14f14e18d4c2c1f",
+   "ci": {
+    "exactHead": "85bf12bbf95af059a9ca23fb4318cfa8d18b1adc",
+    "run": 33957554769,
+    "conclusion": "success",
+    "smoke": "success",
+    "tests": "148/148",
+    "build": "success"
+   },
+   "notes": "Device emulation baseline merged; current Wave C still needs rendered scroll, responsive relayout and clipping evidence."
+  },
+  {
+   "id": "business-portal-studio-wave-a-c-reopen-remediation",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "closed-superseded",
+   "pr": 87,
+   "baseSha": "62ceb099cafd1832cb45ba7cb14f14e18d4c2c1f",
+   "headSha": "e62b6c7ae99ca8771ad3ee1e177d4321f3c1ec73",
+   "ci": {
+    "run": 33960517385,
+    "conclusion": "success"
+   },
+   "notes": "Closed because the PR diff exceeded the <=500 change budget."
+  },
+  {
+   "id": "business-portal-studio-wave-b-pointer-palette-insertion",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 88,
+   "mergeSha": "76e39eb6ba937082684cc72189c34f7157b967a8",
+   "ci": {
+    "exactHead": "fc77d21575c828a447b3d2264be3caa35948f6d3",
+    "run": 33960579364,
+    "conclusion": "success",
+    "smoke": "success",
+    "tests": "success",
+    "build": "success"
+   },
+   "notes": "Pointer Events palette insertion with capture, cleanup, before/after insertion and click suppression."
+  },
+  {
+   "id": "business-portal-studio-wave-a-preview-token-slice-1",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 89,
+   "mergeSha": "59d9567d72b4eb0798a1a97f2fc9877381725a26",
+   "ci": {
+    "exactHead": "cc37a2058b8c68ba1ddcbe6663f86e1474af110d3",
+    "run": 33960898335,
+    "conclusion": "success",
+    "smoke": "success",
+    "tests": "success",
+    "build": "success"
+   },
+   "notes": "Budgeted Wave A slice covering HeroHeader, QuickInfoBar, ProductGrid, ReviewCarousel and ContactCard."
+  },
+  {
+   "id": "business-portal-studio-wave-a-preview-token-slice-2",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 91,
+   "mergeSha": "a1002e0846f7160298dc58e3f8261e675a9a1c5f",
+   "ci": {
+    "exactHead": "df1bcd0d2f6903d396bc95affec9311b306fbfa9",
+    "run": 33961463513,
+    "conclusion": "success",
+    "smoke": "success",
+    "tests": "success",
+    "build": "success"
+   },
+   "notes": "Budgeted Flutter-grounded token contract for Showcase Gallery, Location Map, and Video Player."
+  },
+  {
+   "id": "business-portal-studio-wave-a-preview-wiring-2",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 92,
+   "mergeSha": "fc4536492c2c879ad2ff2b47aefe5c6c83dcc226",
+   "ci": {
+    "exactHead": "08955de01a48bcbcac3e621c7741e2781a3d4843",
+    "run": 33961944664,
+    "conclusion": "success",
+    "smoke": "success",
+    "tests": "success",
+    "build": "success"
+   },
+   "notes": "Wired Showcase Gallery, Location Map and Video Player geometry through shared preview token helpers."
+  },
+  {
+   "id": "business-portal-studio-wave-c-bounded-device-scroll",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 93,
+   "mergeSha": "83c1749e887f20846ec7af4876e5291816115ec7",
+   "ci": {
+    "exactHead": "0952e426dfcf451ebfecd51c8ea3ee9afa2d8a16",
+    "run": 33962010722,
+    "conclusion": "success",
+    "smoke": "success",
+    "tests": "success",
+    "build": "success"
+   },
+   "notes": "Added bounded studio-device-scroll-viewport; rendered overflow behavior, responsive relayout and clipping evidence remain open."
+  },
+  {
+   "id": "business-portal-studio-wave-a-preview-token-slice-3",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 94,
+   "mergeSha": "f5e8470898b87462d9febb152e0d8faafef4569e",
+   "ci": {
+    "conclusion": "success"
+   },
+   "notes": "Grounded/wired Promo Banner, Social Feed and Live Stats."
+  },
+  {
+   "id": "business-portal-studio-wave-a-preview-token-slice-4",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 95,
+   "mergeSha": "c64a2f78e68781402beb7a89ec90340097ac9503",
+   "ci": {
+    "conclusion": "success"
+   },
+   "notes": "Grounded remaining Animated Counter, Custom HTML and Gradient Hero token maps."
+  },
+  {
+   "id": "business-portal-studio-wave-a-preview-renderer-completion",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 96,
+   "mergeSha": "2ef57f22b1dcae45334dd5f30e896e448073f10b",
+   "ci": {
+    "exactHead": "fb20134bdd0ae622c8937e29c01f5e11a33a0abf",
+    "conclusion": "success",
+    "smoke": "success",
+    "tests": "success",
+    "build": "success"
+   },
+   "notes": "Completed current Wave A token consumption across all 16 widget renderers plus action/fallback/selection/chrome/frame geometry. Completion guard rejects inline numeric CSS px literals and verifies all 16 registry renderers."
+  },
+  {
+   "id": "business-portal-studio-wave-a-preview-token-slices-remaining",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified-complete",
+   "pr": 96,
+   "mergeSha": "2ef57f22b1dcae45334dd5f30e896e448073f10b",
+   "objective": "Finish shared preview token consumption and close Wave A against current code and Flutter-grounded acceptance.",
+   "notes": "Closed after exact-head CI and criterion-by-criterion code/test audit."
+  },
+  {
+   "id": "business-portal-dine-in-notification-invalidation-proof",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 98,
+   "mergeSha": "7140658f4d66cada3d6c3155c085638105fe484e",
+   "ci": {
+    "exactHead": "85560129a19470e40a70175a8049eb3cffde8655",
+    "run": 33975428983,
+    "conclusion": "success",
+    "smoke": "success",
+    "tests": "success",
+    "build": "success"
+   },
+   "notes": "Executable coverage for all supported DINE_IN_TAB_* business notification events and rejection of unrelated-event dine-in refresh."
+  },
+  {
+   "id": "admin-withdrawal-optimistic-concurrency",
+   "repo": "AzamanLTD/AZM-adminPortal",
+   "status": "verified",
+   "pr": 96,
+   "mergeSha": "44b3588b5a134b84a528c533e39ba36b9a9c297f"
+  },
+  {
+   "id": "cross-repo-dine-in-lifecycle-proof",
+   "repo": "cross-repo",
+   "status": "verified-contract-scope",
+   "objective": "Implementation hardened across finalize/payment/close and customer recovery, with current Business Portal owner-notification/query convergence proof.",
+   "notes": "Cross-client contract evidence is current and executable; this is not a deployed four-surface E2E claim."
+  },
+  {
+   "id": "cross-repo-dine-in-lifecycle-executable-proof",
+   "repo": "cross-repo",
+   "status": "residual-integration-partial",
+   "objective": "Correlate Flutter, Backend, Business Portal and Admin-visible state for finalize/payment/replay, tips, ambiguous response and reconnect/background recovery only if a deployed harness or explicit Admin projection requirement justifies it.",
+   "residual": "Admin-side dine-in lifecycle visibility is now verified (backend GET /api/admin/dine-in/overview at main 94dfd31, adminPortal Dashboard projection at 730cb18; exact-head CI green on both). The remaining residual is only the single deployed four-surface E2E harness correlating live Backend, Flutter, Business Portal and Admin state through one finalize/payment/replay/reconnect scenario."
+  },
+  {
+   "id": "backend-business-invoice-idempotency-audit",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified-proof-complete",
+   "pr": 235,
+   "objective": "Prove concurrent canonical business-invoice creation converges on one committed invoice without duplicate creation or intent drift.",
+   "notes": "Creation boundary inventory continues for non-standard runtime paths; inspected business route has a single POST /invoices producer path."
+  },
+  {
+   "id": "admin-financial-mutation-coverage",
+   "repo": "AzamanLTD/AZM-adminPortal",
+   "status": "active-p0",
+   "objective": "Expand withdrawals, escrow disputes, fee controls, War Room, KPI accuracy, tenant/state/realtime and operational/load evidence."
+  },
+  {
+   "id": "production-release-readiness",
+   "repo": "cross-repo",
+   "status": "future-p0",
+   "objective": "Prove deployment/configuration separation, secrets/rotation, migration rollback, observability, worker recovery, anomaly alerts and release rehearsal."
+  },
+  {
+   "id": "backend-route-checker-mount-registry-fix",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "mergeSha": "6b7a884",
+   "ci": {
+    "conclusion": "success"
+   },
+   "notes": "route-checker.js now parses the src/routes/index.js mountRoutes registry (the backend route-mounting refactor had left it reading only legacy server.js app.use style, reporting 0 mounts/0 handlers and failing with 291 unmatched frontend calls). Restored tool verified 102 mounts / 959 handlers / all 291 frontend calls matched at the time of the fix; run via scripts/route-checker.js."
+  },
+  {
+   "id": "business-portal-dine-in-realtime-projection-executable",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 97,
+   "mergeSha": "bb18fec",
+   "ci": {
+    "exactHead": "2f2b83f",
+    "conclusion": "success"
+   },
+   "notes": "Idle PR re-checked and merged 2026-09-14: replaces the non-executable dineIn .jsx test with a runtime .js suite for useBizNotifications. Main-head ddabea4 validate also green."
+  },
+  {
+   "id": "business-portal-studio-phone-frame-scroll",
+   "repo": "AzamanLTD/AZM-businessPortal",
+   "status": "verified",
+   "pr": 99,
+   "mergeSha": "ddabea4",
+   "ci": {
+    "exactHead": "3b2a0ab",
+    "conclusion": "success"
+   },
+   "notes": "Idle PR re-checked and merged 2026-09-14: genuinely scrollable studio phone frame (bounded viewport + scroll test + studioWaveC.css wiring). Advances the open Wave C rendered-scroll evidence. Main-head validate green."
+  },
+  {
+   "id": "backend-dine-in-p0-adapter-authority-proof",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "pr": 236,
+   "mergeSha": "94dfd31",
+   "ci": {
+    "exactHead": "29c213e-branch-head post-fix",
+    "conclusion": "success"
+   },
+   "notes": "PR was failing CI on a jest.mock hoisting bug (module factory referenced out-of-scope variables). Fixed with mock-prefixed factories and explicit service-shape keys; 3/3 tests pass locally (canonical payment authority, ambiguous-response durable CLOSED+PAID recovery without recharge, recovery denied for a paid tab owned by another customer). Exact-head CI success; merged 2026-09-14 (main-head run pending at time of writing)."
+  },
+  {
+   "id": "backend-admin-dine-in-lifecycle-projection",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "mergeSha": "117cebe",
+   "objective": "Admin-side dine-in lifecycle visibility per CONTRACTS.md (Admin is a dine-in consumer; backend-authoritative stats, no client aggregation).",
+   "notes": "GET /api/admin/dine-in/overview (protect+adminOnly): full OPEN/FINALIZED/CLOSED/CANCELLED tabsByStatus zero-defaulted, openTabs/finalizedTabs/closedToday, 24h closed volume+tips (USDC), 15 recent tabs with business+invoice joins. Mounted in src/routes registry before the legacy admin router. Jest contract tests 3/3 locally. Exact-head CI verified: the post-merge main-head run at 94dfd31 (which includes this commit) passed tests + audit + database recovery.",
+   "ci": {
+    "conclusion": "success",
+    "coveredByMainHead": "94dfd31"
+   }
+  },
+  {
+   "id": "admin-portal-dine-in-lifecycle-dashboard",
+   "repo": "AzamanLTD/AZM-adminPortal",
+   "status": "verified",
+   "mergeSha": "730cb18",
+   "objective": "Consume the backend dine-in projection in the Admin dashboard without client-side aggregation.",
+   "notes": "admin.dineInOverview() API + useDineInOverview hook + Dashboard Dine-in Lifecycle panel (lifecycle mini-stats, recent tabs table with status/invoice badges, empty state) + vitest contract test. Local verification: vitest 13/13 (new test + 3 existing lib suites), tsc clean, vite build clean, eslint clean. Exact-head CI verified: validate passed at main head 730cb18.",
+   "ci": {
+    "conclusion": "success",
+    "exactHead": "730cb18"
+   }
+  },
+  {
+   "id": "admin-portal-dead-test-suite-hygiene",
+   "repo": "AzamanLTD/AZM-adminPortal",
+   "status": "open-hygiene",
+   "objective": "Wire the four vitest lib suites into CI.",
+   "notes": "adminPortal has vitest-shaped test files but vitest is not a dependency and CI runs lint+typecheck+build only \u2014 the suites never execute in CI. All four pass locally under vitest 4.1.11 (13/13), so adding vitest as a devDependency and a test step to ci.yml is safe and cheap. Not done in the 2026-09-14 batch to keep the dine-in slice reviewable."
+  },
+  {
+   "id": "backend-control-plane-integrity-atomic-mutations",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "mergeSha": "6d8da48",
+   "objective": "Control-plane integrity batch (2026-09-13 handoff findings A-D): every privileged control-plane mutation and its STAFF audit event become one atomic transaction; TOCTOU windows on authority-sensitive staff updates close with guarded UPDATEs; concurrent permission replacement is serialized by a row lock.",
+   "notes": "PR #241 (squash 6d8da48 on main): PUT /staff/:id/permissions full replacement (validation reads, delete, inserts, STAFF_PERMISSIONS_REPLACED audit) in one $transaction; department create/update, staff create, lifecycle (suspend/activate/deactivate + PATCH), duty assign/revoke each commit mutation+audit atomically via recordActivity(tx,...); lifecycle/PATCH UPDATEs guarded by the validated authority state (zero rows -> deliberate 409, not silent overwrite); department/staff unique races map to the existing 409s; ON CONFLICT duty upsert and all authorization gates (global-super-admin, self-protection, possession) unchanged. Tests: admin-control-plane-integrity.test.js \u2014 10 SQL-fragment unit tests + 11 real-PostgreSQL tests (rollback on late-insert/audit failure, one-audit-per-committed-mutation, three concurrency races). Two defects found by the work itself: (1) the control-plane tables exist only in migration 20260828040000_control_plane_staff_access, not as schema.prisma models, so CI's prisma db push test DB lacked them \u2014 the suite now applies that exact migration DDL idempotently before seeding (prod schema parity; ALSO means prisma db push CANNOT be used to provision a DB with control-plane tables \u2014 use migrate deploy or the raw migration file); (2) the new concurrency test exposed a real race: two parallel permission replacements under READ COMMITTED committed a UNION of both grant sets (4 keys) \u2014 fixed with SELECT ... FOR UPDATE on the target StaffProfile row inside the transaction, so the final set is always exactly the last committed replacement. Exact-head CI green at f5aabaa (1149 tests); post-merge main-head run green at 6d8da48. Prod azm-backend.onrender.com healthy (200). PR size ~930 changed lines \u2014 over the 500 target, dominated by the required 16-case test matrix and transaction re-indentation; kept as one PR per the no-multiple-tiny-PRs rule.",
+   "ci": {
+    "conclusion": "success",
+    "coveredByMainHead": "6d8da48"
+   }
+  },
+  {
+   "id": "backend-escrow-dispute-atomic-raise-resolve",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "mergeSha": "fdcd596",
+   "objective": "Dispute lifecycle financial integrity: raiseDispute and resolveDispute become atomic \u2014 dispute state and any escrow money movement commit in ONE transaction, with canonical transaction-scoped financial primitives (no second refund/release implementation).",
+   "notes": "PR #243 (squash fdcd596 on main): escrowService exposes _claimEscrowStatusTx/_releaseEscrowTx/_refundEscrowTx; raiseDispute is a guarded single-claim $transaction (concurrent participant raises converge to exactly one dispute, loser rejected ESCROW_NOT_CLAIMABLE); resolveDispute composes dispute claim + stake/bucket movement + audit in one $transaction, with guarded updateMany claims so buckets can never go negative. Concurrency and rollback proofs run on real PostgreSQL in CI. Exact-head CI green; post-merge main-head run green at fdcd596. No regressions across the 1128+ suite.",
+   "ci": {
+    "conclusion": "success",
+    "coveredByMainHead": "fdcd596"
+   }
+  },
+  {
+   "id": "backend-booking-no-show-atomic-settlement",
+   "repo": "AzamanLTD/AZM-backend",
+   "status": "verified",
+   "mergeSha": "66b39b1",
+   "objective": "Business no-show settlement integrity (handoff slice): processBusinessNoShow becomes ONE authoritative settlement transaction \u2014 canonical _refundEscrowTx refund -> guarded business-stake penalty claim -> conditional/idempotent booking terminal transition -> canonical AuditLog row -> COMMIT; plus guarded bookingEscrowService bucket drains.",
+   "notes": "PR #244 (squash 66b39b1 on main), built on regression commit a1cacaf. Closes a live-main defect where the business no-show path was broken end-to-end: _refundEscrow was called with a human-readable reason string as the escrow lifecycle status (guaranteed enum violation); the stake penalty debited BusinessProfile.stakeBalance \u2014 a column that did not exist in the schema (penalties ALWAYS failed, swallowed); audit used entity/entityId/userId fields that do not exist (ALWAYS failed, swallowed). Fixes: escrowService exports its transaction-scoped financial primitives (incl. alias refundEscrowInTransaction) so other services reuse the canonical engine; penaltyPolicyService runs the whole settlement in one $transaction with NO swallowed failures (insufficient stake is a committed deterministic outcome penaltyApplied=false; unexpected DB errors roll back refund+stake+booking+audit together; replay against REFUNDED converges via alreadyProcessed with zero mutation and no duplicate audit rows); caller-supplied bookingId/businessProfileId verified against the escrow-linked booking before any mutation (BOOKING_ESCROW_MISMATCH/BUSINESS_MISMATCH); booking terminal transition uses real enum semantics \u2014 ReservationStatus.CANCELLED_BUSINESS / TransitBookingStatus.CANCELLED with pre-terminal guards (BOOKING_NOT_TRANSITIONABLE rolls back the settlement); bookingEscrowService release/refund/split-release payer-bucket drains are guarded conditional updateMany claims (ESCROW_BALANCE_INSUFFICIENT) instead of blind decrements; schema + additive migration 20260914120000_business_stake_balance add BusinessProfile.stakeBalance DECIMAL(20,8) DEFAULT 0 (safe on populated prod; note CI db push provisions it from schema.prisma). Tests: penalty-policy-integrity (7 mock-layer contract + 10 real-PostgreSQL cases: full settlement, exact-once penalty, insufficient stake, concurrent double no-show converges to one refund, concurrent penalty cannot take stake below zero, financial-failure full rollback, booking-transition full rollback, canonical audit persistence, replay zero-mutation, cross-booking/cross-business rejection) and penalty-policy-outcome rewritten to the guarded-claim architecture. First CI run failed on two test-authoring bugs only (required TransitBooking.bookingRef; error code lived only on err.code) \u2014 settlement logic was already correct (8/10 DB cases green) \u2014 fixed and CI green at exact head 8c6e24e (1181 tests); post-merge main-head run green at 66b39b1. Scope untouched: P2P trade settlement, withdrawals, SAT, admin RBAC, invoices, unrelated Business OS modules.",
+   "ci": {
+    "conclusion": "success",
+    "coveredByMainHead": "66b39b1"
+   }
+  }
+ ]
 }
