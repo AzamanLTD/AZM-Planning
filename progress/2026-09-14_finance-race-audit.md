@@ -1,32 +1,60 @@
-# 2026-09-14 finance P0 audit — current-main finding
+# 2026-09-14 finance P0 audit — current-main finding and verified remediation
 
 ## Finding
-Current `AZM-backend/main` contains an unsafe read → decision → write boundary in `services/finance.service.js::liquidateProfits`.
+Current `AZM-backend/main` contained an unsafe read → decision → write boundary in `services/finance.service.js::liquidateProfits`.
 
-Current flow:
+The unsafe flow was:
 1. ensure `SystemProfitFees` and `SystemFiatPool` singletons;
 2. read `SystemProfitFees.balance`;
-3. reject only when the pre-read is insufficient;
+3. reject only when the pre-read was insufficient;
 4. unconditionally decrement `SystemProfitFees.balance`;
 5. increment `SystemFiatPool.balance`;
 6. create `AdminProfitLog`.
 
-Two concurrent liquidation requests can both pass the pre-read. The database's non-negative CHECK constraint prevents a persisted negative balance, but the losing transaction currently fails through the database constraint rather than a stable domain-level insufficient-profit result. The read/decision/write boundary therefore remains weaker than the platform's required atomic-claim standard.
+Two concurrent liquidation requests could both pass the pre-read. The database's non-negative CHECK constraint prevented a persisted negative balance, but the losing transaction could fail through the database constraint rather than a stable domain-level insufficient-profit result.
 
-## Evidence
-- Backend main baseline before CI-hardening: `94dfd3144fc3abfd60f51e7a38ad241809b3e8e2`.
-- `SystemProfitFees` and `SystemFiatPool` both have DB-level non-negative balance constraints in `prisma/migrations/20260525_phase_j2_balance_check_constraints/migration.sql`.
-- Existing `processFiatWithdrawal` already demonstrates the canonical conditional-claim pattern using `updateMany` with `{ balance: { gte: amount } }` and a stable `FIAT_POOL_INSUFFICIENT` error.
-- Existing liquidation route remains a single controller → `financeService.liquidateProfits` path; no duplicate financial service was introduced.
+## Remediation implemented
+`AZM-backend` PR #238 replaced the pre-read + unconditional decrement with a single conditional claim:
 
-## Required next implementation
-Replace the liquidation pre-read + unconditional decrement with one conditional atomic balance claim and explicit domain error semantics, then prove:
-- successful liquidation moves exactly the requested amount;
-- concurrent loser cannot create a second liquidation/profit log or overdraw SystemProfitFees;
-- Fiat pool increment and profit debit remain one transaction;
-- Admin response maps insufficient-profit contention to a stable error without exposing raw Prisma constraint failures.
+```js
+const claim = await tx.systemProfitFees.updateMany({
+    where: { id: 1, balance: { gte: amountFloat } },
+    data: { balance: { decrement: amountFloat } }
+});
 
-Do not revive stale withdrawal/liquidation branches. Implement against current main and keep the PR <=500 changed lines with executable regression coverage.
+if (claim.count !== 1) {
+    const err = new Error(`Insufficient profit balance. Requested: ${amountFloat.toFixed(6)} USDC.`);
+    err.code = 'INSUFFICIENT_PROFIT_BALANCE';
+    throw err;
+}
+```
 
-## Self-audit status
-This finding was not patched through a controller wrapper or parallel service because that would create a second authority. The dedicated branch `fix/finance-profit-liquidation-concurrency` currently exists as a working branch with no merged production changes and should be either completed through the canonical service or removed when branch-deletion tooling is available.
+The fiat-pool increment and `AdminProfitLog` write remain inside the same Prisma transaction. No duplicate controller/service authority was introduced.
+
+## Regression coverage
+Added `__tests__/finance-service-profit-liquidation-concurrency.test.js` covering:
+- two concurrent liquidation attempts against one 10 USDC pool: exactly one succeeds;
+- the losing attempt receives `INSUFFICIENT_PROFIT_BALANCE`;
+- only one fiat-pool increment occurs;
+- only one profit log is created;
+- an oversized liquidation performs no fiat-pool or log mutation.
+
+## Verification
+- PR: `AzamanLTD/AZM-backend#238`
+- Exact head verified by full CI: `f5d43f5ab321c2b00fa6814e08b1c1ed10fc58c5`
+- Backend CI run `#916` passed all canonical steps: dependency install, production dependency audit, database schema application, Prisma generation, full Jest suite, route-registry verification, database backup/restore drill.
+- Merged to backend main as `d5e96432214a6e5f369c7c59a0dba7b97ac7074c`.
+
+## Follow-on tenant-isolation finding
+During the same current-main audit, `services/businessOS/businessGroupService.js::getGroupStats(userId, groupId)` was found to filter by `groupId` alone when a group was supplied. This means a caller holding another owner's `groupId` could cause that group's businesses to be aggregated unless ownership is checked separately.
+
+A canonical remediation is in progress in `AZM-backend` PR #239:
+- verify `BusinessGroup.id` with `ownerUserId = userId` before reading;
+- scope the subsequent `BusinessProfile.findMany` to both `groupId` and `userId`;
+- fail closed with an empty stats result for a foreign/nonexistent group;
+- add regression coverage for cross-owner rejection and valid-owner scoping.
+
+This is a tenant-isolation P0 and is being handled separately from the finance transaction boundary so each change remains narrowly reviewable.
+
+## Cleanup note
+The earlier working branch `fix/finance-profit-liquidation-concurrency` is superseded by PR #238's canonical `fix/finance-profit-liquidation-concurrency-v2`. It contains no additional required implementation and should be removed when branch-deletion tooling is available.
