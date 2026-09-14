@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-14T08:30:00Z",
+  "updatedAt": "2026-09-14T08:45:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -422,7 +422,7 @@
       "repo": "cross-repo",
       "status": "residual-integration-partial",
       "objective": "Correlate Flutter, Backend, Business Portal and Admin-visible state for finalize/payment/replay, tips, ambiguous response and reconnect/background recovery only if a deployed harness or explicit Admin projection requirement justifies it.",
-      "residual": "The Admin-side dine-in lifecycle projection now exists (backend 117cebe GET /api/admin/dine-in/overview + adminPortal 730cb18 dashboard panel, exact-head CI verification pending at time of writing). The remaining residual is the single deployed four-surface E2E harness correlating live Backend, Flutter, Business Portal and Admin state through one finalize/payment/replay/reconnect scenario."
+      "residual": "Admin-side dine-in lifecycle visibility is now verified (backend GET /api/admin/dine-in/overview at main 94dfd31, adminPortal Dashboard projection at 730cb18; exact-head CI green on both). The remaining residual is only the single deployed four-surface E2E harness correlating live Backend, Flutter, Business Portal and Admin state through one finalize/payment/replay/reconnect scenario."
     },
     {
       "id": "backend-business-invoice-idempotency-audit",
@@ -493,18 +493,26 @@
     {
       "id": "backend-admin-dine-in-lifecycle-projection",
       "repo": "AzamanLTD/AZM-backend",
-      "status": "merged-ci-pending",
+      "status": "verified",
       "mergeSha": "117cebe",
       "objective": "Admin-side dine-in lifecycle visibility per CONTRACTS.md (Admin is a dine-in consumer; backend-authoritative stats, no client aggregation).",
-      "notes": "GET /api/admin/dine-in/overview (protect+adminOnly): full OPEN/FINALIZED/CLOSED/CANCELLED tabsByStatus zero-defaulted, openTabs/finalizedTabs/closedToday, 24h closed volume+tips (USDC), 15 recent tabs with business+invoice joins. Mounted in src/routes registry before the legacy admin router. Jest contract tests 3/3 locally. Exact-head CI on main pending (117cebe run superseded by the 94dfd31 merge; the queued main run covers both)."
+      "notes": "GET /api/admin/dine-in/overview (protect+adminOnly): full OPEN/FINALIZED/CLOSED/CANCELLED tabsByStatus zero-defaulted, openTabs/finalizedTabs/closedToday, 24h closed volume+tips (USDC), 15 recent tabs with business+invoice joins. Mounted in src/routes registry before the legacy admin router. Jest contract tests 3/3 locally. Exact-head CI verified: the post-merge main-head run at 94dfd31 (which includes this commit) passed tests + audit + database recovery.",
+      "ci": {
+        "conclusion": "success",
+        "coveredByMainHead": "94dfd31"
+      }
     },
     {
       "id": "admin-portal-dine-in-lifecycle-dashboard",
       "repo": "AzamanLTD/AZM-adminPortal",
-      "status": "merged-ci-pending",
+      "status": "verified",
       "mergeSha": "730cb18",
       "objective": "Consume the backend dine-in projection in the Admin dashboard without client-side aggregation.",
-      "notes": "admin.dineInOverview() API + useDineInOverview hook + Dashboard Dine-in Lifecycle panel (lifecycle mini-stats, recent tabs table with status/invoice badges, empty state) + vitest contract test. Local verification: vitest 13/13 (new test + 3 existing lib suites), tsc clean, vite build clean, eslint clean. Exact-head CI on main pending at time of writing."
+      "notes": "admin.dineInOverview() API + useDineInOverview hook + Dashboard Dine-in Lifecycle panel (lifecycle mini-stats, recent tabs table with status/invoice badges, empty state) + vitest contract test. Local verification: vitest 13/13 (new test + 3 existing lib suites), tsc clean, vite build clean, eslint clean. Exact-head CI verified: validate passed at main head 730cb18.",
+      "ci": {
+        "conclusion": "success",
+        "exactHead": "730cb18"
+      }
     },
     {
       "id": "admin-portal-dead-test-suite-hygiene",
