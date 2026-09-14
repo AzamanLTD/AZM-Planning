@@ -1,14 +1,14 @@
 # AZAMAN Current Engineering State
 
-**Last reconciled:** 2026-09-05 UTC
+**Last reconciled:** 2026-09-14 UTC
 **Authority:** current repository `main` + exact CI/evidence.
 
 ## Current verified baseline
 
-- Backend main: `ad6110213f5a859fd9e47db75d0f36682c32974e` — invoice creation/payment concurrency proofs and prior financial/dine-in hardening are merged and verified.
+- Backend main: `94dfd31` (2026-09-14) — invoice creation/payment concurrency proofs, prior financial/dine-in hardening, the route-checker mount-registry fix (`6b7a884`, exact-head CI success), the merged P0 adapter authority proof (PR #236), and the admin dine-in lifecycle projection endpoint (`117cebe`). The post-merge main-head CI run covers the projection; verify its result before treating the projection as fully verified.
 - Flutter main: `c750562d26499346e7c43315fba9912951e590d1` — durable dine-in recovery plus the new payment convergence contract are merged and verified.
-- Business Portal main: `7140658f4d66cada3d6c3155c085638105fe484e` — PR #88 pointer palette insertion, PR #89/#91/#92/#94/#95 Wave A token/wiring slices, PR #93 bounded device-frame scrolling, PR #96 Wave A renderer/chrome completion, and PR #98 dine-in lifecycle invalidation proof are merged and verified.
-- Admin Portal main: latest verified main retains withdrawal optimistic concurrency and financial API/settings boundary work; the current tree contains no dedicated dine-in projection identified during the P0 audit.
+- Business Portal main: `ddabea4` (2026-09-14) — PR #88 pointer palette insertion, Wave A token/wiring slices, PR #93 bounded device-frame scrolling, PR #96 Wave A completion, PR #98 dine-in lifecycle invalidation proof, plus the 2026-09-14 merges of idle PRs #97 (executable dine-in realtime projection runtime test) and #99 (genuinely scrollable studio phone frame — advances open Wave C evidence). Main-head validate green.
+- Admin Portal main: `730cb18` (2026-09-14) — retains withdrawal optimistic concurrency and financial API/settings boundary work, and now consumes the backend dine-in lifecycle projection on the Dashboard (API + hook + lifecycle panel + contract test; exact-head CI pending at time of writing).
 
 ## Studio acceptance audit — current truth
 
@@ -44,7 +44,8 @@ Historical Wave A/B/C completion is not trusted merely because an older green ru
 - Flutter PR #91 merged at `c750562d26499346e7c43315fba9912951e590d1`; exact head `d1dbc94ed890583241a4d338fc2a045cf5cec4a3`, Flutter Quality run `33967426867` passed Analyze/Test with coverage. The added contract verifies payment POST → authoritative tab reread → durable CLOSED recovery, while preserving the original failure when durable proof is absent.
 - Business Portal PR #98 merged at `7140658f4d66cada3d6c3155c085638105fe484e`; exact head `85560129a19470e40a70175a8049eb3cffde8655`, run `33975428983` passed. Coverage executes all supported `DINE_IN_TAB_OPENED`, `DINE_IN_TAB_ITEM_ADDED`, `DINE_IN_TAB_ITEM_REMOVED`, `DINE_IN_TAB_FINALIZED`, `DINE_IN_TAB_PAID`, and `DINE_IN_TAB_CANCELLED` notification paths and proves unrelated order events do not invalidate dine-in projections.
 - **P0 scope now verified at cross-client contract level:** backend settlement/replay authority, customer durable recovery, and business-owner notification→canonical-query convergence each have current executable evidence. Socket payloads remain invalidation signals rather than payment proof.
-- **Residual integration gap:** there is still no single deployed four-surface E2E harness tying the live Backend, Flutter, Business Portal and Admin surfaces together through one physical finalize/payment/replay/reconnect scenario. Admin-side dine-in lifecycle visibility also remains unproven because no dedicated dine-in projection was identified in the current Admin tree.
+- **Admin-side dine-in lifecycle projection (2026-09-14, pending exact-head CI):** Backend `117cebe` adds `GET /api/admin/dine-in/overview` (protect+adminOnly; full zero-defaulted OPEN/FINALIZED/CLOSED/CANCELLED lifecycle counts, closed-today count, 24h closed volume+tips in USDC, 15 recent tabs with business+invoice joins; jest contract tests 3/3). Admin Portal `730cb18` consumes it on the Dashboard (API + `useDineInOverview` hook + lifecycle panel + vitest contract test; local vitest 13/13, tsc/build/eslint clean). This closes the "no dedicated dine-in projection" finding once CI is confirmed on the exact main heads.
+- **Residual integration gap:** there is still no single deployed four-surface E2E harness tying the live Backend, Flutter, Business Portal and Admin surfaces together through one physical finalize/payment/replay/reconnect scenario. With the Admin projection in place, that harness now has an Admin surface to read.
 
 ## Important contracts
 
@@ -56,6 +57,7 @@ Historical Wave A/B/C completion is not trusted merely because an older green ru
 ## Residual risks / hygiene
 
 - Wave C rendered scroll, responsive relayout and clipping evidence remain open.
-- A live deployed four-surface dine-in E2E harness and Admin-side lifecycle projection evidence remain future integration work; the current P0 claim is explicitly contract-level, not deployed-E2E.
+- A live deployed four-surface dine-in E2E harness remains future integration work; the current P0 claim is explicitly contract-level, not deployed-E2E. The Admin-side lifecycle projection is now implemented and pending exact-head CI confirmation.
+- Hygiene findings (2026-09-14 audit): (1) `scripts/route-checker.js` had been broken by the src/routes mount-registry refactor — fixed at `6b7a884`, and it is not wired into backend CI, which is why nothing caught it; consider adding it as a CI step. (2) adminPortal ships four vitest-shaped lib suites that never run in CI (vitest is not a dependency); all 13 tests pass locally, so wiring them in is safe and cheap. (3) The production backend on Render cold-starts in ~27s (free-tier spin-down) — a production-readiness concern for the release wave. (4) 190+ stray backend branches (including `noop`, `temp`, `x`, `accidental-do-not-use`) need a cleanup sweep.
 - Bundle-size warning (>500 kB chunk) remains a separate performance slice.
 - Backend branch-deletion cleanup remains optional hygiene only where safe tooling supports it.

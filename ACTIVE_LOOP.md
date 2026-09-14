@@ -19,10 +19,10 @@
 
 ### Verified current GitHub state — 2026-09-05 UTC
 
-- Backend main: `ad6110213f5a859fd9e47db75d0f36682c32974e`; invoice creation/payment concurrency proofs are merged and verified with green exact-head tests and database recovery. Dine-in PR #233 is the executable invoice-to-closure orchestration proof: exact head `2453729846cf15d95bf6ab637d26ae19f3b735fa`, run `33957019469`, tests + production dependency audit + database recovery passed.
+- Backend main: `94dfd31` (2026-09-14); invoice creation/payment concurrency proofs remain verified with green exact-head tests and database recovery (PR #233 evidence unchanged). Since then: route-checker mount-registry fix (`6b7a884`, exact-head CI success), PR #236 P0 adapter recovery proof fixed (jest hoisting bug) and merged with green exact-head CI, and the admin dine-in lifecycle projection endpoint (`117cebe`, jest 3/3 locally; the post-merge main-head CI run covers it — verify before closing).
 - Flutter main: `c750562d26499346e7c43315fba9912951e590d1`; PR #90 durable CLOSED-tab recovery is merged, and PR #91 adds the complementary customer payment convergence contract. Exact head `d1dbc94ed890583241a4d338fc2a045cf5cec4a3`, Flutter Quality run `33967426867`, passed Analyze + Test with coverage + upload coverage; merged at `c750562d26499346e7c43315fba9912951e590d1`.
 - Business Portal main: `7140658f4d66cada3d6c3155c085638105fe484e`; PR #88 pointer palette insertion, PR #89/#91/#92/#94/#95 Wave A token/wiring slices, PR #93 bounded device-frame scroll, PR #96 Wave A completion, and PR #98 dine-in lifecycle invalidation proof are merged and verified. PR #96 exact head `fb20134bdd0ae622c8937e29c01f5e11a33a0abf` passed smoke/tests/build; PR #98 exact head `85560129a19470e40a70175a8049eb3cffde8655`, Business Portal CI run `33975428983`, passed smoke/tests/build.
-- Admin Portal main retains the verified withdrawal concurrency and financial API/settings boundary work; no dedicated dine-in projection was found in the current repository tree during the P0 audit.
+- Admin Portal main: `730cb18` (2026-09-14) adds the dine-in lifecycle Dashboard projection (backend-authoritative via `/api/admin/dine-in/overview`); exact-head CI pending at time of writing. The "no dedicated dine-in projection" finding is closed by this once CI is confirmed.
 
 ### Studio acceptance gates
 
@@ -36,12 +36,13 @@
 - Flutter PR #91 is merged at `c750562d26499346e7c43315fba9912951e590d1`. Its test locks the payment POST → authoritative tab reread → durable CLOSED recovery boundary and preserves the original failure when durable proof is absent.
 - Business Portal PR #98 is merged at `7140658f4d66cada3d6c3155c085638105fe484e`; exact head `85560129a19470e40a70175a8049eb3cffde8655`, run `33975428983`, proves all supported DINE_IN_TAB_* lifecycle notifications invalidate canonical dine-in roots while unrelated order events do not.
 - **P0 status: VERIFIED at cross-client contract scope.** Backend financial/replay authority, Flutter durable recovery and Business Portal owner-notification/query convergence each have current executable evidence. Socket payloads remain convergence signals only.
-- **Residual integration gap:** no single deployed four-surface E2E harness currently correlates live Backend, Flutter, Business Portal and Admin state through one finalize/payment/replay/reconnect scenario. Admin-side dine-in lifecycle visibility also remains unproven because no dedicated dine-in projection was identified.
+- **Admin-side dine-in lifecycle visibility (2026-09-14):** backend endpoint + admin Dashboard projection implemented with executable tests on both sides; pending exact-head CI confirmation on main heads `94dfd31` (backend) and `730cb18` (adminPortal).
+- **Residual integration gap:** no single deployed four-surface E2E harness currently correlates live Backend, Flutter, Business Portal and Admin state through one finalize/payment/replay/reconnect scenario. The Admin projection now gives that harness an Admin surface to read.
 
 ### Priority after current reconciliation
 
 1. Exercise and, where justified, strengthen current Studio Wave C rendered evidence rather than reopening Wave B's deferred magnetic snap without a 2D surface.
-2. Close the remaining integration gap in dine-in only when a testable deployed harness or an explicit Admin projection requirement makes that work valuable; do not duplicate existing component proofs.
+2. The Admin dine-in projection requirement is now implemented — first verify exact-head CI on backend `94dfd31` and adminPortal `730cb18`, then wire the adminPortal vitest suites into CI (all 13 tests pass locally; see CURRENT_STATE hygiene notes). The remaining dine-in residual is the deployed four-surface E2E harness; build it only when a testable deployed environment makes it valuable. Do not duplicate existing component proofs.
 3. Advance financial/control-plane integrity: withdrawals, escrow disputes, fee controls, War Room, KPI accuracy, tenant/state/realtime and operational/load evidence.
 4. Production readiness and adversarial/release rehearsal.
 
