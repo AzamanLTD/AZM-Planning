@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-14T08:45:00Z",
+  "updatedAt": "2026-09-14T14:45:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -520,6 +520,18 @@
       "status": "open-hygiene",
       "objective": "Wire the four vitest lib suites into CI.",
       "notes": "adminPortal has vitest-shaped test files but vitest is not a dependency and CI runs lint+typecheck+build only \u2014 the suites never execute in CI. All four pass locally under vitest 4.1.11 (13/13), so adding vitest as a devDependency and a test step to ci.yml is safe and cheap. Not done in the 2026-09-14 batch to keep the dine-in slice reviewable."
+    },
+    {
+      "id": "backend-control-plane-integrity-atomic-mutations",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "mergeSha": "6d8da48",
+      "objective": "Control-plane integrity batch (2026-09-13 handoff findings A-D): every privileged control-plane mutation and its STAFF audit event become one atomic transaction; TOCTOU windows on authority-sensitive staff updates close with guarded UPDATEs; concurrent permission replacement is serialized by a row lock.",
+      "notes": "PR #241 (squash 6d8da48 on main): PUT /staff/:id/permissions full replacement (validation reads, delete, inserts, STAFF_PERMISSIONS_REPLACED audit) in one $transaction; department create/update, staff create, lifecycle (suspend/activate/deactivate + PATCH), duty assign/revoke each commit mutation+audit atomically via recordActivity(tx,...); lifecycle/PATCH UPDATEs guarded by the validated authority state (zero rows -> deliberate 409, not silent overwrite); department/staff unique races map to the existing 409s; ON CONFLICT duty upsert and all authorization gates (global-super-admin, self-protection, possession) unchanged. Tests: admin-control-plane-integrity.test.js \u2014 10 SQL-fragment unit tests + 11 real-PostgreSQL tests (rollback on late-insert/audit failure, one-audit-per-committed-mutation, three concurrency races). Two defects found by the work itself: (1) the control-plane tables exist only in migration 20260828040000_control_plane_staff_access, not as schema.prisma models, so CI's prisma db push test DB lacked them \u2014 the suite now applies that exact migration DDL idempotently before seeding (prod schema parity; ALSO means prisma db push CANNOT be used to provision a DB with control-plane tables \u2014 use migrate deploy or the raw migration file); (2) the new concurrency test exposed a real race: two parallel permission replacements under READ COMMITTED committed a UNION of both grant sets (4 keys) \u2014 fixed with SELECT ... FOR UPDATE on the target StaffProfile row inside the transaction, so the final set is always exactly the last committed replacement. Exact-head CI green at f5aabaa (1149 tests); post-merge main-head run green at 6d8da48. Prod azm-backend.onrender.com healthy (200). PR size ~930 changed lines \u2014 over the 500 target, dominated by the required 16-case test matrix and transaction re-indentation; kept as one PR per the no-multiple-tiny-PRs rule.",
+      "ci": {
+        "conclusion": "success",
+        "coveredByMainHead": "6d8da48"
+      }
     }
   ]
 }
