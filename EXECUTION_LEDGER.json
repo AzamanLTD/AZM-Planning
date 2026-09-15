@@ -670,6 +670,36 @@
         "exactHeads": {},
         "postMergeMain": "977f116"
       }
+    },
+    {
+      "id": "backend-azm-ledger-idempotency-unique-invariant",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "mergeSha": "4efd269",
+      "objective": "Close the P0 idempotency defect: concurrent identical AZM creditAzm()/debitAzm() calls could both mutate User.azmBalance because dedup was a read-then-write JSON-metadata pre-check with no database-level uniqueness.",
+      "notes": "PR #254 (branch head 4fe4597 verified against main 977f116, squash 4efd269). Design: dedicated nullable dedupKey column + @@unique([userId, source, dedupKey]) on AzmRewardLog and AzmSpendLog — the DB unique index is the actual concurrency gate; a racing duplicate log insert fails the index and the WHOLE enclosing transaction (balance mutation included) rolls back. Additive history-preserving migration 20260915120000_azm_ledger_dedup_unique with a duplicate-audit NOTICE and first-occurrence-wins backfill (no ledger row deleted or rewritten); proven on real PostgreSQL incl. idempotent re-runs and a template-copy backup/restore drill. Services keep the fast-path pre-check, mirror dedupKey into metadata for compatibility, and converge P2002 races to the existing idempotent result semantics with winner-only post-commit socket emissions. azm-idempotency-concurrency suite: 8 real-PostgreSQL Promise.all() cases (concurrent credit/debit, replays, cross-user/cross-key independence, post-mutation rollback with retry) — regression-proven by reverting only the two service files (tests 1–2 fail with the double-credit/double-debit). Full battery 204/204 suites, 1268/1268 tests; route-check, prisma validate, production audit green. Exact-head CI green at 4fe4597; post-merge main-head run 34991074561 green at 4efd269. Merged by Sugru 2026-09-15.",
+      "ci": {
+        "conclusion": "success",
+        "exactHeads": {
+          "pr254": "4fe4597"
+        },
+        "postMergeMain": "4efd269"
+      }
+    },
+    {
+      "id": "backend-azm-auction-atomic-settlement",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "mergeSha": "6802ab6",
+      "objective": "Close the P0 auction settlement defect: settle() burned winners via independent debitAzm() calls with swallowed errors, then unconditionally marked bids WON, boosted ads and SETTLED the auction — a winner without funds still got the full burn-free boost and the ledger/auction state permanently disagreed.",
+      "notes": "PR #255 (branch head cf3b01e verified against main 4efd269, squash 6802ab6). Policy research per contract: no doc/spec/test defines an insufficient-funds fallback at settlement, so the fail-closed default applies — rollback, keep the auction retryable/OPEN; the existing 5-minute azm-auction worker is the recovery mechanism; no marketplace economics redesigned. Design: ONE authoritative settlement transaction — atomic OPEN→SETTLING conditional claim (window-closed, race-proof; zero rows converge to the existing skipped result), authoritative top-N selection inside the transaction, winner debits through the transaction-scoped _debitAzmWithClient primitive with deterministic auction-win-${auctionId}-${vendorId} dedup keys (exactly-once enforced by PR #254's unique invariant), WON/boost/LOST/SETTLED all in the same transaction, totalAzmBurned from actual committed debits, notifications + auction:settled emission strictly post-commit. A committed SETTLING is impossible under this design; legacy stranded SETTLING rows from the pre-atomic code are recovered burn-free via the widened claim + dedup keys. azm-auction-settlement-integrity suite: 9 real-PostgreSQL cases (success atomicity, concurrent settle exactly-one-winner, insufficient-balance fail-closed + recovery, post-debit rollback + retry, SETTLED replay no-op, legacy SETTLING recovery without reburn, rank ordering, zero bidders, auction isolation) — regression-proven: 4 cases fail on the old implementation. Full battery 205/205 suites, 1277/1277 tests; route-check, prisma validate, production audit and template-copy backup/restore drill (settled-auction rows + dedup gate survive restore, duplicate insert → P2002) all green. Diff 387+/113- = 500 changed lines, 2 files. Exact-head CI run 34993404805 green at cf3b01e; post-merge main-head CI green at 6802ab6. Merged by Sugru 2026-09-15.",
+      "ci": {
+        "conclusion": "success",
+        "exactHeads": {
+          "pr255": "cf3b01e"
+        },
+        "postMergeMain": "6802ab6"
+      }
     }
   ]
 }
