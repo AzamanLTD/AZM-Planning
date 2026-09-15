@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-14T20:45:00Z",
+  "updatedAt": "2026-09-15T03:10:46Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -517,9 +517,15 @@
     {
       "id": "admin-portal-dead-test-suite-hygiene",
       "repo": "AzamanLTD/AZM-adminPortal",
-      "status": "open-hygiene",
+      "status": "verified",
       "objective": "Wire the four vitest lib suites into CI.",
-      "notes": "adminPortal has vitest-shaped test files but vitest is not a dependency and CI runs lint+typecheck+build only — the suites never execute in CI. All four pass locally under vitest 4.1.11 (13/13), so adding vitest as a devDependency and a test step to ci.yml is safe and cheap. Not done in the 2026-09-14 batch to keep the dine-in slice reviewable."
+      "notes": "PR #98 (merge 60faed7 on main) closed the finding. Context: PR #97 (merged, then-main 1dc17ce) had already wired the four src/lib vitest suites into CI but via an undeclared ad-hoc `npx --yes vitest@4.1.11` invocation. PR #98 makes it conventional and declared: vitest 4.1.11 pinned in devDependencies (additive package-lock update), `npm test` = `vitest run src/lib`, CI step invokes `npm run test`. Replaces the ad-hoc npx pattern, which the prBudget/duplicateWork rules disfavor (undeclared dependency, unpinned in CI). Local gates green: vitest 13/13, eslint clean, tsc clean, vite build clean. Exact-head CI run #251 green at 7c07a3c; post-merge main-head run #252 green at 60faed7.",
+      "mergeSha": "60faed7",
+      "ci": {
+        "conclusion": "success",
+        "exactHead": "7c07a3c",
+        "coveredByMainHead": "60faed7"
+      }
     },
     {
       "id": "backend-control-plane-integrity-atomic-mutations",
@@ -567,6 +573,32 @@
       "ci": {
         "conclusion": "success",
         "coveredByMainHead": "a6b025a"
+      }
+    },
+    {
+      "id": "backend-advisory-lock-primitive-fix",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "mergeSha": "6be5399",
+      "objective": "Execute the PR #247 recorded follow-up: replace the Prisma-undeserializable void `pg_advisory_xact_lock()` call shape with `SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtext($1))` via $queryRawUnsafe in businessTaxPresetService, orderTrackingMutationSafeService and storefrontDraft/PublishSafeService, each covered by a DB-gated test that actually executes the lock path.",
+      "notes": "PR #248 (merge commit 6be5399 on main). All three latent failures fixed: the tax preset, order tracking and storefront draft publish advisory-lock calls used raw void-returning lock invocations that Prisma's query engine cannot deserialize — their existing tests never executed the lock path against real PostgreSQL, so they were green in CI but broken at runtime. Now every call uses the deserializable `SELECT 1 AS locked` shape via $queryRawUnsafe. New suite __tests__/advisory-lock-integrity.test.js: 13 live-PostgreSQL proofs exercising each lock path (concurrent mutation safety, lock serialization, zero-mutation re-entrancy). Five mock suites updated to stub $queryRawUnsafe per the production call shape. Verification: focused suites green on Postgres 16, route-check PASS, prisma validate clean, production dependency audit 0 vulnerabilities, db backup/restore/recovery drill SUCCESS. Full suite 194/199 — the 5 failing suites are pre-existing localhost:5432 environment failures, identical on clean main a6b025a (77 failures there, 77 here). Exact-head CI run #949 green at 773f705; post-merge main-head covered by 6be5399 and the later dc701bb main-head run.",
+      "ci": {
+        "conclusion": "success",
+        "exactHead": "773f705",
+        "coveredByMainHead": "6be5399"
+      }
+    },
+    {
+      "id": "backend-admin-rbac-compliance-withdrawal-authority",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "mergeSha": "dc701bb",
+      "objective": "Close the PR #240-flagged authority gap: APPROVAL_TIERS declares COMPLIANCE_ADMIN an eligible approver for the >= $10k tiers and the >= $50k invariant requires Finance-or-Compliance participation, but approveRequest()'s action-permission gate 403'd Compliance (catalog held no withdrawals.approve) before the tier logic could ever run — the tier declaration and the $50k invariant were dead letter for Compliance.",
+      "notes": "PR #249 (merge commit dc701bb on main). Resolution chosen after tracing approveRequest/rejectRequest/createApprovalRequest, ADMIN_ROLES, APPROVAL_ACTION_PERMISSIONS, APPROVAL_TIERS, the tier/role eligibility helpers, the >= $50k invariant, the admin-rbac-approvals suite, the Admin Portal consumers (portal uses the direct withdrawal endpoints; the approval-request workflow is backend-API-only today), the CONTROL_PLANE_MANAGEMENT permission vocabulary, and PR #240's flagged tension. DECISION: catalog extension (one line), not tier-aware authorization — the tier system (isApprovalRoleEligible on the stored-amount tier + requiredApprovals + the >= $50k participation invariant) is already the sole amount-scoping authority; making the action permission amount-conditional would duplicate tier policy inside the permission gate (a second authorization dimension) and re-encode thresholds that APPROVAL_TIERS.requiredRoles already owns. Reuses the existing withdrawals.approve vocabulary (FINANCE_ADMIN entry) — no duplicate vocabulary. Resulting executable policy = declared policy: <$1k auto-approve; $1k-$10k any role holding withdrawals.approve (SUPER/FINANCE/COMPLIANCE/legacy ADMIN); $10k-$50k tier gate admits SUPER/FINANCE/COMPLIANCE (+legacy); >= $50k three approvals incl. the F/C invariant, now genuinely satisfiable by Compliance. Create/approve/reject all use the stored request type via the same action permission, so Compliance's create and rejection authority align automatically. Invariants preserved: SUPER_ADMIN/legacy ADMIN full authority, Finance unchanged, READ_ONLY gains nothing, self-approval forbidden, CAS writes untouched, no raw Prisma conflicts leak, no settlement/payout/socket/frontend changes, routes file untouched. Tests: 5 new mocked regressions (Compliance create / $10k-$50k approve end-to-end / Compliance OPENs the >= $50k chain completed by SUPER_ADMINs / reject alignment / approver identity asserted) + 1 new real-PostgreSQL proof (Compliance + Finance approve a $60k withdrawal CONCURRENTLY under the JSON-equality CAS, both interleaving outcomes handled, SUPER_ADMIN completes the 3-approval chain); stale NOTE in the $50k test replaced by the now-provable Compliance path. Verification: focused suite 34/34 on live Postgres 16 incl. 4 real-DB CAS proofs; route-check PASS; prisma validate clean; production audit 0 vulnerabilities; recovery drill SUCCESS; full suite 194/199 (same 5 pre-existing localhost:5432 failures as clean main 6be5399). Exact-head CI run #951 green at f2c836c; post-merge main-head run #952 at dc701bb.",
+      "ci": {
+        "conclusion": "success",
+        "exactHead": "f2c836c",
+        "coveredByMainHead": "dc701bb"
       }
     }
   ]
