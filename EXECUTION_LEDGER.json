@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-15T03:10:46Z",
+  "updatedAt": "2026-09-15",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -599,6 +599,32 @@
         "conclusion": "success",
         "exactHead": "f2c836c",
         "coveredByMainHead": "dc701bb"
+      }
+    },
+    {
+      "id": "business-portal-studio-wave-c-rendered-evidence",
+      "repo": "AzamanLTD/AZM-businessPortal",
+      "status": "verified",
+      "mergeSha": "b9b5481",
+      "objective": "Close the Wave C honest residual from the #93/#99 bounded-scroll work with executable rendered evidence: explicit device-frame overflow contract, gallery horizontal-scroll preservation, viewport-button responsive relayout and persisted-document non-mutation.",
+      "notes": "PR #100 (squash b9b5481 on main). Device frame carries data-testid=studio-device-frame with a component-owned inline overflow contract (overflowY auto / overflowX hidden / overscroll contain); the studioWaveC.css chain-selector hack was deleted; the widget viewport is minHeight-only so no competing overflow owner clips. 11 executable rendered tests + a stageRender test driving the real phone/tablet/desktop viewport buttons and asserting rendered grid-template-columns (1/2/4) plus responsive relayout from the actual makeResponsiveDraft() fixture; the non-mutation assertion was hardened from a tautology (fresh re-read) to a byte-identical snapshot of the exact draft object passed through StorefrontStudioV2. Single test-quality defect on the same branch (head 50cf9ca, CI run #286 green). Full suite 192/192; smoke + build green.",
+      "ci": {
+        "conclusion": "success",
+        "exactHead": "50cf9ca",
+        "coveredByMainHead": "b9b5481"
+      }
+    },
+    {
+      "id": "business-portal-studio-wave-c-browser-evidence",
+      "repo": "AzamanLTD/AZM-businessPortal",
+      "status": "open",
+      "mergeSha": null,
+      "objective": "Close the remaining Wave C residual for real: browser-level scroll/clip/containment evidence in real Chromium, and fix the two real rendering defects the browser run exposed.",
+      "notes": "PR #101 open on branch test/studio-wave-c-rendered-acceptance (head 88b61c8, CI run green at 34970434738), awaiting Sugru's merge — DO NOT merge. Playwright suite (5 tests, headless Chromium, self-hosted dev server, workers=1): A/B frame scroll ownership (vertical wheel scrolls the frame; horizontal wheel cannot; wide tiles hit-test clipped at the frame boundary while Studio main and the document gain no horizontal overflow); C horizontal clipping with the inner showcase gallery still scrollable; D overscroll containment at the frame bottom with an in-viewport behavioral control (outer region scrolls when the cursor is outside the frame); E responsive relayout through the real viewport buttons with byte-identical persisted document; F frame geometry matches frozen tokens, scale layer scroll-free. REAL DEFECTS FIXED (JSDOM never validates CSS): (1) StorefrontPhonePreview interpolated unitless lengths into CSS shorthands — gallery flex '0 0 74.75' (no px) made the whole declaration invalid so real browsers dropped it, collapsing showcase cards to icon width with a dead gallery scroller; same defect in pin/badge box shadows, promo CTA padding, identity/tile/nav borders — all sites now unit-suffixed. (2) The preview Card's p-3 chrome shifted clipping off the 220px emulation viewport; the studio stage now mounts the bare frame. CI now installs Chromium and runs npx playwright test after vitest; vitest excludes e2e/ so the runners stay disjoint. Local CI-fresh verification: smoke PASS, vitest 60/60 files 192/192, Playwright 5/5, build PASS.",
+      "ci": {
+        "conclusion": "success",
+        "exactHead": "88b61c8",
+        "coveredByMainHead": null
       }
     }
   ]
