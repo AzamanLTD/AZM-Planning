@@ -620,15 +620,55 @@
       "status": "open",
       "mergeSha": null,
       "objective": "Close the remaining Wave C residual for real: browser-level scroll/clip/containment evidence in real Chromium, and fix the two real rendering defects the browser run exposed.",
-      "notes": "Originally PR #101 (single PR, CI-green) — an independent review flagged it at 824 changed lines against ACTIVE_LOOP rule 8 (<=500/PR), so it was closed/superseded and split 1:1 into three stacked PRs, all CI-green, awaiting Sugru's merges in order — DO NOT merge out of order. #102 (fix/storefront-preview-unitless-css, 340 lines, base main): the production rendering fix — unitless CSS shorthand lengths in StorefrontPhonePreview (gallery flex '0 0 74.75', pin/badge shadows, promo CTA padding, identity/tile borders) that real browsers silently dropped (dead gallery scroller, vanished shadows/borders), now unit-suffixed; plus bare device frame in editorMode so the bounded emulation viewport sizes to the frame (Card p-3 shifted the clip layer 12px off the 220px width). 6 new vitest regressions lock the four shorthand families and the bare-frame contract (198 tests total, 61 files). #103 (test/studio-wave-c-browser-scroll-evidence, 471 lines, stacked on #102): Playwright scroll half — real-Chromium A+B frame scroll ownership, C horizontal clipping at the frame boundary with the inner showcase gallery still scrolling, D overscroll containment with a behavioral control; e2e harness mounts the real StorefrontStudioV2 through the Vite dev server; vitest excludes e2e/ so the runners stay disjoint; @playwright/test 1.63.0 declared. #104 (test/studio-wave-c-browser-responsive-evidence-ci, 162 lines, stacked on #103): E responsive relayout through the real viewport buttons (1/2/4 grid columns, byte-identical persisted document), F token-driven frame geometry with no second scroll owner; wires Chromium install + npx playwright test into CI. CI: #102 head 9115c2b job 104391792928 success; #103 head e02f38b workflow_dispatch run 104393864354 success; #104 head 9618919 workflow_dispatch run 104393873686 success (this tree includes the CI wiring, so its run executed the complete final battery: vitest 61 files/198 tests, Playwright 5/5, build). NOTE: the ci.yml pull_request trigger only fires for PRs targeting main, so the stacked PRs' heads were validated via workflow_dispatch; after each parent merges and the child retargets to main, normal PR CI fires. Local CI-fresh verification per branch tree: smoke PASS, vitest 192-198, Playwright 3/3 then 5/5, build PASS.",
+      "notes": "Originally PR #101 (single PR, CI-green) — an independent review flagged it at 824 changed lines against ACTIVE_LOOP rule 8 (<=500/PR), so it was closed/superseded and split 1:1 into three stacked PRs. PROGRESS 2026-09-15: #102 (fix/storefront-preview-unitless-css, 340 lines) was squash-merged by Sugru as 928c19a — unitless CSS shorthand fix + bare frame in editorMode + 6 vitest regressions (198 total); post-merge main-head validate green at 928c19a. The squash created an ancestry trap for the stacked PRs: retargeted to main, #103 recounted the pre-squash #102 history (811 changed lines, over budget). Repaired: #103's head was rebuilt from post-merge main 928c19a as a single cherry-picked commit (new head 7dcc1e0) containing ONLY the 471-line Playwright scroll slice (A+B frame scroll ownership, C horizontal clipping with the inner gallery still scrolling, D overscroll containment with behavioral control) + harness + config; tree byte-identical to the previously-validated e02f38b head; local gates green (smoke, vitest 61 files/198, Playwright 3/3, build); PR CI green at 7dcc1e0 (run 104397459956), diff 471 lines, mergeable clean — awaiting Sugru's merge. #104 was rebuilt on the repaired #103 head (new head 1137740, single commit, 162 lines: E responsive relayout + F token geometry + Chromium/Playwright CI wiring; tree identical to the validated 9618919); exact-head dispatch CI green (run 104398958967); after #103 merges, #104 must AGAIN be rebuilt from the resulting main (squash double-count) and exact-head CI rerun before its merge. Merge order: #103 -> then rebuild #104 -> merge #104. ci.yml pull_request trigger only fires for main-base PRs, so non-main heads are validated via workflow_dispatch.",
       "ci": {
         "conclusion": "success",
         "exactHeads": {
-          "pr102": "9115c2b",
-          "pr103": "e02f38b",
-          "pr104": "9618919"
+          "pr102_merged": "928c19a",
+          "pr103_repaired": "7dcc1e0",
+          "pr104_repaired": "1137740"
+        }
+      }
+    },
+    {
+      "id": "backend-withdrawal-fee-discount-atomicity",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "mergeSha": "13d7884",
+      "objective": "Make the AZM fee-discount debit atomic with the fiat withdrawal reservation so a failed reservation or provider reversal can never leave a consumed AZM spend with no withdrawal.",
+      "notes": "PR #250 (squash 13d7884 on main). Pre-fix: applyFeeDiscount() committed the AZM debit in its own transaction BEFORE processFiatWithdrawal() ran, so a failed withdrawal reservation (fiat pool insufficient, balance check, DB error) or a later provider reversal left a consumed AZM spend with no withdrawal. Fix (additive, scoped to the fee-discount flow): azmSpendService exposes _debitAzmWithClient / applyFeeDiscountInTransaction(tx) debiting AZM on the canonical withdrawal transaction with deterministic dedup key fee_discount_<ref>; reverseFiatWithdrawal restores the exact spend once inside the reversal tx (PENDING->FAILED one-winner claim + metadata.reversedAt); controller emits azm_spend exactly once post-commit via emitFeeDiscountSpend(); AZM_SPEND_FAILED 400 contract preserved. New real-Postgres suite withdrawal-fee-discount-atomicity.test.js proves A-F incl. concurrent-reversal one-winner. Exact-head CI green at 8b1ac9c (200 suites / 1236 tests, CI-fresh ordering). Merged by Sugru 2026-09-15.",
+      "ci": {
+        "conclusion": "success",
+        "exactHeads": {
+          "pr250": "8b1ac9c"
         },
-        "coveredByMainHead": null
+        "postMergeMain": "13d7884"
+      }
+    },
+    {
+      "id": "backend-dashboard-invoice-stats-authoritative",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "mergeSha": "f0f2f1c",
+      "objective": "Make the business dashboard invoice statistics authoritative (computed from invoice aggregates, not ad-hoc counters).",
+      "notes": "PR #251 (squash f0f2f1c on main): business dashboard invoice stats now derive from authoritative aggregates; regression test proves the dashboard uses aggregates. Merged by Sugru 2026-09-15.",
+      "ci": {
+        "conclusion": "success",
+        "exactHeads": {},
+        "postMergeMain": "f0f2f1c"
+      }
+    },
+    {
+      "id": "backend-force-cancel-audit-payout-classification",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "mergeSha": "977f116",
+      "objective": "Close two P0 integrity defects: force-cancel audit atomicity (War Room) and MTN payout unknown-outcome classification.",
+      "notes": "PR #253 (squash 977f116 on main), branch verified against main f0f2f1c, no overlapping open PRs (issue #252). (1) Force-cancel audit atomicity: the DISPUTED->CANCELLED claim, escrow refund and ADMIN_INTERVENTION message committed in one tx, but the mandatory FORCE_CANCEL_TRADE audit row was written after the response through the fire-and-forget audit() helper which swallows failures — a committed financial cancellation could exist with zero audit evidence. audit() gained opt-in strict mode ({ throwOnError: true }); the trade claim, escrow refund, message AND audit row now commit in one transaction; concurrent cancels resolve deterministically (409 loser). (2) Payout unknown-outcome classification: MTN payout outcome classification so unknown-outcome withdrawals stay PROCESSING with a reconciliation exception instead of manual review; settle and replay idempotency. Two CI failure causes fixed en route: idempotent TEXT-key installer for the raw-SQL reconciliation tables (reference migrations had UUID keys that could never apply against TEXT transaction ids), and the force-cancel test now seeds its own admin instead of relying on a phantom user row from other suites. Full local validation: 203 suites / 1260 tests green on real PostgreSQL, CI-fresh ordering. Exact-head CI green. Merged by Sugru 2026-09-15.",
+      "ci": {
+        "conclusion": "success",
+        "exactHeads": {},
+        "postMergeMain": "977f116"
       }
     }
   ]
