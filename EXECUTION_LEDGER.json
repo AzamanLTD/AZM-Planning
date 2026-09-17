@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-15",
+  "updatedAt": "2026-09-17T15:10:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -700,6 +700,14 @@
         },
         "postMergeMain": "6802ab6"
       }
+    },
+    {
+      "id": "backend-wallet-address-authority",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "mergeSha": "ea75f05",
+      "objective": "Close the deposit-address authority gap: User.tatumPolygonAddress was a single mutable legacy column with no registry, no lifecycle, and no global uniqueness — deposits resolved owners via string matching against a mutable field. Introduce the canonical WalletAddress registry: (address, network) globally unique at the DB level, exactly one ACTIVE row per user+asset identity (partial unique index), RETIRED addresses never reassigned, resolveOwner reads the registry first with the deterministic legacy-mirror fallback, canonical deposit identity is native Polygon USDC (0x3c499c542cef5e3811e1192ce70d8cc03d5c3359) with bridged USDC.e explicitly rejected, allocation is race-convergent, and the legacy mirror stays synced (never removed) for zero-downtime rollout.",
+      "notes": "PR #275 (branch p0/wallet-address-authority, exact head 4ce3de4, squash ea75f05). Mechanism: migration 20260917150000_wallet_address_authority + boot installer infra/install-wallet-address-overlay.js (idempotent: enum DO-block, CREATE TABLE IF NOT EXISTS, FK/index DO-blocks with duplicate_object tolerance, ON CONFLICT DO NOTHING backfill of legacy mirror addresses with derivationIndex = user.id); services/walletAddressService.js is the single allocation/retirement/query authority. New real-PostgreSQL suite wallet-address-governance (13 cases: backfill idempotency + exact address preservation, ACTIVE row get/null, allocation idempotency + mirror sync, 8-way concurrent race convergence on one ACTIVE row, retired-never-reassigned + fresh allocation, DB-enforced global (address, network) uniqueness across owners, resolveOwner registry-first + legacy fallback, native-USDC vs USDC.e identity distinction, non-canonical identity rejection). CI at 501134e exposed 9 real-PG failures, all reproduced on a local Postgres 15 and root-caused before the fix commit 4ce3de4: (1) backfill SQL referenced nonexistent User.updatedAt (User has createdAt only) — firstSeenAt/createdAt/updatedAt now record now(), the truthful registration time, since address-mint time is not derivable; (2) the adoption path could INSERT a row for a legacy mirror address already owned by a RETIRED registry row (unique violation, rethrown) — adoption now pre-checks the registry: ACTIVE-for-user converges, any other owner/status derives a fresh address; (3) test fixture used a 43-char address against VARCHAR(42); (4) per-test user deletion violated TransactionHistory FK (seedUser backs balances with ledger rows) — replaced with the established shift-suite afterEach TRUNCATE WalletAddress+User CASCADE pattern. Verified locally: full jest suite 1402/1402 green on local Postgres 15 before pushing; exact-head CI green at 4ce3de4; squash-merged ea75f05."
     }
   ]
 }
