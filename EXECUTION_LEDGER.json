@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-18T17:45:00Z",
+  "updatedAt": "2026-09-18T17:55:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -749,6 +749,14 @@
         "productionAudit": "success",
         "dbRecovery": "success"
       }
+    },
+    {
+      "id": "backend-p5-multi-asset-accounting-boundary",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "planned",
+      "objective": "Establish an explicit multi-asset ledger/accounting identity boundary before wiring GHS↔USDC inventory economics, preventing numerically balanced but cross-asset-invalid postings.",
+      "notes": "§P.5 preparation audit completed 2026-09-18. Existing LedgerAccount includes asset metadata, but P4 ledger posting does not yet enforce asset identity across lines. Model B requires separate asset-balanced legs connected by an explicit conversion/exchange identity. Prep doc: progress/2026-09-18_P5_INVENTORY_ROUTE_LIQUIDITY_INVESTIGATION.md. No production financial data changed.",
+      "nextStep": "Implement P5-A in one <=500-line PR with real-Postgres proofs; preserve all P4 paths and exact CI/recovery gates."
     }
   ]
 }
