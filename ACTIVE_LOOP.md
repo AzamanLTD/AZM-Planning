@@ -42,10 +42,10 @@
 1. Exercise and, where justified, strengthen current Studio Wave C rendered evidence rather than reopening Wave B's deferred magnetic snap without a 2D surface.
 2. DONE 2026-09-15 — the adminPortal vitest suites are wired into CI (PR #98, merge `60faed7`; runs #251/#252 green). The remaining dine-in residual is the deployed four-surface E2E harness; build it only when a testable deployed environment makes it valuable. Do not duplicate existing component proofs.
 3. **DONE 2026-09-18 — §P.4 authoritative liability ledger:** PR #279 merged as `f3f72a65`; full 223-suite / 1,593-test battery and exact CI/recovery evidence verified. Do not reopen P4 except for newly demonstrated defects.
-4. **DONE 2026-09-18 — §P.5-A multi-asset ledger accounting identity:** PR #280 squash-merged as `ab387e77`; final head `fb8fb2a`; 224-suite / 1,613-test battery green, exact-head CI #1046 green, 499 changed lines, and real-PostgreSQL concurrency/provenance proofs verified. Do not reopen P5-A except for newly demonstrated defects.
-5. **DONE 2026-09-18 — §P.5-B inventory lot authority:** PR #281 squash-merged as `39a4977`; final head `fb56d06`; 225-suite / 1,628-test battery green, exact-head CI #1048 green (24.1 min, single slow runner, zero flakes), 469 changed lines, real-PostgreSQL conservation/concurrency/idempotency proofs verified. InventoryLot/InventoryLotConsumption are the ONLY inventory authority; CorporatePurchaseLog stays an untouched audit log; no route settlement, GHS liquidity, spread or P&L in this slice. Do not reopen P5-B except for newly demonstrated defects.
-6. Advance the next financial architecture slice: route-aware quote authority wiring, then GHS liquidity states/reconciliation, Kotani Model A, treasury controls, exchange abstraction, P5-E cost-basis realization and PoR/treasury read models.
-5. Production readiness and adversarial/release rehearsal.
+4. **DONE 2026-09-18 — §P.5-A multi-asset ledger accounting identity:** PR #280 merged as `ab387e77`; final head `fb8fb2a`; 224-suite / 1,613-test battery green and exact-head CI #1046 green. Do not reopen P5-A except for newly demonstrated defects.
+5. **MERGED — §P.5-B inventory lot authority:** PR #281 squash-merged as `39a4977`; final head `fb56d06`; exact-head CI #1048 green with 225 suites / 1,628 tests, route-check, Prisma validation, production audit and database recovery. Post-merge main run #1049 is still in progress, so the final verified-on-main gate is pending.
+6. Advance the next financial architecture slice: P5-C route-aware quote authority wiring, then GHS liquidity states/reconciliation, Kotani Model A, treasury controls, exchange abstraction, P5-E cost-basis realization and PoR/treasury read models.
+7. Production readiness and adversarial/release rehearsal.
 
 ## Merge gate
 
