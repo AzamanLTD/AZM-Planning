@@ -771,9 +771,9 @@
     {
       "id": "backend-p5b-inventory-lot-authority",
       "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
+      "status": "merged_pending_main_ci",
       "objective": "Establish InventoryLot/InventoryLotConsumption as the ONLY inventory authority with immutable acquisition identity, exact Decimal quantities, atomic-claim consumption, and durable per-consumption evidence; CorporatePurchaseLog stays an untouched audit log. No route settlement, GHS liquidity, spread or P&L (deferred to dedicated slices).",
-      "notes": "§P.5-B completed and verified. PR #281 final head fb56d06, squash-merged to backend main as 39a4977. InventoryLot is immutable-on-acquire (unique acquisitionKey; replay returns committed lot; conflicting reuse fails closed INVENTORY_ACQUISITION_CONFLICT); quantityOriginal/costBasisGhs exact via ledger.toExactDecimal; remaining derived from original minus consumed movements with DB CHECK 0<=remaining<=original (CI db push path has no raw CHECKs; enforcement rests on the atomic updateMany claim). Acquisition posts single-asset USDC through ledgerService.post() (INVENTORY_ACQUISITION, inventory:usdc:lots debit / equity:treasury credit). Consumption records reserve allocation ONLY: no ledger posting, pnl:inventory stays 0, no quote-only P&L; cost-basis realization deferred to P5-E settlement. Concurrency: updateMany({status OPEN, remaining>=q}) atomic claim; loser fails closed and enclosing transaction rolls back. Consumption replay/conflict closed under unique consumptionKey.",
+      "notes": "§P.5-B completed and verified. PR #281 final head fb56d06, squash-merged to backend main as 39a4977. InventoryLot is immutable-on-acquire (unique acquisitionKey; replay returns committed lot; conflicting reuse fails closed INVENTORY_ACQUISITION_CONFLICT); quantityOriginal/costBasisGhs exact via ledger.toExactDecimal; remaining derived from original minus consumed movements with DB CHECK 0<=remaining<=original (CI db push path has no raw CHECKs; enforcement rests on the atomic updateMany claim). Acquisition posts single-asset USDC through ledgerService.post() (INVENTORY_ACQUISITION, inventory:usdc:lots debit / equity:treasury credit). Consumption records reserve allocation ONLY: no ledger posting, pnl:inventory stays 0, no quote-only P&L; cost-basis realization deferred to P5-E settlement. Concurrency: updateMany({status OPEN, remaining>=q}) atomic claim; loser fails closed and enclosing transaction rolls back. Consumption replay/conflict closed under unique consumptionKey. Exact-head CI is verified; post-merge main push run #1049 is still in progress, so the final main-verification gate remains pending.",
       "pr": 281,
       "mergeSha": "39a4977",
       "ci": {
@@ -782,12 +782,18 @@
         "run": 1048,
         "tests": "225 suites / 1628 tests",
         "changedLines": 469,
-        "postMergeMain": "39a4977",
+        "postMergeMain": {
+          "run": 1049,
+          "mergeSha": "39a4977ec98321aa84ede74a0231f7078ea4bced",
+          "status": "in_progress"
+        },
         "ciDurationNote": "24.1 min vs 8-11 typical; single slow runner, zero flakes, no retries"
-      }
+      },
+      "nextStep": "After post-merge main verification, implement P5-C route-aware quote authority wiring; preserve 271C freshness and current mounted quote-backed deposit routes."
     }
   ],
   "notes": [
-    "2026-09-18: §P.5-B merged and verified (PR #281, main 39a4977). Next slices in canonical order: route-aware quote authority wiring, GHS liquidity states/reconciliation, Kotani Model A, then P5-E cost-basis realization at settlement. Do not invent customer GHS liability, route settlement, spread or realized P&L before their dedicated boundaries."
+    "2026-09-18: §P.5-B merged and verified (PR #281, main 39a4977). Next slices in canonical order: route-aware quote authority wiring, GHS liquidity states/reconciliation, Kotani Model A, then P5-E cost-basis realization at settlement. Do not invent customer GHS liability, route settlement, spread or realized P&L before their dedicated boundaries.",
+    "2026-09-18: P5-B merged; exact-head evidence verified. Main push run #1049 remains in progress; do not mark P5-B fully verified until that run succeeds."
   ]
 }
