@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-17T17:30:00Z",
+  "updatedAt": "2026-09-18T17:45:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -730,6 +730,24 @@
           "pr277": "11d3799"
         },
         "postMergeMain": "994f07c (run 105304499068, verified green at reconciliation time)"
+      }
+    },
+    {
+      "id": "backend-p4-authoritative-liability-ledger",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "pr": 279,
+      "mergeSha": "f3f72a652d2d361729214a48239a3cf08cf217ea",
+      "objective": "Establish the authoritative caller-transaction-scoped double-entry liability ledger, migrate all major financial writers, model external restricted obligations, enforce custody clearing/evidence semantics, and make PoR use one coherent customer-plus-restricted denominator.",
+      "notes": "PR #279 final head 06d379cba8c2ee3c4e1f5c264550cba92d0c50d3, squash-merged 2026-09-18. Final exact-head CI workflow #1041 / run 35374960201 succeeded; 223 suites / 1,593 tests green, route registry verification green, production dependency audit green, disposable-Postgres tuning green, backup/restore drill green. P4 writer coverage includes deposits, fiat deposits, peer transfers, withdrawals, SmartEscrow/booking escrow, dispute, vendor allocation, vault/savings, Susu, order-book, business invoices, chat, admin/reversal and P2P/trade settlement paths. RestrictedObligation source families are authoritative for pending external operations; internal escrow/dispute/vendor reclassifications remain in customer liability and are not double-counted. Crypto deposits use provisional unverified clearing until independent chain evidence; fiat off-ramp uses explicit GHS settlement clearing instead of provider-USDC custody. PoR denominator authority is current materialized customer liability plus modeled external restricted obligations; historical flow classification is diagnostic reconciliation evidence. Custody reconciliation distinguishes VERIFIED/CANDIDATE/FAILED and explicit clearing states. No production financial data changed. Live production crypto signing/broadcast remains OFF. Next architecture slice: Model B inventory/cost-basis economics, route-aware quote authority, GHS liquidity state/reconciliation, Kotani Model A, treasury movement controls, exchange abstraction/P&L, and final treasury/PoR UI.",
+      "ci": {
+        "exactHead": "06d379cba8c2ee3c4e1f5c264550cba92d0c50d3",
+        "run": 35374960201,
+        "conclusion": "success",
+        "tests": "223 suites / 1593 tests",
+        "routeCheck": "success",
+        "productionAudit": "success",
+        "dbRecovery": "success"
       }
     }
   ]
