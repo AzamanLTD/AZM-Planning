@@ -753,10 +753,23 @@
     {
       "id": "backend-p5-multi-asset-accounting-boundary",
       "repo": "AzamanLTD/AZM-backend",
-      "status": "planned",
+      "status": "verified",
       "objective": "Establish an explicit multi-asset ledger/accounting identity boundary before wiring GHS↔USDC inventory economics, preventing numerically balanced but cross-asset-invalid postings.",
-      "notes": "§P.5 preparation audit completed 2026-09-18. Existing LedgerAccount includes asset metadata, but P4 ledger posting does not yet enforce asset identity across lines. Model B requires separate asset-balanced legs connected by an explicit conversion/exchange identity. Prep doc: progress/2026-09-18_P5_INVENTORY_ROUTE_LIQUIDITY_INVESTIGATION.md. No production financial data changed.",
-      "nextStep": "Implement P5-A in one <=500-line PR with real-Postgres proofs; preserve all P4 paths and exact CI/recovery gates."
+      "notes": "§P.5-A completed and verified. PR #280 final head fb8fb2a56df0c720ff7b305728bedd801c6120da, squash-merged to backend main as ab387e77f8de1bb280034dc2075f846d532de00c. Ledger now enforces canonical asset identity per posting: normal postings cannot mix assets; explicit ASSET_CONVERSION is the only cross-asset mechanism, with per-asset-balanced legs, exact conversion provenance, durable conversionIdentity DB uniqueness, fail-closed persisted account identity checks, and injective conversion hashing. Real-PostgreSQL proofs cover concurrent identity race (exactly one winner), rate/quoteReference changes, delimiter-collision provenance, P4 replay compatibility, rollback and account identity disagreement. Full battery 224/224 suites, 1613/1613 tests green; prisma validate, route-check, npm audit --omit=dev clean. Diff 461+/39- = 499 changed lines. No production financial data changed; live signing/broadcast and P5-B economics remain off.",
+      "nextStep": "Implement P5-A in one <=500-line PR with real-Postgres proofs; preserve all P4 paths and exact CI/recovery gates.",
+      "pr": 280,
+      "mergeSha": "ab387e77f8de1bb280034dc2075f846d532de00c",
+      "ci": {
+        "conclusion": "success",
+        "exactHead": "fb8fb2a56df0c720ff7b305728bedd801c6120da",
+        "run": 1046,
+        "tests": "224 suites / 1613 tests",
+        "changedLines": 499,
+        "postMergeMain": "ab387e77f8de1bb280034dc2075f846d532de00c"
+      }
     }
+  ],
+  "notes": [
+    "2026-09-18: §P.5-A merged and verified. Next slice is P5-B inventory/cost-basis foundation; do not invent GHS customer liability, route settlement, spread or P&L before their dedicated boundaries."
   ]
 }
