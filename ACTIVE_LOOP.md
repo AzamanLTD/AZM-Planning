@@ -11,15 +11,15 @@
 5. CI failures are defects to diagnose and fix, not reasons to weaken tests.
 6. While CI runs, perform independent audits instead of waiting idle.
 7. **Studio wave completion requires a criterion-by-criterion acceptance audit against current code and matching executable evidence; a historical green run is insufficient.**
-8. Keep every PR <=500 changed lines and include at least one test; split large work before merge.
+8. Keep each slice coherent, testable, and reviewable. There is no arbitrary changed-line target; split work when scope is logically too large, not to satisfy a line-count metric.
 
 ## Current loop
 
 **Status:** ACTIVE — DO NOT CLOSE
 
-### Verified current GitHub state — 2026-09-18 UTC
+### Verified current GitHub state — 2026-09-19 UTC
 
-- Backend main: `ab387e77f8de1bb280034dc2075f846d532de00c` (2026-09-18) — §P.4 PR #279 and §P.5-A PR #280 are merged as squashes. P4 remains authoritative across the major money-mutation writer set; P5-A now enforces canonical asset identity at the ledger core, durable conversionIdentity uniqueness, exact conversion provenance hashing and fail-closed account identity. Exact-head CI #1046 succeeded on final P5-A head `fb8fb2a56df0c720ff7b305728bedd801c6120da`; no production financial data changed and live production crypto signing/broadcast remains OFF. Next boundaries are inventory/cost-basis economics, route-aware conversion, GHS liquidity state/reconciliation, Kotani Model A, treasury movement controls, exchange integration/P&L and final PoR/treasury UI work.
+- Backend main: `baaa4e2359d404fe2bc0b81638c2314b279cf976` (2026-09-19) — §P.4, §P.5-A, §P.5-B, §P.5-C and §P.5-D are merged. P5-C route-aware quote authority is closed at squash `19671d7`; P5-D evidence-backed GHS liquidity authority is closed at squash `baaa4e2` from exact head `22ebebd`. P5-D has 55 dedicated real-PostgreSQL proofs and a 227-suite / 1,719-test clean battery; exact-head CI #1060 succeeded. P5-D preserves 271C external-rate freshness, uses exact-pesewa GHS accounting, keeps `SystemFiatPool` as compatibility projection, follows recorded withdrawal regime, and sends the originally reserved GHS amount despite later rate drift. Main is at the verified squash merge SHA. The available workflow lookup does not independently expose a post-merge push-triggered run for the squash commit, so none is inferred. Next boundary: §P.5-E Model B settlement / cost-basis realization.
 - **Open audited finding (2026-09-15, decide before fixing):** `azmStakeService.createStake` never debits or checks `User.azmBalance`, so the Nitro tier gating premium storefront widgets (`PREMIUM_WIDGETS`) is inflatable with unbacked stakes; `completeUnstake` returns nothing because nothing was taken. No doc/spec/test defines stake fund movement — a product-contract gap, not a provable regression. Do not invent debit-on-stake/credit-on-unstake semantics without an owner decision. The adjacent AZM spend surfaces (ad boost, fee discount) share the hardened `_debitAzmWithClient` primitive and showed no new defect.
 - Flutter main: `c750562d26499346e7c43315fba9912951e590d1`; PR #90 durable CLOSED-tab recovery is merged, and PR #91 adds the complementary customer payment convergence contract. Exact head `d1dbc94ed890583241a4d338fc2a045cf5cec4a3`, Flutter Quality run `33967426867`, passed Analyze + Test with coverage + upload coverage; merged at `c750562d26499346e7c43315fba9912951e590d1`.
 - Business Portal main: `0d8a58d` — Wave C complete (see Studio acceptance gates): #102 `928c19a`, #103 `73cd9ce`, #104 squash `0d8a58d`, exact-head + main-head CI green on each. Earlier history: PR #88 pointer palette insertion, PR #89/#91/#92/#94/#95 Wave A token/wiring slices, PR #93 bounded device-frame scroll, PR #96 Wave A completion, and PR #98 dine-in lifecycle invalidation proof are merged and verified. PR #96 exact head `fb20134bdd0ae622c8937e29c01f5e11a33a0abf` passed smoke/tests/build; PR #98 exact head `85560129a19470e40a70175a8049eb3cffde8655`, Business Portal CI run `33975428983`, passed smoke/tests/build.
@@ -44,8 +44,10 @@
 3. **DONE 2026-09-18 — §P.4 authoritative liability ledger:** PR #279 merged as `f3f72a65`; full 223-suite / 1,593-test battery and exact CI/recovery evidence verified. Do not reopen P4 except for newly demonstrated defects.
 4. **DONE 2026-09-18 — §P.5-A multi-asset ledger accounting identity:** PR #280 merged as `ab387e77`; final head `fb8fb2a`; 224-suite / 1,613-test battery green and exact-head CI #1046 green. Do not reopen P5-A except for newly demonstrated defects.
 5. **DONE 2026-09-18 — §P.5-B inventory lot authority:** PR #281 squash-merged as `39a4977`; final head `fb56d06`; exact-head CI #1048 and post-merge main CI #1049 both succeeded. 225 suites / 1,628 tests, route-check, Prisma validation, production audit and database recovery verified. Do not reopen P5-B except for newly demonstrated defects.
-6. **IN PROGRESS — §P.5-C route-aware quote authority:** PR #282 is open but currently based on pre-P5-B main and exceeds the ≤500-line contract; rebase/scope correction is required before acceptance. After a clean P5-C merge, proceed to GHS liquidity states/reconciliation, Kotani Model A, treasury controls, exchange abstraction, P5-E cost-basis realization and PoR/treasury read models.
-7. Production readiness and adversarial/release rehearsal.
+6. **DONE 2026-09-19 — §P.5-C route-aware quote authority:** PR #284 squash-merged as `19671d7`; exact-head CI #1055 and post-merge main CI #1056 succeeded. Do not reopen P5-C except for a demonstrated regression.
+7. **DONE 2026-09-19 — §P.5-D evidence-backed GHS liquidity authority:** PR #285 squash-merged as `baaa4e2`; exact head `22ebebd`; exact-head CI #1060 succeeded; 227 suites / 1,719 tests, 55 dedicated real-PostgreSQL proofs, route-check/prisma/audit/recovery clean. Do not reopen P5-D except for a demonstrated regression.
+8. **NEXT — §P.5-E Model B settlement / cost-basis realization:** connect evidence-backed GHS receipt/liquidity, inventory lots, customer USDC liability, actual acquisition cost and realized customer spread without quote-only P&L or synthetic GHS/inventory.
+9. Production readiness and adversarial/release rehearsal.
 
 ## Merge gate
 
