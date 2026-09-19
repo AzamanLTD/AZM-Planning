@@ -1,7 +1,7 @@
 # §P.5 Preparation — Inventory, Route-Aware Quotes, and GHS Liquidity
 
 **Date:** 2026-09-18 UTC  
-**Status:** INVESTIGATION / NEXT IMPLEMENTATION BOUNDARY  
+**Status:** P5-A / P5-B / P5-C / P5-D VERIFIED; NEXT IMPLEMENTATION BOUNDARY = §P.5-E MODEL B SETTLEMENT  
 **Backend main:** `f3f72a652d2d361729214a48239a3cf08cf217ea`  
 **Precondition:** §P.4 authoritative liability ledger merged and verified.
 
@@ -226,7 +226,7 @@ The operational singleton can remain a compatibility projection until the new st
 
 ### P5-A — Multi-asset ledger contract
 
-Small prerequisite slice.
+**VERIFIED — PR #280 squash `ab387e77`; exact-head CI #1046.** Small prerequisite slice.
 
 Implement and test the accounting identity boundary without changing production money flows:
 
@@ -239,19 +239,19 @@ Implement and test the accounting identity boundary without changing production 
 
 ### P5-B — Inventory lot foundation
 
-Add the authoritative lot/movement schema and service, but do not wire customer deposits until evidence/route settlement is complete.
+**VERIFIED — PR #281 squash `39a4977`; exact-head CI #1048; post-merge main CI #1049.** Add the authoritative lot/movement schema and service, but do not wire customer deposits until evidence/route settlement is complete.
 
 ### P5-C — Route-aware quote
 
-Add route/provider identity and route policy to the existing TransactionQuote lifecycle while preserving freshness/idempotency.
+**VERIFIED — PR #284 squash `19671d7`; exact-head CI #1055; post-merge main CI #1056.** Add route/provider identity and route policy to the existing TransactionQuote lifecycle while preserving freshness/idempotency.
 
 ### P5-D — GHS liquidity state machine
 
-Replace the conceptual singleton pool as the authority with receipt/reservation/settlement evidence and reconciliation.
+**VERIFIED — PR #285 squash `baaa4e2`; exact head `22ebebd`; CI #1060; 55 dedicated real-PostgreSQL proofs; full battery 227/227 suites, 1719/1719 tests.** The evidence-backed authority now replaces the conceptual singleton as financial authority while retaining `SystemFiatPool` only as a compatibility projection. Recorded-row regime semantics and exact reserved-GHS payout dispatch are enforced.
 
 ### P5-E — Model B settlement
 
-Only after A-D prove the accounting identities, link GHS receipt → inventory lots → customer liability → realized spread.
+**NEXT.** Only after A-D prove the accounting identities, link GHS receipt → inventory lots → customer liability → realized spread. This slice must use actual settled GHS evidence, authoritative inventory lot consumption, explicit asset conversion, and realized economics; no quote-only P&L, synthetic GHS or synthetic inventory.
 
 ### P5-F — Model A
 
@@ -282,3 +282,16 @@ Every P5 slice needs:
 - verification on backend `main`;
 - update to `CURRENT_STATE.md`, `ACTIVE_LOOP.md`, and `EXECUTION_LEDGER.json`.
 
+
+
+## 11. Verified P5-C / P5-D completion evidence
+
+### P5-C
+
+PR #284 is the accepted route-aware quote re-land from the clean post-revert baseline. Final exact head `4b365f7`; squash merge `19671d7`; exact-head CI #1055 and post-merge main CI #1056 succeeded. Route/provider/rail identity is persisted and settlement-bound, quote replay/conflict behavior is deterministic, exact decimal rate provenance is preserved, and §271C external-rate freshness remains authoritative.
+
+### P5-D
+
+PR #285 final exact head `22ebebd`; squash merge `baaa4e2`; exact-head CI #1060 succeeded. The dedicated P5-D suite contains 55 real-PostgreSQL proofs and the clean full battery is 227/227 suites and 1719/1719 tests, with Prisma validation, route-check, dependency audit and recovery drill successful. The final worker contract is recorded-row based: reservation-backed rows dispatch the exact reserved GHS despite rate drift; legacy unreserved rows keep legacy pool semantics; authority rows never consult `SystemFiatPool` as an input and never create a second reservation. No production financial data changed. The available GitHub workflow lookup cannot independently expose a post-merge push-triggered CI result for merge SHA `baaa4e2`, so no such result is claimed.
+
+**Next implementation boundary:** §P.5-E Model B settlement / cost-basis realization.
