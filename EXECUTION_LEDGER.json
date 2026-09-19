@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-18T20:40:00Z",
+  "updatedAt": "2026-09-19T13:10:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -794,16 +794,44 @@
     {
       "id": "backend-p5c-route-aware-quote-authority",
       "repo": "AzamanLTD/AZM-backend",
-      "status": "open_audit",
-      "pr": 282,
-      "objective": "Make TransactionQuote route/provider identity first-class and enforce route-bound settlement while preserving 271C freshness and quote idempotency.",
-      "notes": "PR #282 currently has a pre-P5-B merge base and a 1,424-line diff, including P5-A/P5-B files; it does not satisfy the <=500-line slice contract. It also needs audit of quote identity replay/fingerprint and exact arithmetic before merge. No P5-C merge accepted.",
-      "nextStep": "Rebase onto backend main 39a4977 and reduce to route-aware quote scope; then resolve quote replay/provenance and exact-arithmetic findings before rerunning full gates."
+      "status": "verified",
+      "pr": 284,
+      "mergeSha": "19671d7ad5484dd892f620052fe4fad5c241a9da",
+      "objective": "Make TransactionQuote route/provider/rail identity first-class and enforce route-bound settlement while preserving 271C freshness, idempotency, and exact decimal economics.",
+      "notes": "PR #284 is the corrected P5-C re-land after PR #282 was superseded/reverted. Final exact head 4b365f714a726bfb7f592bf568ad071b1034e993; exact-head CI #1055 succeeded; squash merge 19671d7; post-merge main CI #1056 succeeded. Route identity is persisted and settlement-bound; quote replay/conflict behavior is deterministic; canonical decimal rate provenance and 271C fresh-external-rate semantics remain intact.",
+      "ci": {
+        "conclusion": "success",
+        "exactHead": "4b365f7",
+        "run": 1055,
+        "postMergeMain": "19671d7 (run #1056 success)"
+      }
+    },
+    {
+      "id": "backend-p5d-ghs-liquidity-authority",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "verified",
+      "pr": 285,
+      "mergeSha": "baaa4e2359d404fe2bc0b81638c2314b279cf976",
+      "objective": "Establish the evidence-backed GHS liquidity authority with exact-pesewa state, durable provider evidence, atomic reservation lifecycle, contradiction quarantine/reconciliation, recorded-row legacy compatibility, and mounted payout/deposit integration without synthetic GHS.",
+      "notes": "PR #285 final exact head 22ebebd062fc6642958513fb52e68cd92e60b9d2; squash-merged to backend main as baaa4e2359d404fe2bc0b81638c2314b279cf976. FiatProviderEvent/Receipt/Reservation/State form the authoritative GHS evidence/liquidity model; SystemFiatPool is compatibility projection only. Authority-created withdrawal rows reserve exact GHS at creation and the worker dispatches that original reserved amount despite rate drift. Legacy rows without reservations retain legacy pool semantics even when the flag is ON. Contradictory provider outcomes quarantine rather than rewrite terminal history, and internal profit liquidation cannot manufacture AVAILABLE GHS. Dedicated P5-D suite: 55 real-PostgreSQL proofs. Full clean battery: 227/227 suites, 1719/1719 tests. prisma validate, route-check, npm audit --omit=dev, and db:recovery-drill all clean/successful. Exact-head CI #1060 succeeded. No production financial data changed; production crypto signing/broadcast remains OFF. Main is at the verified squash merge SHA. The available commit-workflow lookup only exposes PR-triggered runs, so no post-merge push CI conclusion is inferred.",
+      "ci": {
+        "conclusion": "success",
+        "exactHead": "22ebebd",
+        "run": 1060,
+        "tests": "227 suites / 1719 tests",
+        "dedicatedProofs": 55,
+        "postMergeMain": {
+          "mergeSha": "baaa4e2359d404fe2bc0b81638c2314b279cf976",
+          "ciStatus": "not independently retrievable via available workflow lookup"
+        }
+      },
+      "nextStep": "Implement §P.5-E Model B settlement / cost-basis realization only after re-reading current backend main and preserving P5-A through P5-D authority boundaries."
     }
   ],
   "notes": [
     "2026-09-18: §P.5-B merged and verified (PR #281, main 39a4977). Next slices in canonical order: route-aware quote authority wiring, GHS liquidity states/reconciliation, Kotani Model A, then P5-E cost-basis realization at settlement. Do not invent customer GHS liability, route settlement, spread or realized P&L before their dedicated boundaries.",
     "2026-09-18: P5-B merged; exact-head evidence verified. Main push run #1049 remains in progress; do not mark P5-B fully verified until that run succeeds.",
-    "2026-09-19: P5-B final main verification completed successfully via run #1049. P5-C PR #282 remains open under audit and is not mergeable as scoped until rebased onto current main and reduced below 500 changed lines."
+    "2026-09-19: P5-B final main verification completed successfully via run #1049. P5-C PR #282 remains open under audit and is not mergeable as scoped until rebased onto current main and reduced below 500 changed lines.",
+    "2026-09-19: §P.5-C PR #284 merged/verified and §P.5-D PR #285 merged/verified at backend main baaa4e2. Next canonical boundary is P5-E Model B settlement/cost-basis realization. Financial slices are not constrained by an arbitrary changed-line target; scope and evidence determine slicing."
   ]
 }
