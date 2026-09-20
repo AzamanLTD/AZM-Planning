@@ -89,3 +89,28 @@ Historical Wave A/B/C completion is not trusted merely because an older green ru
 
 - **Financial-integrity wave, §P.5-C route-aware quote authority (2026-09-19, verified):** PR #284 is the accepted re-land of the route-aware quote slice after PR #282 was superseded/reverted and rebuilt from the clean post-revert baseline. Route identity is first-class in quote issuance/consumption; provider/rail/settlement-surface mismatches fail closed; quote identity conflicts/replays are deterministic; canonical decimal rates are preserved; 271C fresh-external-rate gating remains intact. Final exact-head CI #1055 succeeded on `4b365f7`; squash merge `19671d7`; post-merge main CI #1056 succeeded. P5-C is closed.
 - **Financial-integrity wave, §P.5-D evidence-backed GHS liquidity authority (2026-09-19, verified at merge):** PR #285 final exact head `22ebebd062fc6642958513fb52e68cd92e60b9d2`, squash-merged to backend `main` as `baaa4e2359d404fe2bc0b81638c2314b279cf976`. The new GHS authority is evidence-backed and exact-pesewa: `FiatProviderEvent`/`FiatLiquidityReceipt`/`FiatLiquidityReservation`/`FiatLiquidityState`, atomic single-winner reservation, `RESERVED → IN_TRANSIT → PAID_OUT|RELEASED|RECONCILIATION_REQUIRED`, contradiction quarantine, reconciliation categories, and `SystemFiatPool` as compatibility projection only. Mounted finance/webhook/worker paths now obey the recorded-row regime: authority reservations use their exact reserved GHS even after rate drift; legacy unreserved rows retain legacy pool semantics; authority paths never use the pool as an input and never create a second reservation. `liquidateProfits()` cannot manufacture AVAILABLE GHS from internal USDC profit; treasury openings require separate external funding evidence. Dedicated P5-D coverage is 55 real-PostgreSQL proofs; full clean battery is 227/227 suites and 1,719/1,719 tests; `prisma validate`, route-check, production dependency audit and recovery drill are clean/successful; exact-head CI #1060 succeeded on the final head. No production financial data changed and live crypto signing/broadcast gates remain OFF. Main is verified at the squash merge SHA; the available connector cannot independently expose a post-merge push-triggered CI run for that merge commit, so no post-merge CI conclusion is inferred.
+
+
+---
+
+## 2026-09-20 — Product intent and target architecture captured
+
+A durable product/financial architecture contract was added at:
+
+`docs/PRODUCT_INTENT_AND_TARGET_ARCHITECTURE_2026-09-20.md`
+
+It records the current product direction and constraints that future audit/implementation sessions must preserve:
+
+- Moolre is the only current external fiat provider contract; MTN/Telecel/Vodafone are destination-network information, not separate AZAMAN providers.
+- AZM-ID and BIZ-ID are first-class customer-facing payment identities; numeric User IDs remain backend details.
+- Identity resolution and recipient preview must precede payment authorization.
+- Phone contact discovery may simplify social/chat access, but social relationships never authorize financial movement.
+- Smart Routes are to evolve into a generalized scheduled payment/payout engine supporting allowances, recurring AZM-ID payments, Moolre withdrawals, payroll/business payouts, role/tag/rank grouping, overrides, bonuses and notes.
+- QR/tap payment uses a short-lived payment intent; QR is never direct payment authorization.
+- `User.azmBalance` is loyalty points and must remain separate from monetary `availableBalance`; payroll/EWA currently violate this semantic and require P0 correction.
+- Business employee enrollment is AZM-ID based and must resolve/preview the worker before association.
+- Payroll/EWA must use authoritative monetary liability and business source-of-funds accounting.
+- Moolre, crypto custody/execution, internal payment, payroll and scheduler responsibilities must remain separate canonical layers.
+- Current known P0/P1 risks and the staged implementation sequence are recorded in the new document and the appended Wave 11 in `ROADMAP.md`.
+
+This document is now part of the Planning continuity protocol and should be read at the beginning of future sessions.
