@@ -239,3 +239,70 @@ Independent workstreams may proceed in parallel, but never parallelize two chang
 ## Completion rule
 
 A checkbox is checked only with evidence. Every completed item must record repository, commit/PR, test/CI evidence and residual risk in `CURRENT_STATE.md`.
+
+
+---
+
+# WAVE 11 — PRODUCT-INTENT AND FINANCIAL-DOMAIN CONVERGENCE (2026-09-20)
+
+**Canonical contract:** `docs/PRODUCT_INTENT_AND_TARGET_ARCHITECTURE_2026-09-20.md`
+
+This wave captures product requirements that must constrain future implementation. It is not a feature-shopping list; the financial/identity semantics are part of the architecture.
+
+## Moolre-only current fiat rail
+
+- [ ] Treat Moolre as the only current external fiat provider contract.
+- [ ] Remove/deprecate direct-provider terminology that implies AZAMAN has separate MTN/Telecel/Vodafone provider contracts.
+- [ ] Keep local network/operator selection as Moolre destination information.
+- [ ] Audit all fiat code paths for provider abstraction leakage and canonicalize them behind the Moolre rail.
+
+## Money vs AZM loyalty
+
+- [ ] Prove every payroll/EWA financial credit targets monetary liability, never `User.azmBalance`.
+- [ ] Keep AZM loyalty accounting isolated from USDC/customer money.
+- [ ] Reconcile employee compensation source-of-funds and obligations through the authoritative ledger.
+- [ ] Make EWA fee/limits policy admin-configurable.
+
+## Identity and recipient authority
+
+- [ ] Establish AZM-ID as first-class user payment identity.
+- [ ] Establish BIZ-ID as first-class business payment identity.
+- [ ] Build canonical identity resolution + recipient preview.
+- [ ] Preserve recipient identity snapshots on receipts/audit records.
+- [ ] Fix employee enrollment so Business Portal AZM-ID input resolves to the canonical user before association.
+- [ ] Model AZM-ID → BIZ-ID payments as business-participant settlement, not blind owner-user credit.
+
+## Social/contact graph
+
+- [ ] Evolve phone discovery into a privacy-safe known-contact relationship.
+- [ ] Allow chat convenience without making a friend request mandatory where policy permits.
+- [ ] Preserve block, opt-out and privacy controls.
+- [ ] Keep social/contact access distinct from financial authorization.
+
+## Generalized scheduled payments
+
+- [ ] Design `PaymentPlan` / target / recipient / rule / override / batch / item semantics.
+- [ ] Support recurring AZM-ID transfers, allowances, Moolre withdrawals and business payouts.
+- [ ] Support role/tag/rank groups, per-recipient amounts, bonuses, notes and execution snapshots.
+- [ ] Add single-winner occurrence claims, idempotency, concurrency safety and reconciliation.
+- [ ] Migrate Smart Routes behind the generalized scheduler instead of adding more special cases.
+- [ ] Audit current Smart Route race/reconciliation defects before migration.
+
+## QR / payment intent
+
+- [ ] Introduce short-lived signed payment requests.
+- [ ] Scan must resolve current recipient and amount before payer confirmation.
+- [ ] QR must never directly authorize money movement.
+- [ ] Produce canonical receipts.
+- [ ] Reuse the payment-intent primitive for future NFC/tap-to-pay flows.
+
+## Business employee / payroll / EWA
+
+- [ ] Business Portal adds workers by AZM-ID with identity confirmation.
+- [ ] Flutter worker experience consumes authoritative employee/payroll/EWA data.
+- [ ] Payroll uses real monetary accounting and business source-of-funds.
+- [ ] EWA advances are monetary obligations/credits, not loyalty minting.
+- [ ] Generalized payout scheduling must not duplicate payroll settlement logic.
+
+**Exit:** these requirements are either implemented behind canonical authority boundaries or explicitly marked unresolved with evidence in `CURRENT_STATE.md`.
+
