@@ -125,3 +125,13 @@ No implementation PR from the current AZM engineering loop is intentionally left
 ## Quality standard
 
 The target is not merely "works now." The target is deterministic behavior under retries, concurrent requests, reconnects, stale clients, partial failures, and multi-portal operation. Any implementation that creates a second source of truth, duplicate event, duplicate listener, or ambiguous transaction boundary is considered incomplete even if its happy-path tests pass.
+
+
+## Product-intent continuity contract — 2026-09-20
+
+Before implementing new financial/product features, read:
+`docs/PRODUCT_INTENT_AND_TARGET_ARCHITECTURE_2026-09-20.md`
+
+That document is the durable contract for the current product direction, including Moolre-only fiat-provider semantics, AZM-ID/BIZ-ID payment identity, privacy-safe phone contact discovery, generalized scheduled payments/payouts, QR payment intents, business employee enrollment, payroll/EWA monetary semantics, and the strict separation of AZM loyalty points from customer money.
+
+Any future implementation that conflicts with that contract must first be backed by new evidence and an explicit architecture decision recorded in Planning.
