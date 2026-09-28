@@ -188,7 +188,7 @@ A task is DONE only when **all** of these are true:
 | TASK-009d | Rebuild the balance cards on 009a–009c | 1 | TASK-009a/b/c | `DONE — merged (ee60455), post-audit follow-ups in PR #104 (93ed294), CI green` |
 | TASK-010 | Nav pill: scroll-reactive compression | 1 | TASK-007 | `DONE — merged (27ce10c), CI green` |
 | TASK-010b | Long-press vertical launcher | 1 | TASK-010, TASK-011 | `REVIEW REQUIRED — callback fix applied` |
-| TASK-011 | `MarketplaceExperienceStage`: tempo, scope, dossier scaffold, vertical entry point | 2 | TASK-001, TASK-002, TASK-005, TASK-009a | `REVIEW REQUIRED — F.2` |
+| TASK-011 | `MarketplaceExperienceStage`: tempo, scope, dossier scaffold, vertical entry point | 2 | TASK-001, TASK-002, TASK-005, TASK-009a | `REVIEW REQUIRED — F.2 (audited + guards landed: PR #107, CI green; implementation confirmed present on main via 29a0d30; spec reconciliation: scope byte-identical, tempo format-only diff, dossier deviations documented F-035/AzamanSheet stage)` |
 | TASK-012 | Retail: `liftIntoTray` commit + shelf depth + swatch variants + catching tray | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-009a, TASK-011 | `REVIEW REQUIRED — top-level picker correction` |
 | TASK-013 | Restaurant: merged dine-in/takeaway/delivery, ribbon bookmark, paperRip upgrade, drag tray rail, build sheet | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-009a, TASK-011 | `REVIEW REQUIRED — F.2` |
 | TASK-014 | Transit: route ribbon + lit cabin + deck slice + hold ring + boarding-pass keepsake | 2 | TASK-001, TASK-002, TASK-006, TASK-011 | `BLOCKED — F.2` |
