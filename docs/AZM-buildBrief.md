@@ -188,7 +188,7 @@ A task is DONE only when **all** of these are true:
 | TASK-009d | Rebuild the balance cards on 009a–009c | 1 | TASK-009a/b/c | `DONE — merged (ee60455), post-audit follow-ups in PR #104 (93ed294), CI green` |
 | TASK-010 | Nav pill: scroll-reactive compression | 1 | TASK-007 | `DONE — merged (27ce10c), CI green` |
 | TASK-010b | Long-press vertical launcher | 1 | TASK-010, TASK-011 | `REVIEW REQUIRED — callback fix applied` |
-| TASK-011 | `MarketplaceExperienceStage`: tempo, scope, dossier scaffold, vertical entry point | 2 | TASK-001, TASK-002, TASK-005, TASK-009a | `REVIEW REQUIRED — F.2 (audited + guards landed: PR #107, CI green; implementation confirmed present on main via 29a0d30; spec reconciliation: scope byte-identical, tempo format-only diff, dossier deviations documented F-035/AzamanSheet stage)` |
+| TASK-011 | `MarketplaceExperienceStage`: tempo, scope, dossier scaffold, vertical entry point | 2 | TASK-001, TASK-002, TASK-005, TASK-009a | `DONE — merged a4f9677 via PR #107 (guards; production via 29a0d30 lineage); exact-main CI green (Flutter Quality run 36496857828 + Android Integration run 36496082663); close-out + deviations in sign-off` |
 | TASK-012 | Retail: `liftIntoTray` commit + shelf depth + swatch variants + catching tray | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-009a, TASK-011 | `REVIEW REQUIRED — top-level picker correction` |
 | TASK-013 | Restaurant: merged dine-in/takeaway/delivery, ribbon bookmark, paperRip upgrade, drag tray rail, build sheet | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-009a, TASK-011 | `REVIEW REQUIRED — F.2` |
 | TASK-014 | Transit: route ribbon + lit cabin + deck slice + hold ring + boarding-pass keepsake | 2 | TASK-001, TASK-002, TASK-006, TASK-011 | `BLOCKED — F.2` |
@@ -8224,18 +8224,67 @@ visually identical after rollback except the stage header glyph and the retail p
 ### Sign-off
 
 ```
-TASK-011  Status: DONE / BLOCKED
-rg "milliseconds: 820" (expect 1, tempo file):   __________
-rg "motionDuration" (expect 1, blueprint def):   __________
-flutter analyze errors (baseline: ____):         __________
-flutter test (5 permanent files + suite):        __________
-G3 build:                                        __________
-Visual 1 (glyph header):                         __________
-Visual 2 (retail dossier):                       __________
-Visual 4 (restaurant rip unchanged):             __________
-Visual 5 (reduced-motion dossier):               __________
-Notes / deviations:                              __________
+TASK-011  Status: DONE (merged a4f9677801dc908605cea392ad27a41c74770ba9 via PR #107;
+                      exact-main CI green: Flutter Quality + Android Integration)
+rg "milliseconds: 820" (expect 1, tempo file):   1 in lib (marketplace_tempo.dart:68) +
+                      1 golden mirror in test/marketplace_tempo_test.dart
+rg "motionDuration" (expect 1, blueprint def):   1 executable definition
+                      (marketplace_experience_blueprint.dart:143); remaining matches are
+                      doc comments in marketplace_tempo.dart and test mirrors — no stage
+                      call site remains
+flutter analyze errors (baseline: ____):         0 — Flutter Quality (flutter analyze
+                      --no-fatal-infos --no-fatal-warnings) green on exact main a4f9677
+flutter test (5 permanent files + suite):        CI green on both exact SHAs — PR head
+                      be02369 (Flutter Quality run 36495055801) and exact main a4f9677
+                      (workflow_dispatch run 36496857828), full `flutter test --coverage`.
+                      Local sandbox: 2 of the marketplace test files incomplete under the
+                      documented ~2GB tester memory ceiling — a sandbox limit, not a CI
+                      failure; no production code changed and no tests weakened for it
+G3 build:                                        Android Integration on exact main a4f9677
+                      (run 36496082663): success
+Visual 1 (glyph header):                         guarded — exactly one glyph icon per
+                      presentation, the presentation's own label (PR #107 dossier test)
+Visual 2 (retail dossier):                      guarded — eyebrow, title, caller content
+                      and optional footer render through the shared scaffold (PR #107
+                      dossier test)
+Visual 4 (restaurant rip unchanged):             guarded — restaurant commit surface
+                      untouched by the guard PR; restaurant_commit_surface*_test green in
+                      both CI runs
+Visual 5 (reduced-motion dossier):              guarded — entrance fully collapsed on the
+                      FIRST rendered frame under reduced motion (PR #107 dossier test)
+Notes / deviations:                              see close-out below
 ```
+
+**TASK-011 close-out (PR #107, merged a4f9677801dc908605cea392ad27a41c74770ba9):**
+
+- **Merge evidence:** squash-merged from exact head `be02369722d28f2224bb15abb3f9f3f3a7fa9467`
+  (base `1602672b8cc339088958e8892395228315eeb71a`); frontend main points at `a4f9677801`;
+  Flutter Quality green on the exact head (run 36495055801) AND on exact main via
+  workflow_dispatch (run 36496857828); Android Integration green on exact main
+  (run 36496082663).
+- **Permanent guard files (PR #107 — three test files only, +359 lines, zero production
+  changes):** `test/widgets/marketplace/marketplace_dossier_sheet_test.dart`,
+  `test/widgets/marketplace/marketplace_home_category_normalisation_test.dart`,
+  `test/widgets/marketplace/marketplace_home_initial_category_test.dart`.
+- **Verified initialCategory downstream contract:** `MarketplaceHomeScreen.initialCategory`
+  normalises through the launch allowlist (`FOOD_BEVERAGE`, `RETAIL`, `LOGISTICS`,
+  `HOSPITALITY`, `REAL_ESTATE` — the explicit allowlist sidesteps F-029's `fromWire` gap),
+  seeds the starting search (`search('', category: _selectedCategory)`), drives the dial's
+  `selectedWire`, filters local results and renders the category label; null / blank /
+  unknown wires open the marketplace unfiltered — an unknown value never maps to a nearby
+  category. This is the TASK-010b entry contract, now guarded permanently.
+- **Production implementation provenance:** the TASK-011 production code (scope, tempo,
+  dossier scaffold, stage authority, initialCategory) reached main earlier via `29a0d30`
+  ("feat: add premium frontend revamp") and the subsequent main lineage; PR #107 adds only
+  the permanent guards against it. The audit of that production state (scope byte-identical,
+  tempo format-only diff) is recorded in the A.8 status board.
+- **Documented deviations (unchanged, deliberate):**
+  1. **AzamanSheet stage migration** — the dossier scaffold opens through
+     `AzamanSheet.showStage` (the `lib/widgets/azaman_sheet.dart` grammar) instead of the
+     spec's raw sheet substrate, so the dossier inherits the app's detent/motion system.
+  2. **F-035 icon policy** — the presentation glyph mapping uses only Hugeicons names
+     verified in-repo.
+- **Next:** TASK-010b remains gated on owner authorization; do not start it automatically.
 
 ---
 
