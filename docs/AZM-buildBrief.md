@@ -186,7 +186,7 @@ A task is DONE only when **all** of these are true:
 | TASK-009b | `OdometerNumber` — per-digit roll (+ permanent widget test) | 1 | TASK-009a | `DONE — merged, CI green` |
 | TASK-009c | `HolographicSurface` — pointer-driven hero substrate (+ test) | 1 | TASK-005, TASK-009a | `DONE — merged (952810d)` |
 | TASK-009d | Rebuild the balance cards on 009a–009c | 1 | TASK-009a/b/c | `DONE — merged (ee60455), post-audit follow-ups in PR #104 (93ed294), CI green` |
-| TASK-010 | Nav pill: scroll-reactive compression | 1 | TASK-007 | `REVIEW REQUIRED — corrected 4c anchor` |
+| TASK-010 | Nav pill: scroll-reactive compression | 1 | TASK-007 | `DONE — merged (27ce10c), CI green` |
 | TASK-010b | Long-press vertical launcher | 1 | TASK-010, TASK-011 | `REVIEW REQUIRED — callback fix applied` |
 | TASK-011 | `MarketplaceExperienceStage`: tempo, scope, dossier scaffold, vertical entry point | 2 | TASK-001, TASK-002, TASK-005, TASK-009a | `REVIEW REQUIRED — F.2` |
 | TASK-012 | Retail: `liftIntoTray` commit + shelf depth + swatch variants + catching tray | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-009a, TASK-011 | `REVIEW REQUIRED — top-level picker correction` |
@@ -6277,7 +6277,7 @@ Notes / deviations:                    __________
 
 ## TASK-010 — Nav pill: scroll-reactive compression
 
-**Tier:** 1 · **Depends on:** TASK-007 · **Status:** `SPEC READY`
+**Tier:** 1 · **Depends on:** TASK-007 · **Status:** **`DONE` 2026-09-28**
 
 > **SCOPE CHANGE — the long-press vertical launcher has been split out into TASK-010b.**
 >
@@ -6985,25 +6985,34 @@ partial state.
 ### Sign-off
 
 ```
-TASK-010  Status: DONE / BLOCKED
-Step 1-3 Color(0xFFEF4444) matches:    __________  (expect 0)
-Step 1-3 HapticFeedback. matches:      __________  (expect 0)
-Step 1-3 height: 62 / barHeight: 62:   __________  (expect 0)
-Step 1-3 fontSize: 10 matches:         __________  (expect 0)
-Step 5   navScrollCompression matches: __________  (expect 3)
-Test 2   compress on scroll:           __________
-Test 3   restore at top:               __________
-Test 5   pull-to-refresh does NOT compress:  __________  (REGRESSION)
-Test 6   works on all four tabs:       __________  (PROOF: no page edits needed)
-Test 7   nested horizontal scroll:     __________  (axis guard needed? y/n)
-Test 8   reduce motion:                __________
-Test 10  tap-active gives feedback:    __________
-Test 11  badge follows theme:          __________
-G2 flutter analyze errors:             __________  (baseline: ____)
-flutter test:                          __________  (All tests passed)
-G3 build:                              __________
-Notes / deviations:                    __________
+TASK-010  Status: DONE (merged 27ce10c, main CI green)
+Step 1-3 Color(0xFFEF4444) matches:    0  (expect 0)
+Step 1-3 HapticFeedback. matches:      0  (expect 0 — AzamanHaptics vocabulary only)
+Step 1-3 height: 62 / barHeight: 62:   0  (expect 0 — NavScrollCompression constants + live constraints.maxHeight)
+Step 1-3 fontSize: 10 matches:         0  (expect 0 — AzText.caption scale step)
+Step 5   navScrollCompression matches: 8 code refs (6 in nav file, 2 in main.dart)  (spec draft expected 3; reconciliation kept the ONE-listener architecture of the already-partial main implementation)
+Test 2   compress on scroll:           PASS (applyTo vertical test + widget test)
+Test 3   restore at top:               PASS (absolute-offset writer: fromPixels(0) == 0)
+Test 5   pull-to-refresh does NOT compress:  PASS (REGRESSION) (non-positive-pixels guard; negative and NaN tested)
+Test 6   works on all four tabs:       PASS (PROOF: no page edits — diff touched only main.dart + premium_bottom_nav.dart; the single shell-level NotificationListener covers every page)
+Test 7   nested horizontal scroll:     YES, axis guard needed and implemented (metrics.axis != vertical → ignored; tested via AxisDirection.right)
+Test 8   reduce motion:                PASS (reader-side freeze at rest height, full opacity, labels visible)
+Test 10  tap-active gives feedback:    PASS (AzamanHaptics.selection acknowledgment; no re-selection — widget-tested)
+Test 11  badge follows theme:          PASS (colors.danger surface + Theme colorScheme.onError text)
+G2 flutter analyze errors:             0 (baseline warnings pre-existing, untouched)
+flutter test:                          628 passed, 0 failed (17 new in nav_scroll_compression_test.dart)
+G3 build:                              Android Integration on main: success (27ce10c)
+Notes / deviations:                    see reconciliation notes below
 ```
+
+**Reconciliation deviations from the literal spec (all deliberate):**
+1. Main already carried a partial TASK-010 implementation (delta-accumulating writer, decompression on ScrollEnd, 31→26 radius interpolation). The spec's "Step 1" anchors matched the OLD pre-compression file, so the patch was reconciled against the current file rather than pasted. The spec's ScrollEnd/Overscroll reset behavior was dropped: the absolute-offset law (acceptance #1/#2) means stopping mid-page keeps the pill compressed and only returning to the top restores it.
+2. The writer is quantised to 10 steps (new invariant): a scroll that lands on the same visual step costs zero notifier writes; a full-screen scroll costs ~10.
+3. `MotionTokens.spring` == `Curves.easeOutBack`, so the spec's icon-curve swap is an alias, not a feel change. The inverted icon-scale convention (selected=1.0, unselected=0.92) was left as-is per F-026.
+4. `AzamanColors` has no `onError` field (spec's probe assumed one); the badge text now reads `Theme.of(context).colorScheme.onError`, which the theme maps to white in both themes — same pixels, now theme-layer-owned.
+5. Radius interpolation (31→26) replaced by `AzRadius.brPill` (999 self-clamps to half-height at any animated height); LiquidTabBackdrop tracks the live animated height via LayoutBuilder constraints instead of the target.
+6. Tab switches reset compression to rest (incoming page starts at its top) — added to `_onNavItemSelected`, covered by the writer's tests.
+7. Travel widened 72→90px (~1.5 list rows) per spec intent; reduced motion honoured reader-side so the writer stays policy-free.
 
 ---
 
