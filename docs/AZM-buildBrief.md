@@ -181,7 +181,7 @@ A task is DONE only when **all** of these are true:
 | TASK-005 | `PremiumGlassContainer` v2 — directional light | 0 | TASK-001 | `REVIEW REQUIRED — corrected call-site count` |
 | TASK-006 | Haptic consolidation → one canonical `AzamanHaptics` | 0 | — | `REVIEW REQUIRED — verify 63 importers` |
 | TASK-007 | Tab transition: directional slide + fade (replace ghosting cross-fade) | 1 | TASK-002 | `SPEC READY` |
-| TASK-008 | Home: delete ambient loops, conditional entrance, rail rebuild | 1 | TASK-002, TASK-005 | `REVIEW REQUIRED — corrected import/haptics` |
+| TASK-008 | Home: delete ambient loops, conditional entrance, rail rebuild | 1 | TASK-002, TASK-005 | `DONE — merged (1602672), CI green; entrance choreography + reduced-motion gating verified by home_entrance_test (3 checks)` |
 | TASK-009a | `AzMoney` — one money formatter (+ permanent unit test) | 1 | — | `DONE — merged, CI green (ee60455 lineage)` |
 | TASK-009b | `OdometerNumber` — per-digit roll (+ permanent widget test) | 1 | TASK-009a | `DONE — merged, CI green` |
 | TASK-009c | `HolographicSurface` — pointer-driven hero substrate (+ test) | 1 | TASK-005, TASK-009a | `DONE — merged (952810d)` |
