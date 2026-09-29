@@ -12108,6 +12108,7 @@ Replace with:
 import 'package:azaman/marketplace/experiences/marketplace_experience_blueprint.dart';
 import 'package:azaman/marketplace/experiences/restaurant/restaurant_order_mode.dart';
 import 'package:azaman/utils/azaman_haptics.dart';
+import 'package:azaman/widgets/azaman_sheet.dart';
 import 'package:azaman/widgets/marketplace/marketplace_detail_surface.dart';
 import 'package:azaman/widgets/marketplace/restaurant_order_mode_switch.dart';
 ```
@@ -12345,15 +12346,13 @@ Replace with:
 
   void _openBuildSheet(RestaurantDish dish) {
     AzamanHaptics.nav();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
-      builder: (_) => _RestaurantBuildSheet(
+    AzamanSheet.showPanel<void>(
+      context,
+      builder: (sheetContext, scrollController) => _RestaurantBuildSheet(
         dish: dish,
         basePrice: _product?.priceUsdc,
         colors: widget.colors,
+        scrollController: scrollController,
         initialSize: _size,
         initialOptions: _options,
         onDone: (size, options) => setState(() {
@@ -12521,6 +12520,7 @@ class _RestaurantBuildSheet extends StatefulWidget {
   final RestaurantDish dish;
   final double? basePrice;
   final AzamanColors colors;
+  final ScrollController scrollController;
   final String? initialSize;
   final Map<String, Set<String>> initialOptions;
   final void Function(String? size, Map<String, Set<String>> options) onDone;
@@ -12529,6 +12529,7 @@ class _RestaurantBuildSheet extends StatefulWidget {
     required this.dish,
     required this.basePrice,
     required this.colors,
+    required this.scrollController,
     required this.initialSize,
     required this.initialOptions,
     required this.onDone,
@@ -12570,89 +12571,75 @@ class _RestaurantBuildSheetState extends State<_RestaurantBuildSheet> {
           (group) => group.required && (_options[group.id]?.isEmpty ?? true),
         ) &&
         (dish.variants.isEmpty || (_size != null && _size!.isNotEmpty));
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.78),
-          child: Material(
-            borderRadius: BorderRadius.circular(24),
-            clipBehavior: Clip.antiAlias,
-            color: widget.colors.card,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 6, 18, 14),
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 9, bottom: 3),
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: widget.colors.textTertiary.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(999),
+                Expanded(
+                  child: Text(
+                    'Build your ${dish.name}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: widget.colors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 6, 10, 0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Build your ${dish.name}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: widget.colors.textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.close_rounded, color: widget.colors.textSecondary, size: 20),
-                      ),
-                    ],
-                  ),
-                ),
-                Flexible(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(18, 4, 18, 14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (dish.variants.isNotEmpty) _variantChoices(),
-                        ...dish.optionGroups.map(_modifierGroup),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 4, 18, 14),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: canClose
-                          ? () {
-                              widget.onDone(_size, _options);
-                              Navigator.pop(context);
-                            }
-                          : null,
-                      child: Text(
-                        unitPrice == null
-                            ? 'Price unavailable'
-                            : canClose
-                                ? 'Done · ${unitPrice.toStringAsFixed(2)} USDC'
-                                : 'Choose required options',
-                      ),
-                    ),
+                IconButton(
+                  tooltip: 'Close build sheet',
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: widget.colors.textSecondary,
+                    size: 20,
                   ),
                 ),
               ],
             ),
           ),
-        ),
+          Expanded(
+            child: SingleChildScrollView(
+              controller: widget.scrollController,
+              padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (dish.variants.isNotEmpty) _variantChoices(),
+                  ...dish.optionGroups.map(_modifierGroup),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: canClose
+                  ? () {
+                      widget.onDone(_size, _options);
+                      Navigator.pop(context);
+                    }
+                  : null,
+              child: Text(
+                unitPrice == null
+                    ? 'Price unavailable'
+                    : canClose
+                        ? 'Done · ${unitPrice.toStringAsFixed(2)} USDC'
+                        : 'Choose required options',
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
-
   Widget _variantChoices() => Padding(
     padding: const EdgeInsets.only(top: 4),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -13176,6 +13163,8 @@ Verify:
 ```bash
 rg -n "FloatingCartBar" lib/screens/marketplace/business_book_tab.dart   # expect 0
 rg -n "RestaurantTrayRail" lib/screens/marketplace/business_book_tab.dart  # expect 1 (mount)
+rg -n "AzamanSheet.showPanel" lib/widgets/marketplace/restaurant_native_menu_journey.dart # expect 1
+rg -n "showModalBottomSheet" lib/widgets/marketplace/restaurant_native_menu_journey.dart # expect 0
 rg -n "if (!useRestaurantTray || onDineInAddToTab != null) return stage;" lib/screens/marketplace/business_book_tab.dart  # expect 0 (old guard gone)
 ```
 
