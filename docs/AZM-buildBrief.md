@@ -13395,6 +13395,9 @@ void main() {
           storefrontExperienceProvider(business.id).overrideWith(
             (ref) async => _experience(),
           ),
+          storefrontProductsProvider(business.id).overrideWith(
+            (ref) async => <String, dynamic>{'products': <dynamic>[]},
+          ),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -13430,7 +13433,7 @@ flutter pub get                                   # G1
 flutter analyze                                   # G2 — 0 errors, and no NEW warnings in touched files
 flutter test test/restaurant_order_mode_test.dart # permanent mode/progress/routing tests pass
 flutter test                                      # all eight permanent files + the rest of the suite
-flutter build web --debug                         # G3 — exit 0
+flutter build apk --debug                         # G3 — exit 0 (A.5 supported target)
 ```
 
 Probes:
@@ -13439,10 +13442,13 @@ Probes:
 rg -n "Theme.of" lib/widgets/marketplace/restaurant_commit_surface.dart   # 0
 rg -n "AzamanHaptics.addToCart" lib/widgets/marketplace/restaurant_commit_surface.dart  # 3
 rg -n "FloatingCartBar" lib/screens/marketplace/business_book_tab.dart    # 0
-rg -n "RestaurantTrayRail" lib                                              # 4 (3 inside the new widget file, 1 mount in business_book_tab)
+rg -n "RestaurantTrayRail" lib                                              # 3 (widget declaration + ConsumerState type + BusinessBookTab mount)
 rg -n "restaurantBuildProgress" lib                                          # 2 (definition + journey use)
 rg -n "Widget _variantChoices(RestaurantDish dish)" lib/widgets/marketplace/restaurant_native_menu_journey.dart  # 0
-rg -n "onOrderModeChanged" lib                                               # 13 matches, all in the five touched/new files (switch 2, journey 4, adapter 3, stage 3, business_book_tab 1)
+rg -n "onOrderModeChanged" lib/widgets/marketplace/restaurant_native_menu_journey.dart  # 4
+rg -n "onOrderModeChanged" lib/widgets/marketplace/restaurant_menu_journey_adapter.dart # 3
+rg -n "onOrderModeChanged" lib/widgets/marketplace/marketplace_vertical_experience_stage.dart # 3
+rg -n "onOrderModeChanged" lib/screens/marketplace/business_book_tab.dart # 1
 rg -n "class BusinessBookTab extends" lib/screens/marketplace/business_book_tab.dart  # ConsumerStatefulWidget
 rg -n "dineInContext" lib/screens/marketplace/dinein_restaurant_ordering_screen.dart  # expect 1 (unchanged)
 ```
@@ -13502,7 +13508,7 @@ TASK-013  Status: DONE / BLOCKED
 rg "Theme.of" restaurant_commit_surface.dart (expect 0):  __________
 rg "addToCart" commit surface (expect 3):                 __________
 rg "FloatingCartBar" business_book_tab (expect 0):        __________
-rg "RestaurantTrayRail" lib (expect 4):                   __________
+rg "RestaurantTrayRail" lib (expect 3):                   __________
 flutter analyze errors (baseline: ____):                  __________
 flutter test (7 permanent files + suite):                 __________
 G3 build:                                                 __________
