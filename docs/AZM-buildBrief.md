@@ -23408,6 +23408,10 @@ Future<void> _settleEntrance(WidgetTester tester) async {
             .getTopLeft(find.byKey(Key('vertical_launcher_${entry.wire}')))
             .dy;
       }
+      expect(dy['FOOD_BEVERAGE']! < dy['REAL_ESTATE']!, isTrue);
+      expect(dy['REAL_ESTATE']! < dy['LOGISTICS']!, isTrue);
+      expect(dy['LOGISTICS']! < dy['RETAIL']!, isTrue);
+      expect(dy['RETAIL']! < dy['HOSPITALITY']!, isTrue);
 ```
 
 Replace with:
@@ -23703,6 +23707,13 @@ Defect register (severity):
   dy['REAL_ESTATE']` empirically), so the strict `<` chain cannot hold. Clamping is
   monotone, so the honest contract is a non-strict chain with strict ends (first
   topmost, last bottommost). Empirically verified.
+- **D24 LOW (implementation, 2026-09-29) — the D22 find-block extension was never
+  persisted.** The edit that extended 6b's find block to cover the strict expects was
+  applied in a script that ended before its file write; the committed spec kept the
+  truncated find (ending at the dy loop) while the replace block carried the monotone
+  chain — verbatim application left BOTH chains in the test (strict chain still red).
+  Both blocks now verifiably cover the assertion chain; the spec is parsed and applied
+  mechanically from its committed text, not from memory.
 - **D23 LOW (implementation, 2026-09-29) — 6b's D22-extended replacement block was
   asymmetric.** The extension appended the testWidgets closer (`});`) to the replacement
   block while the find block ended at the asserts — verbatim application produced a
