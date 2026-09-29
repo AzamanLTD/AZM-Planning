@@ -85,6 +85,26 @@ rg -n "^int ribbonNights|^DateTime ribbonDateAt|^double stayTotalFor" lib/widget
 All other TASK-015 probes (class declarations, `Timer|Future.delayed` zero-expects, the
 `Chip(` zero-expect in the dossier content) are correct as written and stay.
 
+## 3A. Stay-date cell-pitch correction
+
+The original TASK-015 date-ribbon implementation uses a **56dp visual cell width** plus
+`AzSpace.xs` right margin, which produces a **60dp visual pitch**, while its `_cellAt()` and
+`_reveal()` math historically used only 56dp. That causes the interaction/reveal geometry
+to drift relative to the rendered cells as the user moves farther along the ribbon.
+
+The corrected execution contract is:
+
+- Define one authoritative date-cell pitch from the rendered geometry (`56dp cell + the existing
+  `AzSpace.xs` gap = 60dp at the current token value).
+- Use that same pitch for hit-testing/index calculation, reveal/scroll positioning, and any
+  item-extent/placement math.
+- Preserve the 56dp visible date-cell width and the existing tokenized gap unless a later design
+  decision explicitly changes both together.
+- Add a permanent regression that proves a rendered cell's visual position and the corresponding
+  hit-test/index/reveal calculation stay aligned across multiple cells, not just cell 0.
+
+Do not retain separate 56dp and 60dp geometry constants for the same date-cell sequence.
+
 ## 4. Fresh-main anchor verification (2026-09-29)
 
 Re-verified against AzamanLTD/AZM-frontend at b947a2b (TASK-013 merged):
