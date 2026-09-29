@@ -189,7 +189,7 @@ A task is DONE only when **all** of these are true:
 | TASK-010 | Nav pill: scroll-reactive compression | 1 | TASK-007 | `DONE — merged (27ce10c), CI green` |
 | TASK-010b | Long-press vertical launcher | 1 | TASK-010, TASK-011 | `DONE — merged 122d3b1 via PR #108; exact-main CI green (Flutter Quality run 36501807916 + Android Integration run 36500737881); close-out + deviations in sign-off` |
 | TASK-011 | `MarketplaceExperienceStage`: tempo, scope, dossier scaffold, vertical entry point | 2 | TASK-001, TASK-002, TASK-005, TASK-009a | `DONE — merged a4f9677 via PR #107 (guards; production via 29a0d30 lineage); exact-main CI green (Flutter Quality run 36496857828 + Android Integration run 36496082663); close-out + deviations in sign-off` |
-| TASK-012 | Retail: `liftIntoTray` commit + shelf depth + swatch variants + catching tray | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-009a, TASK-011 | `REVIEW REQUIRED — top-level picker correction` |
+| TASK-012 | Retail: `liftIntoTray` commit + shelf depth + swatch variants + catching tray | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-009a, TASK-011 | `DONE — merged via PR #109; merge SHA 0ea5d478e1d86611287faa349d9e68f65ad25062; exact-main Flutter Quality 36507003624 + Android Integration 36523782939 green; independent close-out completed` |
 | TASK-013 | Restaurant: merged dine-in/takeaway/delivery, ribbon bookmark, paperRip upgrade, drag tray rail, build sheet | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-009a, TASK-011 | `REVIEW REQUIRED — F.2` |
 | TASK-014 | Transit: route ribbon + lit cabin + deck slice + hold ring + boarding-pass keepsake | 2 | TASK-001, TASK-002, TASK-006, TASK-011 | `BLOCKED — F.2` |
 | TASK-015 | Hotel: building section + floor-plan dossier + date scrubber | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-011 | `BLOCKED — F.2` |
@@ -11328,22 +11328,16 @@ changed anywhere, so no caller can break.
 ### Sign-off
 
 ```
-TASK-012  Status: DONE / BLOCKED
-rg "DropdownButtonFormField" retail (expect 0):  __________
-rg "RetailCart _cart" (expect 0):                __________
-rg "retailCommitToTray" (expect 3):              __________
-flutter analyze errors (baseline: ____):         __________
-flutter test (6 permanent files + suite):        __________
-G3 build:                                        __________
-Visual 1 (parallax):                             __________
-Visual 3 (lift + catch + haptic):                __________
-Visual 4 (miss settles back):                    __________
-Visual 5 (swatches, no dropdown):                __________
-Visual 6 (fanned tray thumbnails):               __________
-Visual 7 (cross-business dialog):                __________
-Visual 8 (dossier Add to bag):                   __________
-Visual 9 (reduced motion):                       __________
-Notes / deviations:                              __________
+TASK-012  Status: DONE
+PR: #109
+PR head (fully audited): 0f38dcf7b579d78d1dd1539debca9d0ca1256584
+Merge SHA: 0ea5d478e1d86611287faa349d9e68f65ad25062
+Exact-main Flutter Quality: run 36507003624 — success
+Exact-main Android Integration: run 36523782939 — success
+Pre-merge Android Integration: run 36507002261 — success
+Independent close-out: merge tree equals audited PR-head tree; no post-merge code drift.
+Review hardening: null-price commits rejected; genuine zero price preserved; reduced-motion catch suppressed; unavailable presentation/state guarded; SHOP_FLOOR-only retail catch; fan capped at three; catch/fan regression suite retained.
+Notes / deviations: historical TASK-012 Step 8c remains explicitly non-executable; standalone RetailDossierPicker correction was used. Visual verification was not performed in this GitHub-only session.
 ```
 
 ---
