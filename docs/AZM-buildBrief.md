@@ -254,7 +254,7 @@ pin down.
 | `test/marketplace/experiences/transit/transit_hold_ring_test.dart` | TASK-014 | Hold fraction/label math (incl. expiry and null expiry), ticker-driven ring with injected clock fires `onExpired` exactly once, timer-free demo gateway, booking→experience bridge (null-arrival fallback, driver→operator) |
 | `test/marketplace/experiences/hotel/stay_booking_test.dart` | TASK-015 | Band grouping (floor sort, null-floor grounding, degenerate cases), ribbon math (`ribbonNights`/`ribbonDateAt`/`stayTotalFor`), deterministic drag/tap scrubber cells, summary-bar live total + Reserve gating, vertical floor paging + unavailable-room gating, arrival sheet facts |
 | `test/escrow_vault_rail_test.dart` | TASK-016 | Seal destination (settled/released → vendor, refunded/expired → buyer), ring-fraction honesty degenerates, F-046 stable seed, countdown label formatting, held render + no-window honesty, terminal-on-mount post-state, live active→terminal unseal, reduced-motion instant path |
-| `test/susu_wheel_test.dart` | TASK-017 | Slot geometry (12-o'clock start, rotation-to-slot, shortest-path snap, nearest-free with taken slots), arc-window honesty, F-046 avatar-hue seed, countdown formatting, held wheel render + YOU badge + upcoming ring, terminal `Done` settle, reduced-motion settle, picker tap-select / taken-inert / drag-snap + hub commit, 12-o'clock indicator geometrically proven at top, onPositionSelected exactly-once (re-tap, tap-then-hub, different-slot re-commit, taken-via-hub zero-callback) |
+| `test/susu_wheel_test.dart` | TASK-017 | Slot geometry (12-o'clock start, rotation-to-slot, shortest-path snap, nearest-free with taken slots), arc-window honesty, F-046 avatar-hue seed, countdown formatting, held wheel render + YOU badge + upcoming ring, terminal `Done` settle, reduced-motion settle, picker tap-select / taken-inert / drag-snap + hub commit, 12-o'clock indicator geometrically proven at top, onPositionSelected exactly-once (re-tap, tap-then-hub, different-slot re-commit, fully-taken wheel → hub disabled/Spin/zero-callback) |
 | `test/liquid_launcher_test.dart` | TASK-018 | `satelliteScale` rest/mid-launch/full/stagger ladder, `satelliteTravel` zero → overshoot → settle contract (kHouseSpring overshoots ~22%; endpoint tolerance 1e-3 for the spring residual), `solveRadialFan` safe-bounds + no-anchor-overlap (pairwise slot overlap deliberately NOT asserted — clamp behaviour), widget smoke: auto-open burst settles, `items.first` lands above `items.last`, pick fires its callback exactly once, reduced-motion instant settle, unbounded host renders nothing |
 
 Run the full repository suite before signing off any task that follows them — the canonical command is `flutter test`; the permanent inventory below grows as this programme adds guards, so never rely on a fixed file count:
@@ -20138,6 +20138,15 @@ Second reconciliation (2026-09-29, commit 76435c5 follow-up) — planning-only, 
 | 13 | Verification prose said `flutter test # all eleven files pass` — stale fixed file count | Low | repo test suite far exceeds eleven files | Wording now refers to the full repository suite with no fixed count |
 | 14 | A.8b prose said "Run all nineteen" while the table lists 22 permanent test files | Medium | count of A.8b table rows = 22 | Prose made count-independent (canonical `flutter test`); same fix applied to the TASK-018 sign-off line |
 
+Third pass (2026-09-29, bc1e3a8 follow-up) — planning-only:
+
+| # | Defect | Severity | Evidence | Correction applied |
+|---|---|---|---|---|
+| 15 | "Taken slot tapped via hub path" test was not a realizable UI flow — the hub derives from `susuNearestFreeSlot` and can only name a free slot in any stable frame | High | wheel `_hub` (805-842): `enabled = hubSlot != null`; all-taken wheel reads 'Spin', `onTap: null` | Replaced with the deterministic all-taken invariant: hub disabled, reads 'Spin', zero callbacks |
+| 16 | "Constructor signature and semantics preserved exactly" was too strong — the exactly-once hardening deliberately changes repeated same-slot callback behaviour | Medium | contract subsection wording | Precise rule: signature/parameter names unchanged, tap-to-select preserved, repeated same-slot hardened to exactly-once, drag-snap non-committing, hub alternative commit; callback = selection event, not backend settlement |
+| 17 | Sign-off line said "5 permanent tests" for exactly-once selection — only 4 are exactly-once; the 5th is the indicator regression | Low | count wording | Line now says "4 new permanent tests"; Step 4 states the exact breakdown 24 + 5 = 29 (13 pure + 16 widget) |
+| 18 | Rollback restore used only the short SHA 4e47fdf and did not guard against clobbering unrelated branch work | Medium | rollback section | Full SHA 4e47fdf5464b3223030989ee6c8dc2633f32059a; full-file checkout permitted only when the files carry no unrelated changes, otherwise stop |
+
 ### TASK-017 selection-commit contract — onPositionSelected fires exactly once (added 2026-09-29)
 
 **The latent defect.** The shipped `SusuPositionWheel` lets one user selection flow fire the
@@ -20150,8 +20159,14 @@ must leave no exactly-once ambiguity.
 
 **The decision (evidence-based, contract A — tap IS the commit).** The pre-revamp public
 `SusuPositionPicker` (29a0d30~1) fired `AzamanHaptics.confirm()` + `widget.onPositionSelected(i + 1)`
-on slot tap alone; its centre circle was a static "Pick" visual with no gesture handler. The
-public constructor signature and semantics must be preserved exactly (A.3). Therefore:
+on slot tap alone; its centre circle was a static "Pick" visual with no gesture handler.
+The precise preservation rule: the **public constructor signature and parameter names
+remain unchanged**; **existing tap-to-select behaviour is preserved**; **repeated same-slot
+selection is hardened to exactly-once** (this is the deliberate semantic change); **drag-snap
+remains non-committing**; **the hub remains an alternative commit control for the currently
+free snapped slot**. Note: "commit" here is UI-selection language — the callback/selection
+EVENT fires exactly once; it does not itself constitute backend financial settlement.
+Therefore:
 **tapping a free slot is the committed selection; the hub is a visual/alternative commit
 control for the drag flow** (the drag itself never fires — only landing on the hub commits).
 
@@ -20165,14 +20180,19 @@ control for the drag flow** (the drag itself never fires — only landing on the
    `_selectSlot`. No public-signature change.)
 3. Committing a DIFFERENT free slot afterwards is a new selection and fires once — the
    guard is per-slot, not a one-shot latch.
-4. Taken slots never fire — on tap or via the hub (hub only ever names free slots).
+4. Taken slots never fire on tap. Via the hub the guarantee is structural: `susuNearestFreeSlot`
+   only ever returns a free slot, and a fully-taken wheel disables the hub entirely (it
+   reads 'Spin', `onTap: null`) — so the hub cannot commit a taken slot in any stable frame.
 5. Drag-snap alone never fires the callback (shipped behaviour, already correct).
 
 **Permanent tests (added to `test/susu_wheel_test.dart`):**
 - tap slot 3, then tap hub ("Pick slot 3") → `picks == [3]` (one callback, not two);
 - tap slot 3, then re-tap slot 3 → `picks == [3]`;
 - tap slot 3, then tap slot 2 → `picks == [3, 2]` (later different-slot commits still fire);
-- taken slot tapped via hub path → still zero-callback (extends the shipped taken-inert test).
+- all positions taken → the hub is disabled, reads 'Spin', and tapping it produces ZERO
+  `onPositionSelected` callbacks (deterministic invariant: `susuNearestFreeSlot` returns
+  null on a fully-taken wheel, so the hub can never name a taken slot in any stable frame —
+  no stale-hub inter-frame scenario is prescribed).
 
 ## Intro
 
@@ -21754,10 +21774,11 @@ previous class's `}` as the final line.
 The test file already exists on main with **24 tests (13 pure + 11 widget)** — a superset
 of the 21-test reference below (the shipped pure groups add: single-slot-at-top, rotation
 wrap-through-rounds, rotation degenerate-total). The reference below is retained for
-intent; the shipped suite governs. Five additions required: the 12-o'clock indicator
-position test (Visual acceptance item 0) and the four exactly-once selection tests
-(selection-commit contract subsection). Do not delete or weaken any shipped
-test. Count check after the additions: `grep -c "test(\|testWidgets(" test/susu_wheel_test.dart` → 29.
+intent; the shipped suite governs. TASK-017 adds 5 tests total: 1 indicator regression
+(Visual acceptance item 0) + 4 exactly-once selection regressions (selection-commit
+contract subsection). Exact final count: shipped 24 (13 pure + 11 widget) + 5 = **29 tests
+= 13 pure + 16 widget**. Do not delete or weaken any shipped test. Count check after the
+additions: `grep -c "test(\|testWidgets(" test/susu_wheel_test.dart` → 29.
 
 Reference content (21 tests as originally prescribed):
 
@@ -22241,8 +22262,15 @@ Rollback means ONLY:
 2. remove the TASK-017 indicator-position regression test;
 3. revert the TASK-017 exactly-once guard and its four tests, IF they were applied;
 4. the file, its test file and both screens return byte-for-byte to the shipped
-   main@4e47fdf state (`git checkout 4e47fdf -- lib/widgets/susu/susu_wheel.dart
-   test/susu_wheel_test.dart` restores both in one step).
+   main state (`git checkout 4e47fdf5464b3223030989ee6c8dc2633f32059a --
+   lib/widgets/susu/susu_wheel.dart test/susu_wheel_test.dart` restores both in one step).
+
+A full-file checkout rollback is permitted ONLY when the task branch contains no
+unrelated changes in those two wheel files — otherwise a checkout would clobber work
+that is not TASK-017's to revert, and the executor must STOP and report instead of
+checking out. Before running the checkout, diff the two files against the shipped main
+state and confirm every delta is a TASK-017 change (indicator key, indicator test,
+exactly-once guard, exactly-once tests).
 
 If a rollback attempt would touch `initiate_susu_sheet.dart`, `verification_chip.dart`,
 the router, or any file outside the two wheel paths above, it is out of scope — stop.
@@ -22259,7 +22287,7 @@ G3 build web --debug:           __________
 flutter test (full repository suite):  __________
 susu_wheel_test.dart (29 passing: shipped 24 + indicator + 4 exactly-once):  __________
 Probes (structural controller/mixin/no-executable-hashCode): __________
-Exactly-once selection (5 permanent tests, all pass): __________
+Exactly-once selection (4 new permanent tests, all pass — the 5th new test is the indicator regression):  __________
 Visual 0 (12-oclock indicator geometrically proven at top): __________
 Visual 1 (dashboard wheel):     __________
 Visual 2 (no-window honesty):   __________
