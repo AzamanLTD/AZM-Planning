@@ -13432,7 +13432,7 @@ void main() {
 flutter pub get                                   # G1
 flutter analyze                                   # G2 — 0 errors, and no NEW warnings in touched files
 flutter test test/restaurant_order_mode_test.dart # permanent mode/progress/routing tests pass
-flutter test                                      # all eight permanent files + the rest of the suite
+flutter test                                      # full suite
 flutter build apk --debug                         # G3 — exit 0 (A.5 supported target)
 ```
 
