@@ -187,7 +187,7 @@ A task is DONE only when **all** of these are true:
 | TASK-009c | `HolographicSurface` — pointer-driven hero substrate (+ test) | 1 | TASK-005, TASK-009a | `DONE — merged (952810d)` |
 | TASK-009d | Rebuild the balance cards on 009a–009c | 1 | TASK-009a/b/c | `DONE — merged (ee60455), post-audit follow-ups in PR #104 (93ed294), CI green` |
 | TASK-010 | Nav pill: scroll-reactive compression | 1 | TASK-007 | `DONE — merged (27ce10c), CI green` |
-| TASK-010b | Long-press vertical launcher | 1 | TASK-010, TASK-011 | `REVIEW REQUIRED — callback fix applied` |
+| TASK-010b | Long-press vertical launcher | 1 | TASK-010, TASK-011 | `DONE — merged 122d3b1 via PR #108; exact-main CI green (Flutter Quality run 36501807916 + Android Integration run 36500737881); close-out + deviations in sign-off` |
 | TASK-011 | `MarketplaceExperienceStage`: tempo, scope, dossier scaffold, vertical entry point | 2 | TASK-001, TASK-002, TASK-005, TASK-009a | `DONE — merged a4f9677 via PR #107 (guards; production via 29a0d30 lineage); exact-main CI green (Flutter Quality run 36496857828 + Android Integration run 36496082663); close-out + deviations in sign-off` |
 | TASK-012 | Retail: `liftIntoTray` commit + shelf depth + swatch variants + catching tray | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-009a, TASK-011 | `REVIEW REQUIRED — top-level picker correction` |
 | TASK-013 | Restaurant: merged dine-in/takeaway/delivery, ribbon bookmark, paperRip upgrade, drag tray rail, build sheet | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-009a, TASK-011 | `REVIEW REQUIRED — F.2` |
@@ -8668,15 +8668,54 @@ launcher methods are unreferenced — a clean revert.
 ### Sign-off
 
 ```
-TASK-010b  Status: DONE / BLOCKED
-rg "onTabLongPress" (expect 4):      __________
-rg "initialCategory" (expect 4+):    __________
-flutter analyze errors (baseline):   __________
-G3 build:                            __________
-Visual 2 (launcher opens):           __________
-Visual 3 (Retail pre-selected):      __________
-Visual 4 (cross-tab landing):        __________
-Notes / deviations:                  __________
+TASK-010b  Status: DONE (merged 122d3b134b9552ded41267a93c312d1eff83257d via
+                      PR #108; exact-main CI green: Flutter Quality
+                      workflow_dispatch run 36501807916 + Android
+                      Integration push run 36500737881)
+rg "onTabLongPress" (expect 4):      6 in lib — 4 (nav seam, shipped on main
+                      since the production nav revamp 29a0d30) + 1 shell call
+                      site (main.dart:732) + 1 doc comment (main.dart:225)
+rg "initialCategory" (expect 4+):    6 in lib (marketplace_home_screen 4 +
+                      launcher wiring 1 + doc comment 1), plus test mirrors
+flutter analyze errors (baseline):   0 errors / 0 warnings, 379 pre-existing
+                      infos — identical to the pre-change baseline
+G3 build:                            Android Integration success on exact main
+                      122d3b1 (run 36500737881, push trigger)
+Visual 2 (launcher opens):           pinned by permanent guard
+                      (vertical_launcher_test.dart): a Market long-press
+                      opens the launcher sheet route; non-Market indices open
+                      nothing; barrier dismissal navigates nothing; repeat
+                      cycles never duplicate the route
+Visual 3 (Retail pre-selected):       pinned by permanent guard: each of the
+                      five wires lands on MarketplaceHomeScreen(initialCategory:
+                      wire) — verified against the pushed route's widget AND
+                      the seeding search category (incl. RETAIL)
+Visual 4 (cross-tab landing):        pinned by permanent guard: a pick selects
+                      the Market tab underneath and pushes the already-
+                      filtered marketplace as a new route (back returns to
+                      the unfiltered tab)
+Notes / deviations:                  4 documented deviations (PR #108 + in-code):
+                      (1) Panel weight, not Whisper — five rows + header
+                      exceed the 45% whisper ceiling on phone heights; the
+                      grammar's own rule routes that content to the Panel
+                      weight (Whisper intent survives as the same compact
+                      single-column list); (2) launcher lives as a public
+                      openVerticalLauncherForTab + VerticalLauncherSheet seam
+                      rather than _MainWrapperState methods (MainWrapper is
+                      socket-bound and unpumpable; the seam makes the
+                      lifecycle guardable end to end; shell keeps a one-line
+                      delegation); (3) fifth target labelled 'Hospitality'
+                      (HOSPITALITY records wire) — the app carries two hotel
+                      wire variants (F-029); (4) icons restricted to in-repo
+                      verified Hugeicons names (F-035). Steps 1–3 (nav seam)
+                      required no change: the production nav revamp
+                      (29a0d30 lineage) already ships the callback seam
+                      defect-free — verified against the shipped code. Guards:
+                      nav_long_press_test.dart (13) + vertical_launcher_test
+                      .dart (10); TASK-010 (15) and TASK-011 (6) regression
+                      suites green on the exact head. TASK-018 consumes
+                      openVerticalLauncherForTab + onTabLongPress as its
+                      durable interface — unchanged by these deviations.
 ```
 
 ---
