@@ -13197,6 +13197,7 @@ import 'package:azaman/screens/marketplace/business_book_tab.dart';
 import 'package:azaman/storefront/providers/storefront_provider.dart';
 import 'package:azaman/widgets/book/flip_book.dart';
 import 'package:azaman/widgets/marketplace/restaurant_order_mode_switch.dart';
+import 'package:azaman/widgets/marketplace/restaurant_tray_rail.dart';
 
 AzamanColors get _colors => ThemeProvider.getColors(AzamanTheme.dark);
 
