@@ -107,7 +107,7 @@ Do not retain separate 56dp and 60dp geometry constants for the same date-cell s
 
 ## 4. Fresh-main anchor verification (2026-09-29)
 
-Re-verified against AzamanLTD/AZM-frontend at b947a2b (TASK-013 merged):
+Re-verified against AzamanLTD/AZM-frontend main after TASK-014 merge (`56b532ab3d948e427837f37c996fe824e745805e`):
 
 - `hotel_booking_screen.dart` is now **594** lines (the preamble says 595 — cosmetic drift,
   no anchor depends on the count). `_RoomExplorer` (L301), `_RoomTile` (L405), and
