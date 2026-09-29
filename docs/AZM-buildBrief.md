@@ -76,7 +76,7 @@ STEP 8  Only then start the next task.
 Run this after **every** task. All three must pass. The supplied archive is a mobile-only
 Flutter project: `android/` and `ios/` exist, `web/` does not, and `analysis_options.yaml`
 explicitly says web/desktop targets are removed. Therefore the canonical G3 below is the
-Android debug build; **this overrides every stale `flutter build web --debug` command later in
+Android debug build; **this overrides every stale `flutter build apk --debug` command later in
 this brief. Do not create web scaffolding just to satisfy an old probe.**
 
 ```bash
@@ -7165,6 +7165,7 @@ Create the file with exactly this content:
 import 'package:flutter/widgets.dart';
 
 import 'package:azaman/marketplace/experiences/marketplace_experience_blueprint.dart';
+import 'package:azaman/marketplace/experiences/marketplace_tempo.dart';
 import 'package:azaman/theme/motion_tokens.dart';
 
 abstract class MarketplaceTempo {
@@ -7529,6 +7530,7 @@ import 'package:azaman/widgets/marketplace/restaurant_menu_journey_adapter.dart'
 import 'package:azaman/widgets/marketplace/restaurant_commit_surface.dart';
 import 'package:azaman/marketplace/experience/marketplace_experience_capabilities.dart';
 import 'package:azaman/marketplace/experiences/marketplace_experience_blueprint.dart';
+import 'package:azaman/marketplace/experiences/marketplace_tempo.dart';
 import 'package:azaman/marketplace/experiences/restaurant/restaurant_experience.dart';
 import 'package:azaman/marketplace/experiences/retail/retail_experience.dart';
 import 'package:azaman/widgets/marketplace/hotel_floor_plan_preview.dart';
@@ -11416,12 +11418,14 @@ the router, the tab provider, or the cart provider**.
 
 ## Pre-flight probes (run all, expect all)
 
+> Fresh-main correction (2026-09-29): TASK-013 was re-audited against current `AZM-frontend/main`. The current `restaurant_native_menu_journey.dart` is 475 lines; `BusinessBookTab` has one textual `FloatingCartBar` occurrence; `_variantChoices(RestaurantDish dish)` exists once before Step 5; and `AzamanHaptics.addToCart` is declared as a method, so the probe targets the declaration. Steps 4a and 6a include the existing `marketplace_tempo.dart` import. G3 uses the supported A.5 Android target.
+
 ```bash
 rg -n "Theme.of" lib/widgets/marketplace/restaurant_commit_surface.dart        # expect exactly 1 (L178)
 rg -n "class BusinessBookTab extends" lib/screens/marketplace/business_book_tab.dart  # expect StatelessWidget
-rg -n "FloatingCartBar" lib/screens/marketplace/business_book_tab.dart         # expect 2 (import + mount)
+rg -n "FloatingCartBar" lib/screens/marketplace/business_book_tab.dart         # expect 1 (mount; lowercase import path does not match the class name)
 rg -n "if (!useRestaurantTray || onDineInAddToTab != null) return stage;" lib/screens/marketplace/business_book_tab.dart  # expect 1
-rg -n "AzamanHaptics.addToCart" lib/utils/azaman_haptics.dart                  # expect >= 1 — TASK-006 ran
+rg -n "static Future<void> addToCart\(\)" lib/utils/azaman_haptics.dart    # expect 1 — TASK-006 ran; probe the declaration
 rg -n "HugeIconsStroke.minusSign" lib/screens/marketplace/cart_screen.dart     # expect >= 1 (name verified in-repo)
 ```
 
@@ -12535,8 +12539,10 @@ class _RestaurantBuildSheetState extends State<_RestaurantBuildSheet> {
     for (final entry in widget.initialOptions.entries) entry.key: Set<String>.from(entry.value),
   };
 
-  double _unitPrice() {
-    var total = widget.dish.price ?? 0;
+  double? _unitPrice() {
+    final basePrice = widget.dish.price;
+    if (basePrice == null) return null;
+    var total = basePrice;
     for (final variant in widget.dish.variants) {
       if (variant.name == _size) total += variant.priceDelta;
     }
@@ -12552,7 +12558,9 @@ class _RestaurantBuildSheetState extends State<_RestaurantBuildSheet> {
   @override
   Widget build(BuildContext context) {
     final dish = widget.dish;
-    final canClose = !dish.optionGroups.any(
+    final canClose =
+        widget.dish.price != null &&
+        !dish.optionGroups.any(
           (group) => group.required && (_options[group.id]?.isEmpty ?? true),
         ) &&
         (dish.variants.isEmpty || (_size != null && _size!.isNotEmpty));
@@ -12621,7 +12629,13 @@ class _RestaurantBuildSheetState extends State<_RestaurantBuildSheet> {
                               Navigator.pop(context);
                             }
                           : null,
-                      child: Text(canClose ? 'Done · ${_unitPrice().toStringAsFixed(2)} USDC' : 'Choose required options'),
+                      child: Text(
+                        widget.dish.price == null
+                            ? 'Price unavailable'
+                            : canClose
+                                ? 'Done · \${_unitPrice()!.toStringAsFixed(2)} USDC'
+                                : 'Choose required options',
+                      ),
                     ),
                   ),
                 ),
@@ -12735,7 +12749,7 @@ class _RibbonNotchClipper extends CustomClipper<Path> {
 Verify:
 
 ```bash
-rg -n "Widget _variantChoices(RestaurantDish dish)" lib/widgets/marketplace/restaurant_native_menu_journey.dart  # expect 0 (old method gone)
+rg -n "Widget _variantChoices\(RestaurantDish dish\)" lib/widgets/marketplace/restaurant_native_menu_journey.dart  # expect 1 before Step 5; post-state expects 0
 rg -n "_buildSheetLauncher|_RibbonBookmark|_RestaurantBuildSheet" lib/widgets/marketplace/restaurant_native_menu_journey.dart  # expect 2, 2, 3 (call site + definition; usage + class; usage + widget + state class)
 ```
 
