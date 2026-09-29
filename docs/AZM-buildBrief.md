@@ -11945,6 +11945,7 @@ Find:
 
 ```dart
 import 'package:azaman/marketplace/experiences/marketplace_experience_blueprint.dart';
+import 'package:azaman/marketplace/experiences/marketplace_tempo.dart';
 import 'package:azaman/theme/motion_tokens.dart';
 ```
 
@@ -11952,6 +11953,7 @@ Replace with:
 
 ```dart
 import 'package:azaman/marketplace/experiences/marketplace_experience_blueprint.dart';
+import 'package:azaman/marketplace/experiences/marketplace_tempo.dart';
 import 'package:azaman/theme/motion_tokens.dart';
 import 'package:azaman/utils/azaman_haptics.dart';
 ```
@@ -12350,6 +12352,7 @@ Replace with:
       barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (_) => _RestaurantBuildSheet(
         dish: dish,
+        basePrice: _product?.priceUsdc,
         colors: widget.colors,
         initialSize: _size,
         initialOptions: _options,
@@ -12516,6 +12519,7 @@ class _CompletionRingPainter extends CustomPainter {
 
 class _RestaurantBuildSheet extends StatefulWidget {
   final RestaurantDish dish;
+  final double? basePrice;
   final AzamanColors colors;
   final String? initialSize;
   final Map<String, Set<String>> initialOptions;
@@ -12523,6 +12527,7 @@ class _RestaurantBuildSheet extends StatefulWidget {
 
   const _RestaurantBuildSheet({
     required this.dish,
+    required this.basePrice,
     required this.colors,
     required this.initialSize,
     required this.initialOptions,
@@ -12540,7 +12545,7 @@ class _RestaurantBuildSheetState extends State<_RestaurantBuildSheet> {
   };
 
   double? _unitPrice() {
-    final basePrice = widget.dish.price;
+    final basePrice = widget.dish.price ?? widget.basePrice;
     if (basePrice == null) return null;
     var total = basePrice;
     for (final variant in widget.dish.variants) {
@@ -12558,8 +12563,9 @@ class _RestaurantBuildSheetState extends State<_RestaurantBuildSheet> {
   @override
   Widget build(BuildContext context) {
     final dish = widget.dish;
+    final unitPrice = _unitPrice();
     final canClose =
-        widget.dish.price != null &&
+        unitPrice != null &&
         !dish.optionGroups.any(
           (group) => group.required && (_options[group.id]?.isEmpty ?? true),
         ) &&
@@ -12630,10 +12636,10 @@ class _RestaurantBuildSheetState extends State<_RestaurantBuildSheet> {
                             }
                           : null,
                       child: Text(
-                        widget.dish.price == null
+                        unitPrice == null
                             ? 'Price unavailable'
                             : canClose
-                                ? 'Done · \${_unitPrice()!.toStringAsFixed(2)} USDC'
+                                ? 'Done · ${unitPrice.toStringAsFixed(2)} USDC'
                                 : 'Choose required options',
                       ),
                     ),
@@ -12761,6 +12767,7 @@ Find:
 
 ```dart
 import 'package:azaman/marketplace/experiences/marketplace_experience_blueprint.dart';
+import 'package:azaman/marketplace/experiences/marketplace_tempo.dart';
 import 'package:azaman/marketplace/experiences/restaurant/restaurant_experience.dart';
 ```
 
@@ -12768,6 +12775,7 @@ Replace with:
 
 ```dart
 import 'package:azaman/marketplace/experiences/marketplace_experience_blueprint.dart';
+import 'package:azaman/marketplace/experiences/marketplace_tempo.dart';
 import 'package:azaman/marketplace/experiences/restaurant/restaurant_experience.dart';
 import 'package:azaman/marketplace/experiences/restaurant/restaurant_order_mode.dart';
 ```
@@ -13120,7 +13128,6 @@ class _BusinessBookTabState extends ConsumerState<BusinessBookTab> {
     );
 
     if (added) {
-      AzamanHaptics.confirm();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${product.name} added to your order tray.'), duration: const Duration(milliseconds: 1400)));
       return;
     }
@@ -13141,7 +13148,6 @@ class _BusinessBookTabState extends ConsumerState<BusinessBookTab> {
               Navigator.pop(dialogContext);
               notifier.clearCart();
               notifier.addItem(businessProfileId: widget.business.id, businessName: widget.business.businessName, productId: product.id, name: product.name, unitPrice: unitPrice, imageUrl: product.primaryImage, category: product.category, experiencePreset: experiencePreset, quantity: quantity, variants: selections, notes: notes);
-              AzamanHaptics.confirm();
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${product.name} added to your new order tray.'), duration: const Duration(milliseconds: 1400)));
             },
             child: const Text('Replace tray'),
@@ -13179,9 +13185,73 @@ Create with exactly this content:
 
 ```dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:azaman/marketplace/experiences/restaurant/restaurant_order_mode.dart';
+import 'package:azaman/models/business_models.dart';
+import 'package:azaman/providers/cart_provider.dart';
+import 'package:azaman/providers/theme_provider.dart';
+import 'package:azaman/screens/marketplace/business_book_tab.dart';
+import 'package:azaman/storefront/providers/storefront_provider.dart';
+import 'package:azaman/widgets/book/flip_book.dart';
+import 'package:azaman/widgets/marketplace/restaurant_order_mode_switch.dart';
+
+AzamanColors get _colors => ThemeProvider.getColors(AzamanTheme.dark);
+
+BusinessProduct _product() => BusinessProduct(
+  id: 'dish-1',
+  businessProfileId: 'bp-1',
+  name: 'Jollof Rice',
+  slug: 'jollof-rice',
+  priceUsdc: 12,
+  totalRevenue: 0,
+  imageUrls: const [],
+  isActive: true,
+  totalOrders: 0,
+  tags: const [],
+);
+
+BusinessProfile _business() => BusinessProfile(
+  id: 'bp-1',
+  bizId: 'BIZ-1',
+  businessName: 'Test Restaurant',
+  category: 'FOOD_BEVERAGE',
+  isVerified: true,
+  isSuspended: false,
+  kybStatus: 'VERIFIED',
+  totalEscrows: 0,
+  completedEscrows: 0,
+  userId: 1,
+  totalVolume: 0,
+  averageRating: 4.8,
+  username: 'test-restaurant',
+  products: const [],
+);
+
+CatalogSection _section() => CatalogSection(
+  id: 'mains',
+  businessProfileId: 'bp-1',
+  name: 'Mains',
+  description: null,
+  displayOrder: 0,
+  isActive: true,
+  products: [_product()],
+);
+
+Map<String, dynamic> _experience() => {
+  'preset': 'DINING_JOURNEY',
+  'commit': {'style': 'PAPER_RIP', 'persistentTray': true},
+};
+
+Future<void> _openDish(WidgetTester tester) async {
+  final book = tester.state<FlipBookState>(find.byType(FlipBook));
+  book.turnForward();
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Jollof Rice').first);
+  await tester.pumpAndSettle();
+}
 
 void main() {
   group('RestaurantOrderMode', () {
@@ -13195,58 +13265,158 @@ void main() {
     });
 
     test('icons are distinct per mode', () {
-      expect(RestaurantOrderMode.values.map((mode) => mode.icon).toSet().length, 3);
+      expect(
+        RestaurantOrderMode.values.map((mode) => mode.icon).toSet().length,
+        3,
+      );
     });
   });
 
   group('restaurantBuildProgress', () {
     test('no options means complete', () {
       expect(
-        restaurantBuildProgress(hasVariants: false, sizeChosen: false, requiredGroupsSatisfied: const []),
+        restaurantBuildProgress(
+          hasVariants: false,
+          sizeChosen: false,
+          requiredGroupsSatisfied: const [],
+        ),
         1.0,
       );
     });
 
     test('variants only', () {
       expect(
-        restaurantBuildProgress(hasVariants: true, sizeChosen: false, requiredGroupsSatisfied: const []),
+        restaurantBuildProgress(
+          hasVariants: true,
+          sizeChosen: false,
+          requiredGroupsSatisfied: const [],
+        ),
         0.0,
       );
       expect(
-        restaurantBuildProgress(hasVariants: true, sizeChosen: true, requiredGroupsSatisfied: const []),
+        restaurantBuildProgress(
+          hasVariants: true,
+          sizeChosen: true,
+          requiredGroupsSatisfied: const [],
+        ),
         1.0,
       );
     });
 
     test('required groups only', () {
       expect(
-        restaurantBuildProgress(hasVariants: false, sizeChosen: false, requiredGroupsSatisfied: const [false, false]),
+        restaurantBuildProgress(
+          hasVariants: false,
+          sizeChosen: false,
+          requiredGroupsSatisfied: const [false, false],
+        ),
         0.0,
       );
       expect(
-        restaurantBuildProgress(hasVariants: false, sizeChosen: false, requiredGroupsSatisfied: const [true, false]),
+        restaurantBuildProgress(
+          hasVariants: false,
+          sizeChosen: false,
+          requiredGroupsSatisfied: const [true, false],
+        ),
         0.5,
       );
       expect(
-        restaurantBuildProgress(hasVariants: false, sizeChosen: false, requiredGroupsSatisfied: const [true, true]),
+        restaurantBuildProgress(
+          hasVariants: false,
+          sizeChosen: false,
+          requiredGroupsSatisfied: const [true, true],
+        ),
         1.0,
       );
     });
 
     test('mixed variants and groups', () {
       expect(
-        restaurantBuildProgress(hasVariants: true, sizeChosen: true, requiredGroupsSatisfied: const [false]),
+        restaurantBuildProgress(
+          hasVariants: true,
+          sizeChosen: true,
+          requiredGroupsSatisfied: const [false],
+        ),
         0.5,
       );
       expect(
-        restaurantBuildProgress(hasVariants: true, sizeChosen: false, requiredGroupsSatisfied: const [true]),
+        restaurantBuildProgress(
+          hasVariants: true,
+          sizeChosen: false,
+          requiredGroupsSatisfied: const [true],
+        ),
         0.5,
       );
       expect(
-        restaurantBuildProgress(hasVariants: true, sizeChosen: true, requiredGroupsSatisfied: const [true]),
+        restaurantBuildProgress(
+          hasVariants: true,
+          sizeChosen: true,
+          requiredGroupsSatisfied: const [true],
+        ),
         1.0,
       );
     });
+  });
+
+  testWidgets(
+    'order mode switch emits delivery and disables unavailable dine-in',
+    (tester) async {
+      RestaurantOrderMode? changed;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: RestaurantOrderModeSwitch(
+              selected: RestaurantOrderMode.takeaway,
+              colors: _colors,
+              dineInEnabled: false,
+              onChanged: (mode) => changed = mode,
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Dine-in'));
+      await tester.pump();
+      expect(changed, isNull);
+      await tester.tap(find.text('Delivery'));
+      await tester.pump();
+      expect(changed, RestaurantOrderMode.delivery);
+    },
+  );
+
+  testWidgets('delivery mode reaches the shared cart with the delivery note',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final cart = CartNotifier();
+    final business = _business();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cartProvider.overrideWith((ref) => cart),
+          storefrontExperienceProvider(business.id).overrideWith(
+            (ref) async => _experience(),
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: BusinessBookTab(
+              business: business,
+              colors: _colors,
+              onOrderProduct: (_) => fail('legacy ticket path should not run'),
+              menuSections: [_section()],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Delivery'));
+    await tester.pump();
+    await _openDish(tester);
+    await tester.tap(find.textContaining('Add to tray').first);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(cart.state.itemCount, 1);
+    expect(cart.state.businessProfileId, business.id);
+    expect(cart.state.items.single.notes, 'Delivery');
   });
 }
 ```
@@ -13258,8 +13428,8 @@ void main() {
 ```bash
 flutter pub get                                   # G1
 flutter analyze                                   # G2 — 0 errors, and no NEW warnings in touched files
-flutter test test/restaurant_order_mode_test.dart # new permanent test passes
-flutter test                                      # all seven permanent files + the rest of the suite
+flutter test test/restaurant_order_mode_test.dart # permanent mode/progress/routing tests pass
+flutter test                                      # all eight permanent files + the rest of the suite
 flutter build web --debug                         # G3 — exit 0
 ```
 
