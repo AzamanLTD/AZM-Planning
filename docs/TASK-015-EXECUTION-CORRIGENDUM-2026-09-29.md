@@ -12,10 +12,10 @@ probes whose expectations assume snake_case import lines match CamelCase symbol 
 TASK-015 may start only from the current AzamanLTD/AZM-frontend/main after confirming:
 
 - TASK-013 is merged to main (b947a2ba9609cf433c21e2e942d411927ba096e4).
-- TASK-014 is settled (PR #111 merged or explicitly closed) or the owner directs overlap;
-  TASK-015 touches `hotel_booking_screen.dart` only, but both tasks share the dossier sheet,
-  tempo enums, and haptic vocabulary, so the reviews should not interleave on one head.
-- No other TASK-015 implementation PR/branch is being developed.
+- TASK-014 is now settled: PR #111 is merged to frontend main at `56b532ab3d948e427837f37c996fe824e745805e`.
+- TASK-015 has no implementation PR/branch in development;
+  TASK-015 modifies `hotel_booking_screen.dart` plus the new TASK-015 widgets/tests; the shared
+  dossier sheet, tempo enums, and haptic vocabulary are source dependencies, not parallel edits.
 - All eight of the task's pre-flight probes pass (each was re-verified against current main on
   2026-09-29 — see §4).
 
