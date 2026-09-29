@@ -194,7 +194,7 @@ A task is DONE only when **all** of these are true:
 | TASK-014 | Transit: route ribbon + lit cabin + deck slice + hold ring + boarding-pass keepsake | 2 | TASK-001, TASK-002, TASK-006, TASK-011 | `DONE — merged via PR #111; merge SHA 56b532ab3d948e427837f37c996fe824e745805e; exact-head CI green on dd4056c with 730 tests; independent exact-head review completed` |
 | TASK-015 | Hotel: building section + floor-plan dossier + date scrubber | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-011 | `FLIGHT GAP CLOSED — PR #112 final head bb9382a (branch task-015-hotel from main@56b532a); audits of 3e04776, 77b9973 and a341f08 all closed: per-night onNightAdded contract with three explicit regression legs; key-card materialisation on the named kPopSpring primitive; the missing key-card FLIGHT now implemented (door-stage-to-stays-slot vector measured once at card start via status listener, eased to zero on kPopSpring, reduced-motion and single-commit-haptic preserved, no timers) with a permanent widget regression pinning the mid-air position above the slot and the settled position inside it; exact-head Android debug APK verified via Android Integration workflow_dispatch on every revised head (36599105840/77b9973, 36601167310/a341f08, 36604766853/bb9382a with head_sha checked directly); Flutter Quality CI green on bb9382a (746 tests); PR open and unmerged awaiting re-review` |
 | TASK-016 | Escrow unseal — vault rail + goo-rim dissolve + live transition | 3 | TASK-001, TASK-002, TASK-005, TASK-006 | `IMPLEMENTED — PR #113 head a7d7478 (branch task-016-escrow-rail from main@4e47fdf): EscrowVaultRail buyer→vault→vendor flow with 1100ms one-shot unseal (goo-rim dissolve → coin slide → destination bloom) + 1s active-countdown repeater on TickerProviderStateMixin; honest ring (needs both fundedAt and expiresAt, degenerate windows 0) and honest labels (Auto-release / Release pending / status label); F-046 codeUnits fold seed; moneyLanded exactly once; terminal-on-mount calm; reduced-motion instant path; both source-review corrections applied (structural F-049 verification instead of the comment-blind zero-match probe; 16-test count, 11 pure + 5 widget); one spec compile defect fixed (destX num→double) + 3 inert prefer_const fixes; focused 16/16; local full suite 698 pass with 36 sandbox-only shell segfaults in 3 unrelated files each verified standalone (25+2+5); Flutter Quality CI green on a7d7478 (762 tests, +16 exactly); exact-head Android debug APK build success (run 36609874532, head_sha=a7d7478 directly); PR open, unmerged, awaiting independent exact-head review` |
-| TASK-017 | Susu wheel — read-only dashboard wheel + draggable position picker with spring snap | 3 | TASK-005, TASK-006 | `SPEC READY — independent second executability review passed 2026-09-29 (planning e1f8779); corrected audit/hardening scope against main@4e47fdf where the wheel, integrations and 24-test suite already ship from 29a0d30` |
+| TASK-017 | Susu wheel — read-only dashboard wheel + draggable position picker with spring snap | 3 | TASK-005, TASK-006 | `IMPLEMENTED — PR #114 head 23edba1 (branch task-017-susu-wheel-hardening from main@4e47fdf): indicator key + measured geometric regression, exactly-once onPositionSelected contract (per-slot guard, didUpdateWidget resync, _confirmHub routing preserved) + 4 permanent regressions; final suite 29 = 13 pure + 16 widget (shipped 24 untouched); focused 29/29; full suite +723 with 3 sandbox-only parallel failures in 8 unrelated files each verified standalone green; analyze parity 369 == main baseline, 0 errors, touched files clean; exact-head CI green (Flutter Quality run 36619104955 + Android Integration run 36619201612, both on 23edba1); PR open, unmerged, awaiting independent exact-head review` |
 | TASK-018 | Radial launcher (nav + chat + product + AI command) | 3 | TASK-006, TASK-010b | `REVIEW REQUIRED — F.2` |
 | TASK-019 | Today strip + ambient mode | 3 | TASK-008 | `SCOPE LOCKED` |
 | TASK-020 | Sound design (`AzSound`, 5 samples) | 3 | — | `SCOPE LOCKED` |
@@ -20103,7 +20103,7 @@ Notes / deviations:             __________
 
 ## TASK-017 — Susu: the wheel of members
 
-**Tier:** 3 — Signature moments · **Depends on:** TASK-005, TASK-006 · **Status:** `SPEC READY — the independent second executability review passed 2026-09-29; the corrected audit/hardening scope is executable against main@4e47fdf, where the implementation already shipped in commit 29a0d30 (the pre-TASK-011 premium revamp). The only permitted frontend changes: the 12-o'clock indicator key + geometric proof test, the exactly-once onPositionSelected contract with its 4 permanent tests, final suite 29 = 13 pure + 16 widget (shipped 24 untouched). No frontend changes have been made yet.`
+**Tier:** 3 — Signature moments · **Depends on:** TASK-005, TASK-006 · **Status:** `IMPLEMENTED 2026-09-29 — PR #114 (branch task-017-susu-wheel-hardening from main@4e47fdf, head 23edba1), left OPEN for independent exact-head review. The two permitted changes landed: the 12-o'clock indicator key + measured geometric regression, and the exactly-once onPositionSelected contract (per-slot last-committed guard in _selectSlot, didUpdateWidget resync from external selectedPosition, _confirmHub routing preserved, public signature unchanged) with its 4 permanent regressions. Final suite 29 = 13 pure + 16 widget; shipped 24 untouched. Both exact-head CI gates green (Flutter Quality 36619104955, Android Integration 36619201612).`
 
 ### TASK-017 executability corrections — 2026-09-29 re-audit vs main@4e47fdf (post-TASK-016)
 
@@ -22279,25 +22279,25 @@ the router, or any file outside the two wheel paths above, it is out of scope �
 
 ```
 TASK-017 sign-off
-Executed by: __________
-Date: __________
-G1 pub get:                     __________
-G2 analyze (0 errors, no NEW warnings in touched files): __________
-G3 build web --debug:           __________
-flutter test (full repository suite):  __________
-susu_wheel_test.dart (29 passing: shipped 24 + indicator + 4 exactly-once):  __________
-Probes (structural controller/mixin/no-executable-hashCode): __________
-Exactly-once selection (4 new permanent tests, all pass — the 5th new test is the indicator regression):  __________
-Visual 0 (12-oclock indicator geometrically proven at top): __________
-Visual 1 (dashboard wheel):     __________
-Visual 2 (no-window honesty):   __________
-Visual 3 (tap → spring → hub):  __________
-Visual 4 (drag + snap haptic):  __________
-Visual 5 (taken slots inert):   __________
-Visual 6 (reduced motion):      __________
-Visual 7 (naming):              __________
-Visual 8 (no regressions):      __________
-Notes / deviations:             __________
+Executed by: Solas (as pyraxxz <pyraxxz@users.noreply.github.com>)
+Date: 2026-09-29
+G1 pub get:                     clean (deps resolved; focused + full suites ran)
+G2 analyze (0 errors, no NEW warnings in touched files): 0 error-level issues; project-wide 369 == pristine main@4e47fdf baseline 369 (exact parity); both touched files analyze clean
+G3 build web --debug:           N/A — project has no web platform (Android-only); build gate = Android debug APK via Android Integration CI (run 36619201612, success on head 23edba1)
+flutter test (full repository suite): +723 green; 3 sandbox-only parallel-runner failures across 8 unrelated files, EACH re-verified standalone green (documented sandbox shell issue, TASK-016 precedent; wheel suite unaffected)
+susu_wheel_test.dart (29 passing: shipped 24 + indicator + 4 exactly-once): 29/29 = 13 pure + 16 widget
+Probes (structural controller/mixin/no-executable-hashCode): all pass — 2 `late final AnimationController` (_clock, _rot); 2 `with SingleTickerProviderStateMixin`; zero executable String.hashCode/Timer(/Future.delayed/print(; zero legacy picker/timeline leftovers; 1 import + 1 call site per integration; zero removed-import hits
+Exactly-once selection (4 new permanent tests, all pass — the 5th new test is the indicator regression): 4/4 green (tap-then-hub → [3]; re-tap → [3]; different slot → [3, 2]; fully-taken → hub disabled, 'Spin', zero callbacks)
+Visual 0 (12-oclock indicator geometrically proven at top): PROVEN — measured ±1.0px horizontal centre, top ≤ wheel.top+4.0, bottom < centre line (widget test, permanent)
+Visual 1 (dashboard wheel):     code-verified — shipped integration unchanged (29a0d30 prior art; no dashboard diff)
+Visual 2 (no-window honesty):   code-verified — shipped susuArcSweep degenerate-window tests unchanged (13 pure)
+Visual 3 (tap → spring → hub): code-verified — one-shot spring + hub alternative commit; exactly-once regressions pin the flow
+Visual 4 (drag + snap haptic):  code-verified — shipped drag test unchanged (springs to nearest free, hub commits)
+Visual 5 (taken slots inert):   code-verified — shipped inert test + new fully-taken hub invariant
+Visual 6 (reduced motion):      code-verified — shipped reduced-motion tests unchanged
+Visual 7 (naming):              code-verified — 'Payout wheel' section + 'Pick slot N'/'Spin' hub asserted in tests
+Visual 8 (no regressions):      full suite green modulo documented sandbox-only parallel failures; analyze parity; shipped 24 tests untouched
+Notes / deviations:             (1) indicator key sits on the Icon inside _twelveOClockIndicator, not the Align: the Align expands to fill the wheel so its rect IS the wheel's rect and ind.bottom < wheel.center.dy is unsatisfiable on it; acceptance item 0 says "the indicator must carry the key" — the measured element carries it. (2) web gate N/A (Android-only project; Android Integration debug APK is the build gate per TASK-015/016 precedent). (3) exact-head CI: Flutter Quality run 36619104955 + Android Integration run 36619201612, both completed success on 23edba1 (head_sha checked directly). PR #114 left OPEN, unmerged, awaiting independent exact-head review.
 ```
 
 ---
@@ -23464,7 +23464,7 @@ Notes / deviations:                    __________
 | ID | Scope (locked) |
 |---|---|
 | TASK-016 | `NEEDS CORRECTION — F.2` — `EscrowVaultRail` buyer→vault→vendor flow, honest countdown, unseal, reduced-motion path. Fix comment-sensitive zero-match probes. |
-| TASK-017 | `SPEC READY` (second executability review passed 2026-09-29) — `SusuWheel` dashboard and `SusuPositionWheel` picker already ship from 29a0d30; scope is audit/hardening only: indicator key + geometric proof test, exactly-once selection contract + 4 permanent tests, final suite 29 = 13 pure + 16 widget. Preserve reviewed geometry math. |
+| TASK-017 | `IMPLEMENTED` (PR #114, head 23edba1, open awaiting independent review) — indicator key + geometric proof test, exactly-once selection contract + 4 permanent tests, final suite 29 = 13 pure + 16 widget; exact-head CI green (Flutter Quality 36619104955 + Android Integration 36619201612). Preserve reviewed geometry math. |
 | TASK-018 | `REVIEW REQUIRED` — radial launcher and `ThinkingOrb` loading consumer. Verify the complete spec and its compatibility/API details before execution. |
 | TASK-019 | Today strip (live chips with countdowns) + ambient idle mode after 8s of no interaction. |
 | TASK-020 | `AzSound` — 5 samples (tick, success chime, coin, rip, whoosh), gated by a setting. |
