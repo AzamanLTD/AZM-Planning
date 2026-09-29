@@ -20103,7 +20103,30 @@ Notes / deviations:             __________
 
 ## TASK-017 — Susu: the wheel of members
 
-**Tier:** 3 — Signature moments · **Depends on:** TASK-005, TASK-006 · **Status:** `SPEC READY`
+**Tier:** 3 — Signature moments · **Depends on:** TASK-005, TASK-006 · **Status:** `SPEC CORRECTED — PENDING SECOND EXECUTABILITY REVIEW — implementation already shipped on main by commit 29a0d30 (the pre-TASK-011 premium revamp); corrected 2026-09-29 against main@4e47fdf: probes made structural (F-049 controller check, F-046 comment-aware), initState MediaQuery read replaced by didChangeDependencies/_syncTicker, test count corrected to 24 (13 pure + 11 widget), 12-o'clock indicator given a key + geometric proof test, Steps 1–4 re-scoped from create/retrofit to audit-the-shipped-file. No frontend changes in this pass.`
+
+### TASK-017 executability corrections — 2026-09-29 re-audit vs main@4e47fdf (post-TASK-016)
+
+The implementation already shipped on main in commit 29a0d30 (the pre-TASK-011 premium
+revamp), so every anchor, probe and count below was re-verified against the POST-revamp
+tree. Line numbers cite the pre-correction brief. No frontend changes were made.
+
+| # | Defect (old line) | Severity | Repository evidence | Correction applied |
+|---|---|---|---|---|
+| 1 | `rg -c "AnimationController"` expected 2 (22013) — counts LINES, not controllers | High | shipped wheel: 5 matching lines (1 comment + 2 declarations + 2 inits) for exactly 2 controllers | Structural probe: `grep -n "late final AnimationController"` → exactly 2 (`_clock` ~166, `_rot` ~625) |
+| 2 | `String.hashCode…` zero-match probe (22011) self-contaminated — prescribed F-046 comments name it | High | shipped wheel lines 29 and 108 are comments containing `String.hashCode`; zero executable uses | Comment-aware probe: strip `//`/`///` lines, then expect zero |
+| 3 | `SingleTickerProviderStateMixin` probe demanded "exactly 2 hits" (22015) — comment line 30 also matches | High | shipped: 3 hits (comment 30 + States 165, 623) | Bind pattern to `with SingleTickerProviderStateMixin` → exactly 2 structural hits |
+| 4 | `SusuWheel\|SusuPositionWheel` call-site probe expected "1 import + 1 call site" (22024) — imports are the lowercase filename, unreachable as written | Medium | shipped dashboard import at 41 (`susu_wheel.dart`), call at 121; picker import 16, call 58 | Pattern now includes `susu_wheel.dart` |
+| 5 | Pre-flight probes 2–4 (20158–20170) target the PRE-revamp tree (timeline class, dot grid, absent wheel) — all fail on main | High | `_SusuPayoutTimeline`/`_fmtDateInline` zero hits; `_pulseController`/`_PositionDot`/`_mathCos` zero hits; `lib/widgets/susu/susu_wheel.dart` present (952 lines) | Re-anchored to the post-state (lines ~114/119/121 dashboard, ~58 picker) |
+| 6 | Prescribed Block 1 read `liquidReducedMotion(context)` inside `initState` (20385) — inherited-widget read from initState throws FlutterError at mount | Critical | shipped file fixed it via `didChangeDependencies` + `_syncTicker()` (comment cites the exact rule) | Reference content corrected to the shipped pattern |
+| 7 | Test count said 21 (10 pure + 11 widget) (22005, 22089); shipped suite is 24 (13 pure + 11 widget) | Medium | `grep -c "test(\|testWidgets(" test/susu_wheel_test.dart` → 24; 24/24 pass standalone and in CI | Counts corrected; after the indicator test, 25 (13+12) |
+| 8 | 12-o'clock indicator acceptance relied on the `Align` assumption alone; no test proves top placement | Medium | shipped `_twelveOClockIndicator` (line 137) has no key; no indicator test exists | Key `ValueKey('susu-12-oclock-indicator')` + geometric rect assertions (Visual acceptance item 0) |
+| 9 | pumpAndSettle hazard audit (per review finding) — verified, not a defect | Info | shipped suite: bounded pumps (100/50ms) wherever the 1s repeater runs; `pumpAndSettle` only in terminal (ticker never started), reduced-motion (never starts) and one-shot picker-spring contexts | Wording tightened in Do-NOT #9; discipline confirmed correct as shipped |
+
+Verified non-defects: `kHouseSpring` (liquid_engine 25) and `liquidReducedMotion` (212)
+present; `AzamanHaptics.selection/confirm` present (80/54); picker public constructor
+surface unchanged; all five ValueKey seams exactly once each; removed-import probes pass
+(zero hits); shipped suite 24/24 standalone and green in Flutter Quality CI on 4e47fdf.
 
 ## Intro
 
@@ -20155,30 +20178,60 @@ Run these probes. **If any probe fails, stop and fix the mismatch before touchin
 rg -n "static Future<void> (moneyLanded|selection|threshold)" lib/utils/azaman_haptics.dart
 #    Expect hits. If empty, STOP: run TASK-006 first.
 
-# 2. Dashboard anchors exist exactly once.
-rg -n "class _SusuPayoutTimeline|_Hero\(susu: susu, colors: colors\)" lib/screens/susu/susu_dashboard_screen.dart
-#    Expect: _Hero at ~113, timeline call site at ~158, class at ~1128.
+# 2. CORRECTED (post-revamp anchors — the original pre-revamp anchors,
+#    _SusuPayoutTimeline at ~1128 and the dot-grid picker, no longer exist on
+#    main; the wheel already shipped in commit 29a0d30). The wheel retrofit
+#    must be present exactly once:
+rg -n "_Hero\(susu: susu, colors: colors\)" lib/screens/susu/susu_dashboard_screen.dart
+#    Expect: exactly 1 hit (~114).
+rg -n "_SectionTitle\('Payout wheel'" lib/screens/susu/susu_dashboard_screen.dart
+#    Expect: exactly 1 hit (~119).
+rg -n "SusuWheel\(" lib/screens/susu/susu_dashboard_screen.dart
+#    Expect: exactly 1 call site (~121), plus the import at ~41.
+rg -n "class _SusuPayoutTimeline|_fmtDateInline" lib/screens/susu/susu_dashboard_screen.dart
+#    Expect: zero hits (old timeline fully deleted).
 
-# 3. Picker anchors exist (all must be removed by this task).
-rg -n "_pulseController|class _PositionDot|_mathCos|_dartCos" lib/screens/susu/susu_position_picker_screen.dart
+# 3. Picker post-state anchors (the dot grid, _PositionDot, _pulseController and
+#    the Taylor trig helpers were all removed when the wheel shipped):
+rg -n "SusuPositionWheel\(" lib/screens/susu/susu_position_picker_screen.dart
+#    Expect: exactly 1 call site (~58), plus the import at ~16.
+rg -n "_pulseController|_hoveredPosition|_PositionDot|_mathCos|_dartCos|_dartSin" lib/screens/susu/susu_position_picker_screen.dart
+#    Expect: zero hits.
 
-# 4. The target directory ALREADY EXISTS (from the Phase 4 susu work) and holds
-#    two files this task must NOT touch. The new file must NOT exist yet.
+# 4. CORRECTED (the wheel and its test ALREADY SHIP on main — this task audits
+#    them, it does not create them). The directory holds the two untouchable
+#    Phase 4 files plus the shipped wheel:
 ls lib/widgets/susu
-#    Expect: initiate_susu_sheet.dart  verification_chip.dart
-test ! -f lib/widgets/susu/susu_wheel.dart && echo "susu_wheel.dart absent — good"
-test ! -f test/susu_wheel_test.dart && echo "susu_wheel_test.dart absent — good"
+#    Expect: initiate_susu_sheet.dart  susu_wheel.dart  verification_chip.dart
+test -f test/susu_wheel_test.dart && echo "susu_wheel_test.dart present — good"
 
 # 5. Liquid engine API present.
 rg -n "const Curve kHouseSpring|bool liquidReducedMotion" lib/widgets/liquid/liquid_engine.dart
 ```
 
-## Step 1 — Create `lib/widgets/susu/susu_wheel.dart`
+## Step 1 — Audit `lib/widgets/susu/susu_wheel.dart` (already shipped on main)
 
-The directory `lib/widgets/susu/` **already exists** and contains `initiate_susu_sheet.dart`
-and `verification_chip.dart` — do not touch either of them. Create only the new file, with
-**exactly** this content. Two concatenation blocks — Block 1 then Block 2, nothing else
-between them. Block 1 ends cleanly after `_WheelArcPainter`; Block 2 starts the picker.
+**Re-scoped 2026-09-29.** The file already exists on main (commit 29a0d30, 952 lines) and
+matches the content below modulo (a) `dart format` whitespace and (b) one REQUIRED fix:
+the content below is the corrected reference; where it differs from the shipped file the
+shipped file is right. Do not touch `initiate_susu_sheet.dart` or `verification_chip.dart`.
+
+**Required reference correction (was an executability defect):** the original Block 1 read
+`liquidReducedMotion(context)` inside `initState` — an inherited-widget read from
+`initState`, which throws a FlutterError at first mount. The corrected pattern (and the one
+shipped) moves the ticker decision into `didChangeDependencies` + `_syncTicker()` so it
+also re-runs when the OS reduced-motion switch flips mid-session. The reference content
+below reflects that correction.
+
+The remaining deltas the shipped implementation still owes (the only permitted code
+changes for TASK-017):
+  1. Give `_twelveOClockIndicator`'s Align `key: const ValueKey('susu-12-oclock-indicator')`
+     so the acceptance test can prove its position geometrically (see Verification).
+  2. Add the indicator-position widget test from the Verification section to
+     `test/susu_wheel_test.dart`.
+
+Reference content — two concatenation blocks, Block 1 then Block 2. Block 1 ends cleanly
+after `_WheelArcPainter`; Block 2 starts the picker.
 
 ### Block 1
 
@@ -20324,6 +20377,7 @@ const double _kDotPad = 5.0;
 
 Widget _twelveOClockIndicator(AzamanColors colors) {
   return Align(
+    key: const ValueKey('susu-12-oclock-indicator'),
     alignment: Alignment.topCenter,
     child: Icon(Icons.arrow_drop_down, color: colors.accent, size: 22),
   );
@@ -20382,14 +20436,30 @@ class _SusuWheelState extends ConsumerState<SusuWheel>
       vsync: this,
       duration: const Duration(seconds: 1),
     );
-    if (!liquidReducedMotion(context) && _upcoming != null) {
-      _clock.repeat();
-    }
+    // CORRECTED: the ticker decision must NOT live in initState — it reads
+    // MediaQuery (via liquidReducedMotion), and inherited widgets may not be
+    // read from initState. didChangeDependencies is also the right hook
+    // regardless: it re-runs when the user flips the OS reduced-motion
+    // switch, so the wheel starts/stops without an outside rebuild.
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncTicker();
   }
 
   @override
   void didUpdateWidget(SusuWheel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _syncTicker();
+  }
+
+  /// Runs the 1s idle pulse only when there is something to count toward and
+  /// the user has not asked for reduced motion. A never-settling ticker is
+  /// exactly what would make `pumpAndSettle` hang, so both conditions are
+  /// hard gates.
+  void _syncTicker() {
     final shouldRun = !liquidReducedMotion(context) && _upcoming != null;
     if (shouldRun) {
       if (!_clock.isAnimating) _clock.repeat();
@@ -21633,7 +21703,16 @@ Replace with nothing — the file must end with the closing brace of the class t
 find block above stays). I.e. delete the class text AND the blank line before it, leaving the
 previous class's `}` as the final line.
 
-## Step 4 — Create `test/susu_wheel_test.dart`
+## Step 4 — Audit `test/susu_wheel_test.dart` (already shipped, 24 tests)
+
+The test file already exists on main with **24 tests (13 pure + 11 widget)** — a superset
+of the 21-test reference below (the shipped pure groups add: single-slot-at-top, rotation
+wrap-through-rounds, rotation degenerate-total). The reference below is retained for
+intent; the shipped suite governs. One addition required: the 12-o'clock indicator
+position test (see Visual acceptance item 0). Do not delete or weaken any shipped
+test. Count check after the addition: `grep -c "test(\|testWidgets(" test/susu_wheel_test.dart` → 25.
+
+Reference content (21 tests as originally prescribed):
 
 ```dart
 // =============================================================================
@@ -22002,31 +22081,57 @@ flutter pub get                                  # G1
 flutter analyze                                  # G2 — 0 errors, no NEW warnings in touched files
 flutter build web --debug                        # G3
 flutter test                                     # all eleven files pass
-flutter test test/susu_wheel_test.dart           # 21 tests (10 pure + 11 widget)
+flutter test test/susu_wheel_test.dart           # 25 tests (13 pure + 12 widget) after adding the indicator test
 ```
 
 Probes — every line must return exactly what it says:
 
 ```bash
-rg -n "String.hashCode|MediaQuery.sizeOf|Timer|Future.delayed|print\(" lib/widgets/susu/susu_wheel.dart
-#   → zero hits
-rg -c "AnimationController" lib/widgets/susu/susu_wheel.dart
-#   → 2
-rg -n "SingleTickerProviderStateMixin" lib/widgets/susu/susu_wheel.dart
-#   → exactly 2 hits (one per State)
+# CORRECTED (was self-contaminating): the prescribed file's honesty comments
+# name String.hashCode/F--046, so a literal zero-match probe fails against
+# correct text. Assert no EXECUTABLE usage: strip comment lines first.
+grep -n "String.hashCode\|MediaQuery.sizeOf\|Timer(\|Future.delayed\|print(" lib/widgets/susu/susu_wheel.dart | grep -vE "^[0-9]+:(//|///)" || true
+#   → zero hits (comment mentions of String.hashCode are expected and legal)
+#
+# CORRECTED (was rg -c "AnimationController" → 2): rg -c counts matching LINES,
+# not controller instances — declaration, initialization and comment lines all
+# match (the shipped file yields 5 lines for 2 controllers). Structural check:
+grep -n "late final AnimationController" lib/widgets/susu/susu_wheel.dart
+#   → exactly 2 hits: _clock (~166) in _SusuWheelState, _rot (~625) in _SusuPositionWheelState
+#
+# CORRECTED (was self-contaminating): the header comment names
+# SingleTickerProviderStateMixin, so the bare pattern yields 3 hits (1 comment +
+# 2 States) while the probe demanded "exactly 2". Bind the pattern to the `with`
+# clause so only the structural declarations match:
+grep -n "with SingleTickerProviderStateMixin" lib/widgets/susu/susu_wheel.dart
+#   → exactly 2 hits, one per State class (_SusuWheelState ~165, _SusuPositionWheelState ~623)
 rg -n "_pulseController|_hoveredPosition|_PositionDot|_mathCos|_dartCos|_dartSin" lib/screens/susu/susu_position_picker_screen.dart
 #   → zero hits
 rg -n "_SusuPayoutTimeline|_fmtDateInline" lib/screens/susu/susu_dashboard_screen.dart
 #   → zero hits
 rg -n "susu-wheel-canvas|susu-wheel-next-dot|susu-wheel-center-label|susu-position-wheel|susu-position-hub" lib/widgets/susu/susu_wheel.dart
 #   → the first three once each; susu-position-hub once; susu-position-wheel once
-rg -n "SusuWheel|SusuPositionWheel" lib/screens/susu/susu_dashboard_screen.dart lib/screens/susu/susu_position_picker_screen.dart
-#   → dashboard: 1 import + 1 call site; picker: 1 import + 1 call site
+# CORRECTED: the original pattern cannot match the import lines (they contain
+# the lowercase filename susu_wheel.dart, not the class name), so "1 import +
+# 1 call site" was unreachable as written. Include the filename in the pattern:
+grep -En "susu_wheel\.dart|SusuWheel\(|SusuPositionWheel\(" lib/screens/susu/susu_dashboard_screen.dart lib/screens/susu/susu_position_picker_screen.dart
+#   → dashboard: 1 import (~41) + 1 call site (~121); picker: 1 import (~16) + 1 call site (~58)
 rg -n "cached_network_image|azaman_network_image|azaman_haptics" lib/screens/susu/susu_position_picker_screen.dart
 #   → zero hits (imports removed with their last users)
 ```
 
 ## Visual acceptance
+
+0. **12-o'clock indicator is provably at the top (CORRECTED).** The original acceptance
+   relied on the Align assumption alone. The indicator must carry
+   `ValueKey('susu-12-oclock-indicator')` and a permanent widget test must measure, not
+   assume: mount `SusuPositionWheel` in the standard host, then
+   `final wheel = tester.getRect(find.byKey(const ValueKey('susu-position-wheel')));`
+   `final ind = tester.getRect(find.byKey(const ValueKey('susu-12-oclock-indicator')));`
+   and assert: `ind.center.dx ≈ wheel.center.dx` (± 1.0),
+   `ind.top ≤ wheel.top + 4.0`, and `ind.bottom < wheel.center.dy`. That proves the
+   indicator sits at the wheel's top edge, horizontally centred — not merely that some
+   Align was configured.
 
 1. **Dashboard** — open any active Susu: the wheel renders between the hero card and the
    upcoming-cycle card; members sit on their slots, your slot carries the YOU badge, the
@@ -22086,8 +22191,9 @@ G1 pub get:                     __________
 G2 analyze (0 errors, no NEW warnings in touched files): __________
 G3 build web --debug:           __________
 flutter test (all eleven files):  __________
-susu_wheel_test.dart (21 passing):  __________
-Probes (zero-lines / keys / call-sites): __________
+susu_wheel_test.dart (25 passing: shipped 24 + indicator test):  __________
+Probes (structural controller/mixin/no-executable-hashCode): __________
+Visual 0 (12-oclock indicator geometrically proven at top): __________
 Visual 1 (dashboard wheel):     __________
 Visual 2 (no-window honesty):   __________
 Visual 3 (tap → spring → hub):  __________
