@@ -195,7 +195,7 @@ A task is DONE only when **all** of these are true:
 | TASK-015 | Hotel: building section + floor-plan dossier + date scrubber | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-011 | `FLIGHT GAP CLOSED — PR #112 final head bb9382a (branch task-015-hotel from main@56b532a); audits of 3e04776, 77b9973 and a341f08 all closed: per-night onNightAdded contract with three explicit regression legs; key-card materialisation on the named kPopSpring primitive; the missing key-card FLIGHT now implemented (door-stage-to-stays-slot vector measured once at card start via status listener, eased to zero on kPopSpring, reduced-motion and single-commit-haptic preserved, no timers) with a permanent widget regression pinning the mid-air position above the slot and the settled position inside it; exact-head Android debug APK verified via Android Integration workflow_dispatch on every revised head (36599105840/77b9973, 36601167310/a341f08, 36604766853/bb9382a with head_sha checked directly); Flutter Quality CI green on bb9382a (746 tests); PR open and unmerged awaiting re-review` |
 | TASK-016 | Escrow unseal — vault rail + goo-rim dissolve + live transition | 3 | TASK-001, TASK-002, TASK-005, TASK-006 | `IMPLEMENTED — PR #113 head a7d7478 (branch task-016-escrow-rail from main@4e47fdf): EscrowVaultRail buyer→vault→vendor flow with 1100ms one-shot unseal (goo-rim dissolve → coin slide → destination bloom) + 1s active-countdown repeater on TickerProviderStateMixin; honest ring (needs both fundedAt and expiresAt, degenerate windows 0) and honest labels (Auto-release / Release pending / status label); F-046 codeUnits fold seed; moneyLanded exactly once; terminal-on-mount calm; reduced-motion instant path; both source-review corrections applied (structural F-049 verification instead of the comment-blind zero-match probe; 16-test count, 11 pure + 5 widget); one spec compile defect fixed (destX num→double) + 3 inert prefer_const fixes; focused 16/16; local full suite 698 pass with 36 sandbox-only shell segfaults in 3 unrelated files each verified standalone (25+2+5); Flutter Quality CI green on a7d7478 (762 tests, +16 exactly); exact-head Android debug APK build success (run 36609874532, head_sha=a7d7478 directly); PR open, unmerged, awaiting independent exact-head review` |
 | TASK-017 | Susu wheel — read-only dashboard wheel + draggable position picker with spring snap | 3 | TASK-005, TASK-006 | `IMPLEMENTED — PR #114 head 23edba1 (branch task-017-susu-wheel-hardening from main@4e47fdf): indicator key + measured geometric regression, exactly-once onPositionSelected contract (per-slot guard, didUpdateWidget resync, _confirmHub routing preserved) + 4 permanent regressions; final suite 29 = 13 pure + 16 widget (shipped 24 untouched); focused 29/29; full suite +723 with 3 sandbox-only parallel failures in 8 unrelated files each verified standalone green; analyze parity 369 == main baseline, 0 errors, touched files clean; exact-head CI green (Flutter Quality run 36619104955 + Android Integration run 36619201612, both on 23edba1); PR open, unmerged, awaiting independent exact-head review` |
-| TASK-018 | Radial launcher (nav + chat + product + AI command) | 3 | TASK-006, TASK-010b | `REVIEW REQUIRED — F.2` — first independent executability audit 2026-09-29: NOT executable as written (dead Step 3 anchors vs shipped TASK-010b; Step 1 const-scope compile error; impossible web gate; unsafe rollback); corrections committed Planning-only; awaiting independent second executability review |
+| TASK-018 | Radial launcher (nav + chat + product + AI command) | 3 | TASK-006, TASK-010b | `SPEC READY` — first executability audit (D1–D14) + independent second review dry run (D15–D22, incl. omitted TASK-010b guard suite and short-viewport overflow) all corrected Planning-only; spec executes verbatim on main@27325e62 (analyze parity, task suites 15/15 + 10/10 + 5/5, probes all match) |
 | TASK-019 | Today strip + ambient mode | 3 | TASK-008 | `SCOPE LOCKED` |
 | TASK-020 | Sound design (`AzSound`, 5 samples) | 3 | — | `SCOPE LOCKED` |
 | TASK-021 | Artifact wallet (receipts / passes / certificates) | 3 | TASK-005 | `SCOPE LOCKED` |
@@ -22304,7 +22304,7 @@ Notes / deviations:             (1) indicator key sits on the Icon inside _twelv
 
 ## TASK-018 — Radial launcher: one gesture vocabulary
 
-**Tier:** 3 — Signature moments · **Depends on:** TASK-006, TASK-010b · **Status:** `REVIEW REQUIRED — F.2` — first independent executability audit 2026-09-29 (against live main@27325e62, Planning a7500ec): NOT executable as originally written (dead Step 3 anchors vs the shipped TASK-010b surface; Step 1 const-scope compile error; impossible web build gate; self-contaminating probe; unsafe rollback). Corrective wording applied below; a separate independent second executability review is required before SPEC READY. See the audit record at the end of this section.
+**Tier:** 3 — Signature moments · **Depends on:** TASK-006, TASK-010b · **Status:** `SPEC READY` — first executability audit 2026-09-29 found the spec NOT executable as originally written (D1–D14, corrected Planning-only in c8e597e); an independent second executability review then dry-ran the corrected spec end-to-end against live main@27325e62 in a detached worktree, found and corrected six further defects (D15–D22, including the omitted TASK-010b guard suite and the short-viewport overflow), and verified every step executes verbatim: all anchors match, `dart format` clean, `flutter analyze` at baseline parity (0 errors / 150 warnings), task suites green (launcher 15/15, TASK-010b guard 10/10, smoke 5/5), full-suite failures flake-equivalent to pristine main (pass on rerun), all cross-check probes match. See both audit records at the end of this section.
 
 ### Why
 
@@ -22372,6 +22372,8 @@ Reality, verified against the source at spec time:
 - MODIFY `lib/widgets/liquid/category_speed_dial.dart` (one line)
 - MODIFY `lib/widgets/liquid/liquid_dropdown_menu.dart` (one line)
 - NEW `test/liquid_launcher_test.dart`
+- MODIFY `test/widgets/vertical_launcher_test.dart` (the shipped TASK-010b
+  guard — five of its ten tests anchor the old row list; see Step 6, D18)
 
 ### Pre-flight
 
@@ -22901,28 +22903,37 @@ Replace with:
         // TASK-018: the radial burst replaces the five-row list. The launcher
         // solves its own satellite geometry inside this box (bounded
         // constraints are part of its contract) and fires exactly one
-        // AzamanHaptics.confirm() per pick — no extra haptic here or in the
-        // entry point (3e). scrollController stays in the constructor
+        // confirm() haptic per pick — no extra haptic here or in the entry
+        // point (3e). scrollController stays in the constructor
         // contract (AzamanSheet.showPanel provides it); the fixed-height
         // burst needs no scrollable, and the sheet surface still owns the
         // detent drag.
-        SizedBox(
-          height: 190,
-          width: double.infinity,
-          child: LiquidLauncher(
-            semanticLabel: 'Market verticals',
-            items: [
-              for (final entry in kVerticalLauncherEntries)
-                LiquidLauncherItem(
-                  icon: entry.icon,
-                  label: entry.label,
-                  onTap: () => onLaunch(entry.wire),
-                ),
-            ],
+        Flexible(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 190),
+            child: LiquidLauncher(
+              semanticLabel: 'Market verticals',
+              items: [
+                for (final entry in kVerticalLauncherEntries)
+                  LiquidLauncherItem(
+                    icon: entry.icon,
+                    label: entry.label,
+                    onTap: () => onLaunch(entry.wire),
+                  ),
+              ],
+            ),
           ),
         ),
 ```
 
+> The `Flexible` + `maxHeight: 190` box is deliberate (second review, D19): a fixed
+> 190px box plus the pinned header overflows the 45% detent on short viewports
+> (360×480 + 40px inset: three of five satellites rendered below the visible
+> screen, with nothing to scroll), breaching TASK-010b's "every target reachable"
+> contract. With `Flexible`, tall viewports get the full 190px burst and short
+> viewports compress the fan inside the visible detent — empirically verified
+> (360×480 + inset: all five satellites staggered inside the visible band).
+>
 > The satellites carry icon + label only (the dial vocabulary); the entries' `subtitle`
 > field stays in `kVerticalLauncherEntries` (unchanged, simply unread now) and the sheet's
 > standing caption remains the single displayed caption. `kVerticalLauncherEntries` itself
@@ -22950,7 +22961,7 @@ Replace with:
 /// The launcher's Panel body: a pinned "Explore the market" header + the
 /// radial vertical launcher (TASK-018). Satellites burst from the body's
 /// centre with the shared liquid vocabulary — kPopSpring launch, goo-rim
-/// merging, one `AzamanHaptics.confirm()` per pick. The sheet surface
+/// merging, one confirm() haptic per pick. The sheet surface
 /// (colour, scrim, blur, handle, safe-area, detents) is owned by
 /// `AzSheetSurface`; the burst is fixed-height, and the sheet surface owns
 /// the detent drag.
@@ -22994,15 +23005,19 @@ Replace with:
         selectTab(kMarketTabIndex);
 ```
 
-**3f.** Remove the now-unused haptics import **only if** nothing else uses it:
+**3f.** Remove the now-unused imports **only if** nothing else uses them:
 
 ```bash
-rg -n "AzamanHaptics\." lib/main.dart
+rg -n "AzamanHaptics\." lib/main.dart     # expect 0 (3e removed the only use)
+rg -n "AzRadius" lib/main.dart             # expect 0 (3d deleted the only user)
 ```
 
-If the count is 0 (expected: the line above was the only use), delete the line
-`import 'package:azaman/utils/azaman_haptics.dart';` (main.dart line 40). If any use
-remains, keep the import and log it.
+If `AzamanHaptics\.` counts 0, delete the line
+`import 'package:azaman/utils/azaman_haptics.dart';` (main.dart line 40). If `AzRadius`
+counts 0, delete the line `import 'package:azaman/theme/az_radius.dart';` (main.dart
+line 46 — `AzRadius.brLg`/`brMd` lived only inside the deleted `_VerticalLauncherRow`).
+If any use remains, keep that import and log it. (Dry-run note: leaving az_radius in is
+a +1 unused_import warning over baseline, which breaches the verification gate.)
 
 ---
 
@@ -23344,6 +23359,185 @@ void main() {
 
 ---
 
+### Step 6 — UPDATE `test/widgets/vertical_launcher_test.dart` (the TASK-010b guard)
+
+The shipped guard suite anchors the old five-row list in five of its ten tests. The
+task-kept contracts (route lifecycle, guarded wire allowlist, barrier dismissal, repeat
+cycles, non-Market gating) are untouched. Apply exactly these four rewrites:
+
+**6a.** `_settleEntrance` must also settle the burst (the one-shot 660ms controller makes
+`pumpAndSettle` safe — the launcher must not depend on any OTHER animation having
+settled, but its own burst must be settled before taps). Find:
+
+```dart
+/// Settle the panel's entrance without pumpAndSettle: the launcher must not
+/// depend on every animation in the tree having settled.
+Future<void> _settleEntrance(WidgetTester tester) =>
+    tester.pump(const Duration(milliseconds: 350));
+```
+
+Replace with:
+
+```dart
+/// Settle the panel's entrance, then the TASK-018 radial burst (one-shot
+/// 660ms controller — pumpAndSettle terminates). The launcher must not
+/// depend on any OTHER animation in the tree having settled; the burst is
+/// its own.
+Future<void> _settleEntrance(WidgetTester tester) async {
+  await tester.pump(const Duration(milliseconds: 350));
+  await tester.pumpAndSettle();
+}
+```
+
+**6b.** The wire-order test keyed the deleted `_VerticalLauncherRow`
+(`Key('vertical_launcher_<wire>')` — 0 found after 3d). Find:
+
+```dart
+      // Every wire's row exists (shrinkWrap keeps all rows materialised).
+      for (final entry in kVerticalLauncherEntries) {
+        expect(
+          find.byKey(Key('vertical_launcher_${entry.wire}')),
+          findsOneWidget,
+        );
+      }
+      // Dial order: Restaurants, Hotels, Transit, Retail — plus the
+      // model-canonical HOSPITALITY wire last.
+      final dy = <String, double>{};
+      for (final entry in kVerticalLauncherEntries) {
+        dy[entry.wire] = tester
+            .getTopLeft(find.byKey(Key('vertical_launcher_${entry.wire}')))
+            .dy;
+      }
+```
+
+Replace with:
+
+```dart
+      // Every wire's satellite exists (TASK-018: the burst materialises all
+      // five targets — nothing is virtualised).
+      for (final entry in kVerticalLauncherEntries) {
+        expect(find.text(entry.label), findsOneWidget);
+      }
+      // Dial order: Restaurants, Hotels, Transit, Retail — plus the
+      // model-canonical HOSPITALITY wire last. The burst preserves host
+      // order vertically: items.first is the TOP satellite.
+      final dy = <String, double>{};
+      for (final entry in kVerticalLauncherEntries) {
+        dy[entry.wire] = tester.getTopLeft(find.text(entry.label)).dy;
+      }
+      // The safe-area clamp may collapse neighbouring tiers (a 190px host
+      // boxes the fan into three bands: two top, one middle, two bottom),
+      // so the chain is monotone, not strict — but the ENDS stay strict:
+      // items.first topmost, items.last bottommost.
+      expect(dy['FOOD_BEVERAGE']! <= dy['REAL_ESTATE']!, isTrue);
+      expect(dy['REAL_ESTATE']! <= dy['LOGISTICS']!, isTrue);
+      expect(dy['LOGISTICS']! <= dy['RETAIL']!, isTrue);
+      expect(dy['RETAIL']! <= dy['HOSPITALITY']!, isTrue);
+      expect(dy['FOOD_BEVERAGE']! < dy['HOSPITALITY']!, isTrue);
+    });
+```
+
+**6c.** The reduced-motion test asserted first-frame rendering; the burst solves its
+fan in a post-frame callback. Find:
+
+```dart
+      // No settle: the launcher owns no animation, so nothing may be
+      // mid-flight — every target must already exist on the first frame.
+      for (final entry in kVerticalLauncherEntries) {
+        expect(
+          find.byKey(Key('vertical_launcher_${entry.wire}')),
+          findsOneWidget,
+        );
+        expect(find.text(entry.label), findsOneWidget);
+      }
+```
+
+Replace with:
+
+```dart
+      // The TASK-018 burst solves its fan in a post-frame callback, so the
+      // satellites exist from the first frame AFTER the solve (two pumps);
+      // under reduced motion they render at their settled positions — no
+      // launch animation is observable.
+      await tester.pump();
+      await tester.pump();
+      for (final entry in kVerticalLauncherEntries) {
+        expect(find.text(entry.label), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+```
+
+**6d.** The bounded-viewport test scrolled the deleted `ListView` to reach
+HOSPITALITY; the burst is fixed-height and non-scrollable — reachability is a bounds
+assertion now (and holds only because 3b ships the `Flexible` box, D19). Two edits.
+First, hoist the inline inset so the assertion can reference it. Find:
+
+```dart
+      const size = Size(360, 480);
+      await _pumpHarness(
+        tester,
+        notifier: _RecordingSearchNotifier(),
+        size: size,
+        mediaPadding: const EdgeInsets.only(bottom: 40),
+      );
+```
+
+Replace with:
+
+```dart
+      const size = Size(360, 480);
+      const inset = EdgeInsets.only(bottom: 40);
+      await _pumpHarness(
+        tester,
+        notifier: _RecordingSearchNotifier(),
+        size: size,
+        mediaPadding: inset,
+      );
+```
+
+Second, replace the scroll block. Find:
+
+```dart
+      // All five targets exist and the last one is reachable by scrolling
+      // the sheet's own scrollable (I.10.1: scope to the sheet, not the last
+      // Scrollable on screen).
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('vertical_launcher_HOSPITALITY')),
+        120,
+        scrollable: find.descendant(
+          of: _sheetRouteFinder,
+          matching: find.byType(Scrollable),
+        ),
+      );
+      expect(
+        find.byKey(const Key('vertical_launcher_HOSPITALITY')),
+        findsOneWidget,
+      );
+```
+
+Replace with:
+
+```dart
+      // TASK-018: the burst is fixed-height and non-scrollable — every
+      // target is materialised, so reachability is a bounds assertion, not
+      // a scroll: each satellite must sit inside the visible area.
+      for (final entry in kVerticalLauncherEntries) {
+        final rect = tester.getRect(find.text(entry.label));
+        expect(rect.top, greaterThanOrEqualTo(0));
+        expect(
+          rect.bottom,
+          lessThanOrEqualTo(size.height - inset.bottom),
+        );
+      }
+```
+
+> The remaining five tests (non-Market gating, sheet-route open, barrier dismissal,
+> repeat cycles, the guarded-wire allowlist) need no edits — 6a's settle fix alone
+> repairs the two tap-driven lifecycle tests ('each of the five wires reaches…',
+> 'open → pick → back → open again'), whose taps previously landed mid-flight.
+
+---
+
 ### Verification
 
 ```bash
@@ -23371,7 +23565,7 @@ rg -n "CircularProgressIndicator" lib/widgets/ai_command_menu.dart              
 rg -n "ThinkingOrb\(" lib/widgets/ai_command_menu.dart                         # expect 1 (call site only — the F-052 comment also names ThinkingOrb; the old "expect 1" probe self-contaminated)
 rg -n "HapticFeedback\." lib/widgets/ai_command_menu.dart                       # expect 0
 rg -n "flutter/services.dart" lib/widgets/ai_command_menu.dart                  # expect 0
-rg -n "LiquidLauncher" lib/main.dart                                            # expect 1
+rg -n "LiquidLauncher\(" lib/main.dart                                        # expect 1 (the instantiation; LiquidLauncherItem also matches the bare name — paren disambiguates)
 rg -n "_VerticalLauncherRow" lib/main.dart                                      # expect 0 (capital V — the shipped class name)
 rg -c "subtitle" lib/main.dart                                                  # expect 6 (type decl + five records — the field stays; the old "expect 0" was unreachable)
 rg -n "AzamanHaptics\." lib/main.dart                                           # expect 0 (import removed in 3f)
@@ -23385,7 +23579,7 @@ Then run the complete permanent suite from the application root:
 flutter test
 ```
 
-The §A.8b board is authoritative for the current set (22 files at audit time, 2026-09-29 — count the table at execution; do not trust prose counts), but `flutter test`
+The §A.8b board is authoritative for the current set (22 files at audit time, 2026-09-29 — count the table at execution; do not trust prose counts; NOTE: `test/widgets/vertical_launcher_test.dart` from TASK-010b is absent from the board — housekeeping gap, flagged), but `flutter test`
 checks those plus all pre-existing regression suites and avoids stale or guessed paths. Record
 any pre-existing failures separately; all task-owned tests must pass before sign-off. The liquid
 widget smoke suite remains included and should keep passing because Step 4b changes only dismissal
@@ -23435,10 +23629,11 @@ haptics, not its trigger path.
 
 ### Rollback
 
-Task-owned surface (exactly six files — audit 2026-09-29): NEW
+Task-owned surface (exactly seven files — audit 2026-09-29): NEW
 `lib/widgets/liquid/liquid_launcher.dart`, NEW `test/liquid_launcher_test.dart`, MODIFY
 `lib/main.dart`, `lib/widgets/ai_command_menu.dart`,
-`lib/widgets/liquid/category_speed_dial.dart`, `lib/widgets/liquid/liquid_dropdown_menu.dart`.
+`lib/widgets/liquid/category_speed_dial.dart`, `lib/widgets/liquid/liquid_dropdown_menu.dart`,
+`test/widgets/vertical_launcher_test.dart`.
 
 1. Delete the two NEW files.
 2. **Clobber guard FIRST:** `git diff --name-only <task-base>..HEAD` must list ONLY the six
@@ -23503,6 +23698,52 @@ Defect register (severity):
   Consequence: post-Step-2b, `AiCommandMenu` with its loading state visible is a
   `pumpAndSettle` HANG hazard for any future widget test — test with bounded pumps only.
   No shipped test touches AiCommandMenu (verified), so the current suite is unaffected.
+- **D21 LOW (second review, 2026-09-29) — TASK-010b's strict row order is unachievable in
+  a fan.** The safe-area clamp collapses the fan's outer tiers (190px host: two
+  satellites share the top band, two the bottom — `dy['FOOD_BEVERAGE'] ==
+  dy['REAL_ESTATE']` empirically), so the strict `<` chain cannot hold. Clamping is
+  monotone, so the honest contract is a non-strict chain with strict ends (first
+  topmost, last bottommost). Empirically verified.
+- **D22 MEDIUM (second review, 2026-09-29) — 6b's replacement block was truncated.** As
+  first written, 6b's replace block ended at the dy loop — the four strict `<` expects
+  would have been left behind in the test (ordering test still failing). 6b's find and
+  replace blocks both extended to cover the assertion chain. Caught when the dry run
+  failed while applying the spec verbatim.
+- **D20 LOW (second review, 2026-09-29) — 6d referenced an out-of-scope name.** The first
+  6d wording used `mediaPadding.bottom` inside a test whose inset was an inline const
+  argument, not a local (compile error caught by the dry run). 6d reworded to hoist the
+  const (`inset`) first.
+- **D18 HIGH (second review, 2026-09-29) — the shipped TASK-010b guard suite was omitted.**
+  `test/widgets/vertical_launcher_test.dart` (10 tests) anchors the old five-row list:
+  per-wire `Key('vertical_launcher_<wire>')` finders (0 found after 3d), a 350ms-only
+  entrance settle (taps landed mid-burst), first-frame reduced-motion rendering, and a
+  scroll-to-reach contract. Executing the corrected spec broke 5 of its 10 tests, which
+  the first audit missed (its test-impact grep covered ai_command_menu and the dial/
+  dropdown, not the launcher sheet suite). Fixed by Step 6's four rewrites; the suite
+  also joins the task-owned surface.
+- **D19 HIGH (second review, 2026-09-29) — fixed 190px box breaks short viewports.**
+  The corrected 3b's `SizedBox(height: 190)` + pinned header overflows the 45% detent
+  on short viewports: at 360×480 + 40px bottom inset, three of five satellites rendered
+  below the visible screen with nothing to scroll (the old rows scrolled) — breaching
+  TASK-010b's "every target reachable" contract. 3b now ships `Flexible` +
+  `BoxConstraints(maxHeight: 190)`: tall viewports keep the full 190px burst; short
+  viewports compress the fan inside the visible detent (empirically verified — all
+  five satellites staggered on-screen at 360×480 + inset).
+- **D17 MEDIUM (second review, 2026-09-29) — 3d orphans the az_radius import.** `AzRadius.brLg`
+  /`brMd` lived only inside the deleted `_VerticalLauncherRow`; deleting the class leaves
+  main.dart's `az_radius.dart` import unused → +1 warning over baseline, breaching the
+  "warnings ≤ baseline" verification gate the corrected spec itself sets. 3f extended to
+  remove it behind an `rg "AzRadius" # expect 0` guard. Caught by the dry run.
+- **D16 LOW (second review, 2026-09-29) — LiquidLauncher probe off by one.** The
+  `rg "LiquidLauncher" lib/main.dart # expect 1` probe returns 2 after a CORRECT
+  implementation — `LiquidLauncherItem(` in the items loop also matches the bare name.
+  Present in the original draft and missed by the first audit's manual probe check; caught
+  by the dry run. Probe tightened to `LiquidLauncher\(`.
+- **D15 LOW (second review, 2026-09-29) — 3b/3c comment self-contamination.** The corrected
+  3b/3c replacement comments contained the literal `AzamanHaptics.`, which contaminates the
+  3f guard and the `AzamanHaptics\.` expect-0 probe (guard would keep a then-unused import
+  → new unused_import warning; probe would report 1, not 0). Comments reworded to
+  "confirm() haptic" — the same D4 class caught in my own corrective text.
 - **D14 LOW — unreachable probe expectations as written.** `subtitle` expect 0 was
   unreachable (8 occurrences exist; 6 legitimately remain after the corrected steps —
   the field stays in the entry records) and `AzamanHaptics\.` expect 0 was achievable only
@@ -23523,6 +23764,53 @@ L238–247, dropdown L104–113), and pre-flight probes 1, 3, 4, 5, 6 pass on cu
 The prescribed pure-math assertions (rest 0.12, mid-launch bounds, 1e-3 spring endpoint
 residual, kHouseSpring overshoot > 1, safe-area bounds, anchor clearance ≥ gap) all hold
 against the shipped curve/source.
+
+---
+
+### Second executability review record (2026-09-29, independent)
+
+Reviewer: Solas (as pyraxxz), against the corrected spec at Planning c8e597e and live
+AZM-frontend/main@27325e62. Method: full end-to-end dry run in a detached worktree
+(no repo modification, no branch, no frontend commit) — pre-flight probes, Steps 1–6
+applied VERBATIM, then the complete verification block.
+
+Verdict: **executable — SPEC READY.** All six steps apply verbatim against current main;
+the verification gates pass as written.
+
+Defect register (second review; corrections applied Planning-only):
+
+- D15 LOW — corrected 3b/3c comment self-contamination of the 3f guard/probe.
+- D16 LOW — `LiquidLauncher` probe off by one (`LiquidLauncherItem(` also matches).
+- D17 MEDIUM — 3d orphans main.dart's `az_radius` import (+1 warning over baseline);
+  3f extended to remove it behind an `rg "AzRadius" # expect 0` guard.
+- D18 HIGH — the shipped TASK-010b guard suite (`test/widgets/vertical_launcher_test.dart`,
+  10 tests) was omitted entirely: executing the corrected spec broke 5 of its 10 tests
+  (per-wire keys, 350ms-only settle, first-frame rendering, scroll-to-reach). Fixed by
+  the new Step 6 (four rewrites); the suite joins the task-owned surface (7 files).
+- D19 HIGH — the corrected 3b's fixed 190px box overflowed the 45% detent on short
+  viewports (360×480 + 40px inset: three of five satellites below the visible screen,
+  nothing to scroll — TASK-010b's "every target reachable" contract breached). 3b now
+  ships `Flexible` + `BoxConstraints(maxHeight: 190)`; empirically verified on the
+  stress viewport (all five satellites staggered on-screen).
+- D20 LOW — 6d first referenced out-of-scope `mediaPadding`; reworded to hoist a local
+  `inset` const.
+- D21 LOW — TASK-010b's strict five-tier vertical order is unachievable in a fan (the
+  safe-area clamp collapses outer tiers: `dy['FOOD_BEVERAGE'] == dy['REAL_ESTATE']`
+  empirically); 6b's contract is a monotone chain with strict ends.
+- D22 MEDIUM — 6b's first replacement block was truncated (the strict `<` expects would
+  have survived the replace, keeping the ordering test red); both blocks extended to
+  cover the assertion chain.
+
+Empirical validation (detached worktree at main@27325e62): all 9 pre-flight probes pass;
+Steps 1–6 apply verbatim; `dart format` clean; `flutter analyze` 0 errors / 150 warnings =
+baseline parity (224 infos vs baseline 219, all in the two NEW files — infos are not
+gated); task suites green — `liquid_launcher_test` 15/15, `vertical_launcher_test` 10/10,
+`liquid_widget_smoke_test` 5/5; full `flutter test` +735 with failures flake-equivalent to
+pristine main (the known flutter_tester loading flake: failure sets move between runs in
+both trees; every failing file passes on immediate rerun, including in the dry tree);
+all 12 cross-check probes match exactly. The burst's production geometry verified in the
+harness: five satellites, Restaurants top / Hospitality bottom, taps land post-settle,
+small-viewport fan compresses inside the visible band.
 
 ---
 
