@@ -23434,7 +23434,6 @@ Replace with:
       expect(dy['LOGISTICS']! <= dy['RETAIL']!, isTrue);
       expect(dy['RETAIL']! <= dy['HOSPITALITY']!, isTrue);
       expect(dy['FOOD_BEVERAGE']! < dy['HOSPITALITY']!, isTrue);
-    });
 ```
 
 **6c.** The reduced-motion test asserted first-frame rendering; the burst solves its
@@ -23704,6 +23703,12 @@ Defect register (severity):
   dy['REAL_ESTATE']` empirically), so the strict `<` chain cannot hold. Clamping is
   monotone, so the honest contract is a non-strict chain with strict ends (first
   topmost, last bottommost). Empirically verified.
+- **D23 LOW (implementation, 2026-09-29) — 6b's D22-extended replacement block was
+  asymmetric.** The extension appended the testWidgets closer (`});`) to the replacement
+  block while the find block ended at the asserts — verbatim application produced a
+  duplicated closer and a parse error. The dry run had patched 6b directly, so this
+  never surfaced until the real implementation applied the block verbatim. Closer
+  removed; find/replace symmetric again.
 - **D22 MEDIUM (second review, 2026-09-29) — 6b's replacement block was truncated.** As
   first written, 6b's replace block ended at the dy loop — the four strict `<` expects
   would have been left behind in the test (ordering test still failing). 6b's find and
