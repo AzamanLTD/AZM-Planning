@@ -11178,6 +11178,8 @@ never hit the network in this widget test.
 
 Create with exactly this content:
 
+Create with exactly this content. The widget test must override every network-backed provider it observes; in the supplied test below, both `storefrontExperienceProvider` and `storefrontProductsProvider` are overridden, so the routing test is deterministic and offline.
+
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11889,6 +11891,7 @@ class _RestaurantTrayRailState extends ConsumerState<RestaurantTrayRail> {
         children: [
           _stepButton(
             HugeIconsStroke.minusSign,
+            'Decrease quantity',
             () {
               AzamanHaptics.toggle();
               notifier.decrementLine(item.lineKey);
@@ -11905,6 +11908,7 @@ class _RestaurantTrayRailState extends ConsumerState<RestaurantTrayRail> {
           ),
           _stepButton(
             HugeIconsStroke.plusSign,
+            'Increase quantity',
             () {
               AzamanHaptics.toggle();
               notifier.incrementLine(item.lineKey);
@@ -11916,10 +11920,17 @@ class _RestaurantTrayRailState extends ConsumerState<RestaurantTrayRail> {
     );
   }
 
-  Widget _stepButton(IconData icon, VoidCallback onTap, AzamanColors colors) => SizedBox(
+  Widget _stepButton(
+    IconData icon,
+    String tooltip,
+    VoidCallback onTap,
+    AzamanColors colors,
+  ) =>
+      SizedBox(
         width: 30,
         height: 30,
         child: IconButton(
+          tooltip: tooltip,
           padding: EdgeInsets.zero,
           iconSize: 14,
           icon: Icon(icon, color: colors.textPrimary),
@@ -13236,6 +13247,10 @@ Map<String, dynamic> _experience() => {
 
 Future<void> _openDish(WidgetTester tester) async {
   final book = tester.state<FlipBookState>(find.byType(FlipBook));
+  // This fixture has one menu page after the cover. Resetting to the cover
+  // makes repeated calls deterministic after prior mode-routing assertions.
+  book.turnBackward();
+  await tester.pumpAndSettle();
   book.turnForward();
   await tester.pumpAndSettle();
   await tester.tap(find.text('Jollof Rice').first);
@@ -13574,7 +13589,7 @@ rg -n "dineInContext" lib/screens/marketplace/dinein_restaurant_ordering_screen.
    the two-beat addToCart haptic. Reduced-motion device setting still falls back to the toast.
 7. **Tray rail**: after the first tray add, the collapsed pill shows count + subtotal at the
    bottom. Tap expands; drag up past ~44px expands; drag down collapses; both snap with a
-   selection haptic. Steppers adjust quantities live (minus at 1 removes the line). "Open order
+   selection haptic. Steppers adjust quantities live (minus at 1 removes the line) and expose explicit Increase quantity / Decrease quantity semantics. "Open order
    tray" opens CartScreen. With an empty tray the rail is completely absent.
 8. **Regression**: retail shelf, floating cart bar (non-restaurant flows), hotel and transit
    stages, and the profile screen's other tabs are untouched and behave as before.
