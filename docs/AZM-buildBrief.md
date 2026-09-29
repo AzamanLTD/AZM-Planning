@@ -194,7 +194,7 @@ A task is DONE only when **all** of these are true:
 | TASK-014 | Transit: route ribbon + lit cabin + deck slice + hold ring + boarding-pass keepsake | 2 | TASK-001, TASK-002, TASK-006, TASK-011 | `DONE — merged via PR #111; merge SHA 56b532ab3d948e427837f37c996fe824e745805e; exact-head CI green on dd4056c with 730 tests; independent exact-head review completed` |
 | TASK-015 | Hotel: building section + floor-plan dossier + date scrubber | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-011 | `FLIGHT GAP CLOSED — PR #112 final head bb9382a (branch task-015-hotel from main@56b532a); audits of 3e04776, 77b9973 and a341f08 all closed: per-night onNightAdded contract with three explicit regression legs; key-card materialisation on the named kPopSpring primitive; the missing key-card FLIGHT now implemented (door-stage-to-stays-slot vector measured once at card start via status listener, eased to zero on kPopSpring, reduced-motion and single-commit-haptic preserved, no timers) with a permanent widget regression pinning the mid-air position above the slot and the settled position inside it; exact-head Android debug APK verified via Android Integration workflow_dispatch on every revised head (36599105840/77b9973, 36601167310/a341f08, 36604766853/bb9382a with head_sha checked directly); Flutter Quality CI green on bb9382a (746 tests); PR open and unmerged awaiting re-review` |
 | TASK-016 | Escrow unseal — vault rail + goo-rim dissolve + live transition | 3 | TASK-001, TASK-002, TASK-005, TASK-006 | `IMPLEMENTED — PR #113 head a7d7478 (branch task-016-escrow-rail from main@4e47fdf): EscrowVaultRail buyer→vault→vendor flow with 1100ms one-shot unseal (goo-rim dissolve → coin slide → destination bloom) + 1s active-countdown repeater on TickerProviderStateMixin; honest ring (needs both fundedAt and expiresAt, degenerate windows 0) and honest labels (Auto-release / Release pending / status label); F-046 codeUnits fold seed; moneyLanded exactly once; terminal-on-mount calm; reduced-motion instant path; both source-review corrections applied (structural F-049 verification instead of the comment-blind zero-match probe; 16-test count, 11 pure + 5 widget); one spec compile defect fixed (destX num→double) + 3 inert prefer_const fixes; focused 16/16; local full suite 698 pass with 36 sandbox-only shell segfaults in 3 unrelated files each verified standalone (25+2+5); Flutter Quality CI green on a7d7478 (762 tests, +16 exactly); exact-head Android debug APK build success (run 36609874532, head_sha=a7d7478 directly); PR open, unmerged, awaiting independent exact-head review` |
-| TASK-017 | Susu wheel — read-only dashboard wheel + draggable position picker with spring snap | 3 | TASK-005, TASK-006 | `NEEDS CORRECTION — F.2` |
+| TASK-017 | Susu wheel — read-only dashboard wheel + draggable position picker with spring snap | 3 | TASK-005, TASK-006 | `REVIEW REQUIRED — spec corrected 2026-09-29 (commit 76435c5) against main@4e47fdf; awaiting independent second executability review, then SPEC READY` |
 | TASK-018 | Radial launcher (nav + chat + product + AI command) | 3 | TASK-006, TASK-010b | `REVIEW REQUIRED — F.2` |
 | TASK-019 | Today strip + ambient mode | 3 | TASK-008 | `SCOPE LOCKED` |
 | TASK-020 | Sound design (`AzSound`, 5 samples) | 3 | — | `SCOPE LOCKED` |
@@ -254,10 +254,10 @@ pin down.
 | `test/marketplace/experiences/transit/transit_hold_ring_test.dart` | TASK-014 | Hold fraction/label math (incl. expiry and null expiry), ticker-driven ring with injected clock fires `onExpired` exactly once, timer-free demo gateway, booking→experience bridge (null-arrival fallback, driver→operator) |
 | `test/marketplace/experiences/hotel/stay_booking_test.dart` | TASK-015 | Band grouping (floor sort, null-floor grounding, degenerate cases), ribbon math (`ribbonNights`/`ribbonDateAt`/`stayTotalFor`), deterministic drag/tap scrubber cells, summary-bar live total + Reserve gating, vertical floor paging + unavailable-room gating, arrival sheet facts |
 | `test/escrow_vault_rail_test.dart` | TASK-016 | Seal destination (settled/released → vendor, refunded/expired → buyer), ring-fraction honesty degenerates, F-046 stable seed, countdown label formatting, held render + no-window honesty, terminal-on-mount post-state, live active→terminal unseal, reduced-motion instant path |
-| `test/susu_wheel_test.dart` | TASK-017 | Slot geometry (12-o'clock start, rotation-to-slot, shortest-path snap, nearest-free with taken slots), arc-window honesty, F-046 avatar-hue seed, countdown formatting, held wheel render + YOU badge + upcoming ring, terminal `Done` settle, reduced-motion settle, picker tap-select / taken-inert / drag-snap + hub commit |
+| `test/susu_wheel_test.dart` | TASK-017 | Slot geometry (12-o'clock start, rotation-to-slot, shortest-path snap, nearest-free with taken slots), arc-window honesty, F-046 avatar-hue seed, countdown formatting, held wheel render + YOU badge + upcoming ring, terminal `Done` settle, reduced-motion settle, picker tap-select / taken-inert / drag-snap + hub commit, 12-o'clock indicator geometrically proven at top, onPositionSelected exactly-once (re-tap, tap-then-hub, different-slot re-commit, taken-via-hub zero-callback) |
 | `test/liquid_launcher_test.dart` | TASK-018 | `satelliteScale` rest/mid-launch/full/stagger ladder, `satelliteTravel` zero → overshoot → settle contract (kHouseSpring overshoots ~22%; endpoint tolerance 1e-3 for the spring residual), `solveRadialFan` safe-bounds + no-anchor-overlap (pairwise slot overlap deliberately NOT asserted — clamp behaviour), widget smoke: auto-open burst settles, `items.first` lands above `items.last`, pick fires its callback exactly once, reduced-motion instant settle, unbounded host renders nothing |
 
-Run all nineteen before signing off any task that follows them:
+Run the full repository suite before signing off any task that follows them — the canonical command is `flutter test`; the permanent inventory below grows as this programme adds guards, so never rely on a fixed file count:
 
 ```bash
 flutter test
@@ -20103,7 +20103,7 @@ Notes / deviations:             __________
 
 ## TASK-017 — Susu: the wheel of members
 
-**Tier:** 3 — Signature moments · **Depends on:** TASK-005, TASK-006 · **Status:** `SPEC CORRECTED — PENDING SECOND EXECUTABILITY REVIEW — implementation already shipped on main by commit 29a0d30 (the pre-TASK-011 premium revamp); corrected 2026-09-29 against main@4e47fdf: probes made structural (F-049 controller check, F-046 comment-aware), initState MediaQuery read replaced by didChangeDependencies/_syncTicker, test count corrected to 24 (13 pure + 11 widget), 12-o'clock indicator given a key + geometric proof test, Steps 1–4 re-scoped from create/retrofit to audit-the-shipped-file. No frontend changes in this pass.`
+**Tier:** 3 — Signature moments · **Depends on:** TASK-005, TASK-006 · **Status:** `REVIEW REQUIRED — spec corrected 2026-09-29 (commit 76435c5 + this reconciliation) against main@4e47fdf, where the implementation already shipped in commit 29a0d30 (the pre-TASK-011 premium revamp): probes made structural (F-049 controller check, F-046 comment-aware), initState MediaQuery read replaced by didChangeDependencies/_syncTicker, test count corrected, 12-o'clock indicator given a key + geometric proof test, exactly-once onPositionSelected contract pinned, Steps 1–4 re-scoped from create/retrofit to audit-the-shipped-file, rollback re-scoped to indicator-only. No frontend changes in this pass. Moves to SPEC READY once the independent second executability review passes.`
 
 ### TASK-017 executability corrections — 2026-09-29 re-audit vs main@4e47fdf (post-TASK-016)
 
@@ -20127,6 +20127,52 @@ Verified non-defects: `kHouseSpring` (liquid_engine 25) and `liquidReducedMotion
 present; `AzamanHaptics.selection/confirm` present (80/54); picker public constructor
 surface unchanged; all five ValueKey seams exactly once each; removed-import probes pass
 (zero hits); shipped suite 24/24 standalone and green in Flutter Quality CI on 4e47fdf.
+
+Second reconciliation (2026-09-29, commit 76435c5 follow-up) — planning-only, no frontend changes:
+
+| # | Defect | Severity | Repository evidence | Correction applied |
+|---|---|---|---|---|
+| 10 | Status-board row said `NEEDS CORRECTION — F.2` while the section said `SPEC CORRECTED` — inconsistent vocabulary | Medium | status table line 197 vs section status | Both now `REVIEW REQUIRED` (defined vocabulary); moves to `SPEC READY` after the second review |
+| 11 | `onPositionSelected` could fire twice in one selection flow (tap a free slot, then tap the enabled hub) | High (latent) | `_selectSlot` calls the callback directly (wheel 691); `_confirmHub` routes through `_selectSlot` (701-703); pre-revamp public picker fired on tap alone (29a0d30~1 line 130); route default callback is a no-op; no live caller navigates `/susu/position-picker` | Contract A pinned (tap = commit, hub = alternative commit): exactly-once semantics + 4 permanent tests added; no public-signature change |
+| 12 | Rollback section told a future executor to delete the shipped wheel/test and reverse the screen retrofits — catastrophic against prior art 29a0d30 | Critical | wheel, dashboard and picker integration all shipped in 29a0d30, present on main@4e47fdf | Rollback re-scoped to indicator-key revert + new-test removal + `git checkout 4e47fdf --` restore; explicit hard prohibition on removing the shipped wheel |
+| 13 | Verification prose said `flutter test # all eleven files pass` — stale fixed file count | Low | repo test suite far exceeds eleven files | Wording now refers to the full repository suite with no fixed count |
+| 14 | A.8b prose said "Run all nineteen" while the table lists 22 permanent test files | Medium | count of A.8b table rows = 22 | Prose made count-independent (canonical `flutter test`); same fix applied to the TASK-018 sign-off line |
+
+### TASK-017 selection-commit contract — onPositionSelected fires exactly once (added 2026-09-29)
+
+**The latent defect.** The shipped `SusuPositionWheel` lets one user selection flow fire the
+callback twice: `_selectSlot()` calls `widget.onPositionSelected(slot)` directly, and
+`_confirmHub()` routes through `_selectSlot(hubSlot)` — so tap a free slot, then tap the
+enabled "Pick slot N" hub for that same slot, and the callback fires twice. No live caller
+currently navigates to `/susu/position-picker` (route default is a no-op closure), so this is
+a latent component-contract defect, not a production P0 — but a reusable financial component
+must leave no exactly-once ambiguity.
+
+**The decision (evidence-based, contract A — tap IS the commit).** The pre-revamp public
+`SusuPositionPicker` (29a0d30~1) fired `AzamanHaptics.confirm()` + `widget.onPositionSelected(i + 1)`
+on slot tap alone; its centre circle was a static "Pick" visual with no gesture handler. The
+public constructor signature and semantics must be preserved exactly (A.3). Therefore:
+**tapping a free slot is the committed selection; the hub is a visual/alternative commit
+control for the drag flow** (the drag itself never fires — only landing on the hub commits).
+
+**Required semantics (the corrected spec pins all five):**
+1. One user selection flow → exactly ONE `onPositionSelected` callback.
+2. A duplicate gesture resolving to the same already-committed slot — re-tapping the slot,
+   or tapping the hub when it reads "Pick slot N" for a slot the user just committed — is a
+   NO-OP: no callback, no haptic, no spring re-run. (Implementation: track the wheel's last
+   committed slot in State, resync it in `didUpdateWidget` when the externally supplied
+   `selectedPosition` changes; guard `_selectSlot`; `_confirmHub` keeps routing through
+   `_selectSlot`. No public-signature change.)
+3. Committing a DIFFERENT free slot afterwards is a new selection and fires once — the
+   guard is per-slot, not a one-shot latch.
+4. Taken slots never fire — on tap or via the hub (hub only ever names free slots).
+5. Drag-snap alone never fires the callback (shipped behaviour, already correct).
+
+**Permanent tests (added to `test/susu_wheel_test.dart`):**
+- tap slot 3, then tap hub ("Pick slot 3") → `picks == [3]` (one callback, not two);
+- tap slot 3, then re-tap slot 3 → `picks == [3]`;
+- tap slot 3, then tap slot 2 → `picks == [3, 2]` (later different-slot commits still fire);
+- taken slot tapped via hub path → still zero-callback (extends the shipped taken-inert test).
 
 ## Intro
 
@@ -21708,9 +21754,10 @@ previous class's `}` as the final line.
 The test file already exists on main with **24 tests (13 pure + 11 widget)** — a superset
 of the 21-test reference below (the shipped pure groups add: single-slot-at-top, rotation
 wrap-through-rounds, rotation degenerate-total). The reference below is retained for
-intent; the shipped suite governs. One addition required: the 12-o'clock indicator
-position test (see Visual acceptance item 0). Do not delete or weaken any shipped
-test. Count check after the addition: `grep -c "test(\|testWidgets(" test/susu_wheel_test.dart` → 25.
+intent; the shipped suite governs. Five additions required: the 12-o'clock indicator
+position test (Visual acceptance item 0) and the four exactly-once selection tests
+(selection-commit contract subsection). Do not delete or weaken any shipped
+test. Count check after the additions: `grep -c "test(\|testWidgets(" test/susu_wheel_test.dart` → 29.
 
 Reference content (21 tests as originally prescribed):
 
@@ -22080,8 +22127,8 @@ Run the Global Regression Guard, then the task probes:
 flutter pub get                                  # G1
 flutter analyze                                  # G2 — 0 errors, no NEW warnings in touched files
 flutter build web --debug                        # G3
-flutter test                                     # all eleven files pass
-flutter test test/susu_wheel_test.dart           # 25 tests (13 pure + 12 widget) after adding the indicator test
+flutter test                                     # full repository suite passes (no fixed file count — the suite grows with every permanent guard)
+flutter test test/susu_wheel_test.dart           # 29 tests (13 pure + 16 widget) after adding the indicator + exactly-once tests
 ```
 
 Probes — every line must return exactly what it says:
@@ -22140,8 +22187,9 @@ rg -n "cached_network_image|azaman_network_image|azaman_haptics" lib/screens/sus
 2. **Honesty** — a Susu with no cycles (or only terminal cycles) shows a bare wheel (no arc,
    no countdown) and 'Done' when all cycles are terminal. No invented numbers.
 3. **Picker** — open the position picker: the wheel replaces the dot grid. Tap a free slot →
-   confirm haptic, selection fires, the wheel springs so that slot lands at 12 o'clock, and
-   the hub reads "Pick slot N".
+   confirm haptic, selection fires ONCE, the wheel springs so that slot lands at 12 o'clock,
+   and the hub reads "Pick slot N". Tapping the hub then (or re-tapping the slot) is a no-op:
+   no second callback, no second haptic — the selection is already committed (contract A).
 4. **Drag** — drag the wheel horizontally; it rotates 1:1 with the finger; on release it
    springs (`kHouseSpring`) to the nearest free slot with a `selection()` haptic on landing.
 5. **Taken slots** — tapping a taken slot does nothing (no selection, no haptic, no motion).
@@ -22173,13 +22221,31 @@ rg -n "cached_network_image|azaman_network_image|azaman_haptics" lib/screens/sus
 12. Do **not** add new files beyond `susu_wheel.dart` and its test, or new dependencies.
 13. Do **not** modify `initiate_susu_sheet.dart` or `verification_chip.dart` — they share the
     `lib/widgets/susu/` directory and are out of scope for this task.
+14. Do **not** let one user selection flow fire `onPositionSelected` twice — tap-then-hub on
+    the same committed slot is a no-op (see the selection-commit contract subsection).
+15. Do **not** delete or rewrite the shipped wheel, its test file, or either screen's wheel
+    integration as part of this task or its rollback — they are prior art from 29a0d30.
 
 ## Rollback
 
-Delete `lib/widgets/susu/susu_wheel.dart` and `test/susu_wheel_test.dart` (the directory
-stays, with its two pre-existing files untouched). In the picker
-screen, reverse Step 2's five edits; in the dashboard, reverse Step 3's four edits. Both
-screens then behave exactly as before this task.
+TASK-017 is an audit/hardening task: `susu_wheel.dart`, its dashboard integration and its
+picker integration ALREADY SHIP on main (commit 29a0d30). **Rollback therefore must NOT
+delete `lib/widgets/susu/susu_wheel.dart` or `test/susu_wheel_test.dart`, and must NOT
+undo any dashboard or picker wheel integration — the shipped wheel is prior art, not this
+task's output.** A mechanical executor must read this section as a hard prohibition on
+removing the shipped wheel.
+
+Rollback means ONLY:
+1. revert the TASK-017 indicator-key addition (`ValueKey('susu-12-oclock-indicator')` in
+   `_twelveOClockIndicator`);
+2. remove the TASK-017 indicator-position regression test;
+3. revert the TASK-017 exactly-once guard and its four tests, IF they were applied;
+4. the file, its test file and both screens return byte-for-byte to the shipped
+   main@4e47fdf state (`git checkout 4e47fdf -- lib/widgets/susu/susu_wheel.dart
+   test/susu_wheel_test.dart` restores both in one step).
+
+If a rollback attempt would touch `initiate_susu_sheet.dart`, `verification_chip.dart`,
+the router, or any file outside the two wheel paths above, it is out of scope — stop.
 
 ## Sign-off
 
@@ -22190,9 +22256,10 @@ Date: __________
 G1 pub get:                     __________
 G2 analyze (0 errors, no NEW warnings in touched files): __________
 G3 build web --debug:           __________
-flutter test (all eleven files):  __________
-susu_wheel_test.dart (25 passing: shipped 24 + indicator test):  __________
+flutter test (full repository suite):  __________
+susu_wheel_test.dart (29 passing: shipped 24 + indicator + 4 exactly-once):  __________
 Probes (structural controller/mixin/no-executable-hashCode): __________
+Exactly-once selection (5 permanent tests, all pass): __________
 Visual 0 (12-oclock indicator geometrically proven at top): __________
 Visual 1 (dashboard wheel):     __________
 Visual 2 (no-window honesty):   __________
@@ -23335,7 +23402,7 @@ Step 2 orb wired (spinner rg = 0):     __________
 Step 3 _verticalLauncherRow gone:      __________
 Step 3 subtitle field gone:            __________
 G2 flutter analyze errors:             __________  (baseline: ____)
-Run all nineteen suites:               __________
+Run full repository suite (flutter test):  __________
 G3 build:                              __________
 Visual 1 (radial burst):               __________
 Visual 2 (Retail pre-selected):        __________
@@ -23369,7 +23436,7 @@ Notes / deviations:                    __________
 | ID | Scope (locked) |
 |---|---|
 | TASK-016 | `NEEDS CORRECTION — F.2` — `EscrowVaultRail` buyer→vault→vendor flow, honest countdown, unseal, reduced-motion path. Fix comment-sensitive zero-match probes. |
-| TASK-017 | `NEEDS CORRECTION — F.2` — `SusuWheel` dashboard and `SusuPositionWheel` picker. Fix probes that count code/comments as runtime instances; preserve reviewed geometry math. |
+| TASK-017 | `REVIEW REQUIRED` — `SusuWheel` dashboard and `SusuPositionWheel` picker. Spec corrected 2026-09-29 (structural probes, initState fix, test counts, indicator key + geometric test, exactly-once selection contract, rollback re-scoped to the shipped audit posture); awaiting the independent second executability review. Preserve reviewed geometry math. |
 | TASK-018 | `REVIEW REQUIRED` — radial launcher and `ThinkingOrb` loading consumer. Verify the complete spec and its compatibility/API details before execution. |
 | TASK-019 | Today strip (live chips with countdowns) + ambient idle mode after 8s of no interaction. |
 | TASK-020 | `AzSound` — 5 samples (tick, success chime, coin, rip, whoosh), gated by a setting. |
