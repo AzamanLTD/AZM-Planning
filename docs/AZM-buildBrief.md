@@ -178,8 +178,8 @@ A task is DONE only when **all** of these are true:
 | TASK-002 | Type scale `AzText` + `az_tokens.dart` barrel | 0 | TASK-001 | **`DONE` 2026-09-26** |
 | TASK-003 | Complete M3 `ColorScheme` bridge (kill framework colour leakage) | 0 | TASK-001 | **`DONE` 2026-09-26** |
 | TASK-004 | Wire `textTheme` + framework theme de-leak | 0 | TASK-002, TASK-003 | **`DONE` 2026-09-26** |
-| TASK-005 | `PremiumGlassContainer` v2 — directional light | 0 | TASK-001 | `REVIEW REQUIRED — corrected call-site count` |
-| TASK-006 | Haptic consolidation → one canonical `AzamanHaptics` | 0 | — | `REVIEW REQUIRED — verify 63 importers` |
+| TASK-005 | `PremiumGlassContainer` v2 — directional light | 0 | TASK-001 | `SPEC READY` |
+| TASK-006 | Haptic consolidation → one canonical `AzamanHaptics` | 0 | — | `SPEC READY` |
 | TASK-007 | Tab transition: directional slide + fade (replace ghosting cross-fade) | 1 | TASK-002 | `SPEC READY` |
 | TASK-008 | Home: delete ambient loops, conditional entrance, rail rebuild | 1 | TASK-002, TASK-005 | `DONE — merged (1602672), CI green; entrance choreography + reduced-motion gating verified by home_entrance_test (3 checks)` |
 | TASK-009a | `AzMoney` — one money formatter (+ permanent unit test) | 1 | — | `DONE — merged, CI green (ee60455 lineage)` |
