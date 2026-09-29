@@ -195,7 +195,7 @@ A task is DONE only when **all** of these are true:
 | TASK-015 | Hotel: building section + floor-plan dossier + date scrubber | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-011 | `FLIGHT GAP CLOSED — PR #112 final head bb9382a (branch task-015-hotel from main@56b532a); audits of 3e04776, 77b9973 and a341f08 all closed: per-night onNightAdded contract with three explicit regression legs; key-card materialisation on the named kPopSpring primitive; the missing key-card FLIGHT now implemented (door-stage-to-stays-slot vector measured once at card start via status listener, eased to zero on kPopSpring, reduced-motion and single-commit-haptic preserved, no timers) with a permanent widget regression pinning the mid-air position above the slot and the settled position inside it; exact-head Android debug APK verified via Android Integration workflow_dispatch on every revised head (36599105840/77b9973, 36601167310/a341f08, 36604766853/bb9382a with head_sha checked directly); Flutter Quality CI green on bb9382a (746 tests); PR open and unmerged awaiting re-review` |
 | TASK-016 | Escrow unseal — vault rail + goo-rim dissolve + live transition | 3 | TASK-001, TASK-002, TASK-005, TASK-006 | `IMPLEMENTED — PR #113 head a7d7478 (branch task-016-escrow-rail from main@4e47fdf): EscrowVaultRail buyer→vault→vendor flow with 1100ms one-shot unseal (goo-rim dissolve → coin slide → destination bloom) + 1s active-countdown repeater on TickerProviderStateMixin; honest ring (needs both fundedAt and expiresAt, degenerate windows 0) and honest labels (Auto-release / Release pending / status label); F-046 codeUnits fold seed; moneyLanded exactly once; terminal-on-mount calm; reduced-motion instant path; both source-review corrections applied (structural F-049 verification instead of the comment-blind zero-match probe; 16-test count, 11 pure + 5 widget); one spec compile defect fixed (destX num→double) + 3 inert prefer_const fixes; focused 16/16; local full suite 698 pass with 36 sandbox-only shell segfaults in 3 unrelated files each verified standalone (25+2+5); Flutter Quality CI green on a7d7478 (762 tests, +16 exactly); exact-head Android debug APK build success (run 36609874532, head_sha=a7d7478 directly); PR open, unmerged, awaiting independent exact-head review` |
 | TASK-017 | Susu wheel — read-only dashboard wheel + draggable position picker with spring snap | 3 | TASK-005, TASK-006 | `IMPLEMENTED — PR #114 head 23edba1 (branch task-017-susu-wheel-hardening from main@4e47fdf): indicator key + measured geometric regression, exactly-once onPositionSelected contract (per-slot guard, didUpdateWidget resync, _confirmHub routing preserved) + 4 permanent regressions; final suite 29 = 13 pure + 16 widget (shipped 24 untouched); focused 29/29; full suite +723 with 3 sandbox-only parallel failures in 8 unrelated files each verified standalone green; analyze parity 369 == main baseline, 0 errors, touched files clean; exact-head CI green (Flutter Quality run 36619104955 + Android Integration run 36619201612, both on 23edba1); PR open, unmerged, awaiting independent exact-head review` |
-| TASK-018 | Radial launcher (nav + chat + product + AI command) | 3 | TASK-006, TASK-010b | `SPEC READY` — first executability audit (D1–D14) + independent second review dry run (D15–D22, incl. omitted TASK-010b guard suite and short-viewport overflow) all corrected Planning-only; spec executes verbatim on main@27325e62 (analyze parity, task suites 15/15 + 10/10 + 5/5, probes all match) |
+| TASK-018 | Radial launcher (nav + chat + product + AI command) | 3 | TASK-006, TASK-010b | `IMPLEMENTED — PR #115 head f06599c3 (branch task-018-liquid-launcher from main@27325e62), open, unmerged, awaiting independent exact-head review: LiquidLauncher radial burst (existing goo painter + solveRadialFan, one-shot 660ms, one confirm() per pick), F-051 silent dismissal in dial+dropdown, F-052 ThinkingOrb in AI command; kVerticalLauncherEntries byte-identical; TASK-010b guard rewritten (D18); Steps 1-6 verbatim, no code deviations; D23/D24 spec-block fixes Planning-only (039e669, c0e706b); focused 15/15 + 10/10 + 5/5; full suite +741 with moving flutter_tester flake only (all pass on rerun); analyze 0 errors / 150 warnings = parity; exact-head CI green on f06599c3 (Flutter Quality 36630675480 + Android Integration 36630690956); on-device visual acceptance pending with reviewer |
 | TASK-019 | Today strip + ambient mode | 3 | TASK-008 | `SCOPE LOCKED` |
 | TASK-020 | Sound design (`AzSound`, 5 samples) | 3 | — | `SCOPE LOCKED` |
 | TASK-021 | Artifact wallet (receipts / passes / certificates) | 3 | TASK-005 | `SCOPE LOCKED` |
@@ -23833,21 +23833,37 @@ small-viewport fan compresses inside the visible band.
 ### Sign-off
 
 ```
-TASK-018  Status: DONE / BLOCKED
-Pre-flight confirm-count checks:       __________  (all matched)
-Step 4 confirm() counts (1/1/1):       __________
-Step 2 orb wired (spinner rg = 0):     __________
-Step 3 _verticalLauncherRow gone:      __________
-Step 3 subtitle field gone:            __________
-G2 flutter analyze errors:             __________  (baseline: ____)
-Run full repository suite (flutter test):  __________
-G3 build (exact-head CI: Flutter Quality + Android Integration; no web platform):  __________
-Visual 1 (radial burst):               __________
-Visual 2 (Retail pre-selected):        __________
-Visual 3 (silent dismissal):           __________
-Visual 7 (orb loading):                __________
-Visual 8 (reduced motion):             __________
-Notes / deviations:                    __________
+TASK-018  Status: IMPLEMENTED — PR #115 open, unmerged, awaiting independent exact-head review
+Pre-flight confirm-count checks:       all 9 matched on main@27325e62 (selection 1; entries 2;
+                                       openVerticalLauncherForTab 4; nav haptic 1; row class 1;
+                                       dial confirm 2; dropdown confirm 2; spinner 1;
+                                       solveRadialFan 2)
+Step 4 confirm() counts (1/1/1):       yes — dial 1, dropdown 1, launcher 1
+Step 2 orb wired (spinner rg = 0):     yes — ThinkingOrb( 1; CircularProgressIndicator 0
+Step 3 _verticalLauncherRow gone:      yes — 0 hits; AzamanHaptics. 0; AzRadius 0 (3f clean)
+Step 3 subtitle field gone:            field STAYS BY DESIGN — count 6 (type decl + 5 records;
+                                       spec 3b keeps it, simply unread by the burst)
+G2 flutter analyze errors:             0 errors / 150 warnings = baseline parity
+                                       (224 infos = 219 baseline + 5 in the two NEW files)
+Run full repository suite (flutter test):  +741 passed; 7 failures all the documented moving
+                                       flutter_tester loading flake — every failing file passes
+                                       on immediate rerun; flake-equivalent to pristine main
+G3 build (exact-head CI):              GREEN on head f06599c30f740290d8e327debdaace1930dbe04f
+                                       — Flutter Quality run 36630675480 success; Android
+                                       Integration (debug APK, dispatched) run 36630690956
+                                       success
+Visual 1-8:                            not executable in sandbox — requires the on-device
+                                       acceptance pass by the reviewer (haptics + goo rim are
+                                       device-sensory)
+Notes / deviations:                    Steps 1-6 applied VERBATIM from the corrected spec; no
+                                       code deviations. Two spec-block defects caught by the
+                                       verbatim apply and fixed Planning-only: D23 (6b replace
+                                       block carried a trailing closer the find lacked — parse
+                                       error; Planning 039e669) and D24 (the D22 find-block
+                                       extension was never persisted — both assertion chains
+                                       remained; Planning c0e706b). Task branch
+                                       task-018-liquid-launcher from main@27325e62; head
+                                       f06599c30f740290d8e327debdaace1930dbe04f; PR #115.
 ```
 
 ---
