@@ -13383,6 +13383,116 @@ void main() {
     },
   );
 
+  testWidgets('dine-in host defaults to table mode and takeaway switches to shared cart',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final cart = CartNotifier();
+    final business = _business();
+    var dineInAdds = 0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cartProvider.overrideWith((ref) => cart),
+          storefrontExperienceProvider(business.id).overrideWith(
+            (ref) async => _experience(),
+          ),
+          storefrontProductsProvider(business.id).overrideWith(
+            (ref) async => <String, dynamic>{'products': <dynamic>[]},
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: BusinessBookTab(
+              business: business,
+              colors: _colors,
+              dineInContext: 'Table 4',
+              onDineInAddToTab: (product, selections, quantity) async {
+                dineInAdds++;
+              },
+              menuSections: [_section()],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    expect(find.text('Dine-in'), findsOneWidget);
+    expect(find.text('Table 4'), findsOneWidget);
+
+    await _openDish(tester);
+    await tester.tap(find.textContaining('Add to tray').first);
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(dineInAdds, 1);
+    expect(cart.state.itemCount, 0);
+
+    await tester.tap(find.text('Takeaway'));
+    await tester.pump();
+    expect(find.text('Table 4'), findsNothing);
+
+    await _openDish(tester);
+    await tester.tap(find.textContaining('Add to tray').first);
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(dineInAdds, 1);
+    expect(cart.state.itemCount, 1);
+    expect(cart.state.items.single.notes, isNull);
+  });
+
+  testWidgets('restaurant tray rail expands and mutates canonical cart lines',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final cart = CartNotifier();
+    cart.addItem(
+      businessProfileId: 'bp-1',
+      businessName: 'Test Restaurant',
+      productId: 'dish-1',
+      name: 'Jollof Rice',
+      unitPrice: 12,
+      quantity: 1,
+      experiencePreset: 'DINING_JOURNEY',
+    );
+
+    var opened = false;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [cartProvider.overrideWith((ref) => cart)],
+        child: MaterialApp(
+          home: Scaffold(
+            body: RestaurantTrayRail(
+              onOpen: () => opened = true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('restaurant-tray-rail-collapsed')), findsOneWidget);
+
+    await tester.drag(
+      find.byKey(const ValueKey('restaurant-tray-rail-collapsed')),
+      const Offset(0, -50),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('restaurant-tray-rail-expanded')), findsOneWidget);
+    expect(find.text('Jollof Rice'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Increase quantity'));
+    await tester.pump();
+    expect(cart.state.items.single.quantity, 2);
+
+    await tester.tap(find.byTooltip('Decrease quantity'));
+    await tester.pump();
+    expect(cart.state.items.single.quantity, 1);
+
+    await tester.tap(find.text('Order tray'));
+    await tester.pump();
+    expect(opened, isTrue);
+  });
+
   testWidgets('delivery mode reaches the shared cart with the delivery note',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
@@ -13421,8 +13531,7 @@ void main() {
     expect(cart.state.businessProfileId, business.id);
     expect(cart.state.items.single.notes, 'Delivery');
   });
-}
-```
+}```
 
 ---
 
