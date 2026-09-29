@@ -195,7 +195,7 @@ A task is DONE only when **all** of these are true:
 | TASK-015 | Hotel: building section + floor-plan dossier + date scrubber | 2 | TASK-001, TASK-002, TASK-005, TASK-006, TASK-011 | `FLIGHT GAP CLOSED — PR #112 final head bb9382a (branch task-015-hotel from main@56b532a); audits of 3e04776, 77b9973 and a341f08 all closed: per-night onNightAdded contract with three explicit regression legs; key-card materialisation on the named kPopSpring primitive; the missing key-card FLIGHT now implemented (door-stage-to-stays-slot vector measured once at card start via status listener, eased to zero on kPopSpring, reduced-motion and single-commit-haptic preserved, no timers) with a permanent widget regression pinning the mid-air position above the slot and the settled position inside it; exact-head Android debug APK verified via Android Integration workflow_dispatch on every revised head (36599105840/77b9973, 36601167310/a341f08, 36604766853/bb9382a with head_sha checked directly); Flutter Quality CI green on bb9382a (746 tests); PR open and unmerged awaiting re-review` |
 | TASK-016 | Escrow unseal — vault rail + goo-rim dissolve + live transition | 3 | TASK-001, TASK-002, TASK-005, TASK-006 | `IMPLEMENTED — PR #113 head a7d7478 (branch task-016-escrow-rail from main@4e47fdf): EscrowVaultRail buyer→vault→vendor flow with 1100ms one-shot unseal (goo-rim dissolve → coin slide → destination bloom) + 1s active-countdown repeater on TickerProviderStateMixin; honest ring (needs both fundedAt and expiresAt, degenerate windows 0) and honest labels (Auto-release / Release pending / status label); F-046 codeUnits fold seed; moneyLanded exactly once; terminal-on-mount calm; reduced-motion instant path; both source-review corrections applied (structural F-049 verification instead of the comment-blind zero-match probe; 16-test count, 11 pure + 5 widget); one spec compile defect fixed (destX num→double) + 3 inert prefer_const fixes; focused 16/16; local full suite 698 pass with 36 sandbox-only shell segfaults in 3 unrelated files each verified standalone (25+2+5); Flutter Quality CI green on a7d7478 (762 tests, +16 exactly); exact-head Android debug APK build success (run 36609874532, head_sha=a7d7478 directly); PR open, unmerged, awaiting independent exact-head review` |
 | TASK-017 | Susu wheel — read-only dashboard wheel + draggable position picker with spring snap | 3 | TASK-005, TASK-006 | `IMPLEMENTED — PR #114 head 23edba1 (branch task-017-susu-wheel-hardening from main@4e47fdf): indicator key + measured geometric regression, exactly-once onPositionSelected contract (per-slot guard, didUpdateWidget resync, _confirmHub routing preserved) + 4 permanent regressions; final suite 29 = 13 pure + 16 widget (shipped 24 untouched); focused 29/29; full suite +723 with 3 sandbox-only parallel failures in 8 unrelated files each verified standalone green; analyze parity 369 == main baseline, 0 errors, touched files clean; exact-head CI green (Flutter Quality run 36619104955 + Android Integration run 36619201612, both on 23edba1); PR open, unmerged, awaiting independent exact-head review` |
-| TASK-018 | Radial launcher (nav + chat + product + AI command) | 3 | TASK-006, TASK-010b | `REVIEW REQUIRED — F.2` |
+| TASK-018 | Radial launcher (nav + chat + product + AI command) | 3 | TASK-006, TASK-010b | `REVIEW REQUIRED — F.2` — first independent executability audit 2026-09-29: NOT executable as written (dead Step 3 anchors vs shipped TASK-010b; Step 1 const-scope compile error; impossible web gate; unsafe rollback); corrections committed Planning-only; awaiting independent second executability review |
 | TASK-019 | Today strip + ambient mode | 3 | TASK-008 | `SCOPE LOCKED` |
 | TASK-020 | Sound design (`AzSound`, 5 samples) | 3 | — | `SCOPE LOCKED` |
 | TASK-021 | Artifact wallet (receipts / passes / certificates) | 3 | TASK-005 | `SCOPE LOCKED` |
@@ -22304,7 +22304,7 @@ Notes / deviations:             (1) indicator key sits on the Icon inside _twelv
 
 ## TASK-018 — Radial launcher: one gesture vocabulary
 
-**Tier:** 3 — Signature moments · **Depends on:** TASK-006, TASK-010b · **Status:** `SPEC READY`
+**Tier:** 3 — Signature moments · **Depends on:** TASK-006, TASK-010b · **Status:** `REVIEW REQUIRED — F.2` — first independent executability audit 2026-09-29 (against live main@27325e62, Planning a7500ec): NOT executable as originally written (dead Step 3 anchors vs the shipped TASK-010b surface; Step 1 const-scope compile error; impossible web build gate; self-contaminating probe; unsafe rollback). Corrective wording applied below; a separate independent second executability review is required before SPEC READY. See the audit record at the end of this section.
 
 ### Why
 
@@ -22321,9 +22321,10 @@ Reality, verified against the source at spec time:
   guard. **No engine code is added or changed in this task** — the engine *is* the vocabulary.
 - **What is missing is adoption.** Three gaps, each found in source:
   1. **No embedded burst.** Both existing launchers are `OverlayEntry` triggers. The
-     long-press Market launcher (TASK-010b) is a static Whisper sheet whose spec explicitly
-     hands its body to TASK-018. There is no component that bursts satellites *in place*
-     inside a host that already owns its scrim (a sheet).
+     long-press Market launcher (TASK-010b) is a static Panel sheet (five rows in
+     `VerticalLauncherSheet`) whose spec explicitly hands its body to TASK-018. There is no
+     component that bursts satellites *in place* inside a host that already owns its scrim
+     (a sheet).
   2. **The haptic map is broken (F-051).** In both liquid widgets, picking a satellite fires
      `AzamanHaptics.confirm()` **twice** (satellite onTap + `_close()`), and dismissing via the
      scrim also fires `confirm()` — a dismissal mislabelled as a commitment. One gesture
@@ -22341,9 +22342,11 @@ Reality, verified against the source at spec time:
    existing vocabulary instead of re-deriving it. It renders inside its own box (local
    coordinates — no `OverlayEntry`, no scrim), watches `themeProvider` itself, and fires
    exactly one `AzamanHaptics.confirm()` per pick.
-2. Replace the TASK-010b Whisper sheet body in `main.dart` with the radial burst; the
-   long-press gesture, the entry point and the landing (Marketplace pre-filtered) are
-   byte-identical in behaviour.
+2. Replace the TASK-010b Panel sheet body (`VerticalLauncherSheet`'s five-row list in
+   `main.dart`) with the radial burst; the long-press gesture, the entry point
+   (`openVerticalLauncherForTab`, minus its now-double `navigation()` haptic — the F-051
+   class) and the landing (Marketplace pre-filtered) are otherwise byte-identical in
+   behaviour.
 3. Wire `ThinkingOrb` into `AiCommandMenu._buildLoading` (its first production consumer) and
    move `AiCommandMenu`'s haptic onto `AzamanHaptics`.
 4. Fix the F-051 double-fire in `category_speed_dial.dart` and `liquid_dropdown_menu.dart`
@@ -22355,7 +22358,7 @@ Reality, verified against the source at spec time:
 | Dependency | Provides | Used by |
 |---|---|---|
 | TASK-006 | `AzamanHaptics.selection/confirm` vocabulary | launcher pick haptic, `AiCommandMenu` retrofit |
-| TASK-010b | `_verticalLauncherEntries` + the long-press sheet seam in `main.dart` | Step 3 anchors |
+| TASK-010b | `kVerticalLauncherEntries` (FIVE targets incl. the F-029 `HOSPITALITY` variant) + the `openVerticalLauncherForTab` gate + `VerticalLauncherSheet` body in `main.dart` | Step 3 anchors (re-anchored 2026-09-29: the audit found the original anchors described an unshipped “Whisper/`_verticalLauncherEntries`” structure) |
 | repo `lib/widgets/liquid/liquid_engine.dart` | `kPopSpring`/`kHouseSpring`, `paintGoo`, `drawNeck`, `squirclePath`, `LiquidReveal`, `liquidReducedMotion` | unchanged — it IS the vocabulary |
 | repo `lib/widgets/liquid/liquid_placement.dart` | `LiquidSafeArea`, `ArcSlot` | unchanged |
 | repo `lib/widgets/liquid/category_speed_dial.dart` | **public** `solveRadialFan`, `measureSatellitePill`, `satelliteScale`, `satelliteTravel` | reused by `LiquidLauncher` (§A.3 — nothing is removed or renamed) |
@@ -22374,10 +22377,18 @@ Reality, verified against the source at spec time:
 
 TASK-006 and TASK-010b must be DONE — this spec anchors against their post-state.
 
+> TASK-006 board note (audit 2026-09-29): the TASK-006 row still reads `SPEC READY`, but its
+> artifact is verifiably shipped on main (`lib/utils/azaman_haptics.dart`, full vocabulary;
+> probe 1 below passes). Recording TASK-006's DONE evidence is separate Planning
+> housekeeping — flagged here, not silently edited.
+
 ```bash
 flutter analyze
 rg -n "static Future<void> selection" lib/utils/azaman_haptics.dart    # expect 1 (TASK-006)
-rg -n "_verticalLauncherEntries" lib/main.dart                        # expect 2 (TASK-010b)
+rg -n "kVerticalLauncherEntries" lib/main.dart                       # expect 2 (TASK-010b: decl + sheet use)
+rg -n "openVerticalLauncherForTab" lib/main.dart                     # expect ≥ 2 (def + nav call)
+rg -n "AzamanHaptics.navigation" lib/main.dart                      # expect 1 (Step 3e removes it — F-051)
+rg -n "class _VerticalLauncherRow" lib/main.dart                     # expect 1 (Step 3d deletes it)
 rg -n "AzamanHaptics.confirm\(\);" lib/widgets/liquid/category_speed_dial.dart   # expect 2 (F-051 double-fire)
 rg -n "AzamanHaptics.confirm\(\);" lib/widgets/liquid/liquid_dropdown_menu.dart  # expect 2 (F-051)
 rg -n "CircularProgressIndicator" lib/widgets/ai_command_menu.dart    # expect 1 (the spinner to replace)
@@ -22386,7 +22397,7 @@ rg -n "solveRadialFan" lib/widgets/liquid/category_speed_dial.dart    # expect �
 
 If any count differs, **stop** — a prior task did not land as specified.
 
-> **flutter_tester caveat.** `liquid_widget_smoke_test.dart` documents that the goo
+> **flutter_tester caveat.** `test/widgets/liquid/liquid_widget_smoke_test.dart` documents that the goo
 > `CustomPaint` path (`ui.ImageFilter.compose`) has segfaulted `flutter_tester` headless in the
 > past. The brief's TASK-016 widget tests already render `paintGoo`-based painters, so the
 > current environment is assumed clean. If `flutter test test/liquid_launcher_test.dart`
@@ -22434,6 +22445,19 @@ import 'category_speed_dial.dart'
 import 'liquid_engine.dart';
 import 'liquid_placement.dart';
 
+// Satellite dims mirror category_speed_dial.dart's satellites so the burst
+// is indistinguishable from the dial's. `measureSatellitePill` measures
+// with those same dims — keep the two files' numbers in sync.
+// (Audit 2026-09-29: these MUST be top-level, not State-class statics —
+// `_LauncherGooPainter` and `_LauncherSatellite` below reference them
+// unqualified; as originally written this file did not compile.)
+const double _kSatPillHPad = 13;
+const double _kSatPillRadius = 19;
+const double _kSatIconSize = 15;
+const double _kSatLabelFS = 12;
+const double _kAnchorSize = 44;
+const double _kAnchorRadius = 22;
+
 class LiquidLauncherItem {
   final IconData icon;
   final String label;
@@ -22460,16 +22484,6 @@ class LiquidLauncher extends ConsumerStatefulWidget {
 
 class _LiquidLauncherState extends ConsumerState<LiquidLauncher>
     with SingleTickerProviderStateMixin {
-  // Satellite dims mirror category_speed_dial.dart's satellites so the burst
-  // is indistinguishable from the dial's. `measureSatellitePill` measures
-  // with those same dims — keep the two files' numbers in sync.
-  static const double _kSatPillHPad = 13;
-  static const double _kSatPillRadius = 19;
-  static const double _kSatIconSize = 15;
-  static const double _kSatLabelFS = 12;
-  static const double _kAnchorSize = 44;
-  static const double _kAnchorRadius = 22;
-
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 660),
@@ -22833,9 +22847,14 @@ Replace with:
 
 ---
 
-### Step 3 — `main.dart`: the Whisper body becomes the radial burst
+### Step 3 — `main.dart`: the Panel sheet body becomes the radial burst
 
-All anchors are the **post-TASK-010b state** — TASK-010b must be DONE.
+All anchors are the **post-TASK-010b state as shipped on main@27325e62** — re-anchored by
+the 2026-09-29 audit. TASK-010b shipped `kVerticalLauncherEntries` (five targets incl.
+the F-029 `HOSPITALITY` variant), the `openVerticalLauncherForTab` gate, and the
+`VerticalLauncherSheet` / `_VerticalLauncherRow` pair — NOT the "Whisper sheet /
+`_verticalLauncherEntries`" structure the first draft of this spec anchored against. Every
+find block below is verified against current main.
 
 **3a.** Add the import. Find:
 
@@ -22850,168 +22869,130 @@ import 'package:azaman/widgets/drawer_peek_hint.dart';
 import 'package:azaman/widgets/liquid/liquid_launcher.dart';
 ```
 
-**3b.** Drop the now-dead `subtitle` field from the entries (the radial satellites carry icon
-+ label only — the dial vocabulary; the sheet's standing subtitle under the title is the
-single subtitle). Find:
+**3b.** Replace the sheet body (inside `VerticalLauncherSheet.build`; the pinned header
+above it is untouched — the sheet keeps its "Explore the market" title and standing
+caption). Find:
 
 ```dart
-  /// The four marketplace verticals, in the order they appear in the in-app
-  /// category dial. Wire values match what the dial itself sends, so a
-  /// launcher landing is indistinguishable from a dial filter — except the
-  /// landing happens on a fresh, already-filtered marketplace.
-  static const List<({String wire, String label, IconData icon, String subtitle})>
-      _verticalLauncherEntries = [
-    (wire: 'RETAIL', label: 'Retail', icon: HugeIconsStroke.shoppingBag01, subtitle: 'Shop the shelf'),
-    (wire: 'FOOD_BEVERAGE', label: 'Restaurants', icon: HugeIconsSolid.store01, subtitle: 'Menus & tables'),
-    (wire: 'LOGISTICS', label: 'Transit', icon: HugeIconsSolid.arrowDataTransferHorizontal, subtitle: 'Trips & seats'),
-    (wire: 'REAL_ESTATE', label: 'Hotels', icon: HugeIconsSolid.bank, subtitle: 'Rooms & floors'),
-  ];
-```
-
-Replace with:
-
-```dart
-  /// The four marketplace verticals, in the order they appear in the in-app
-  /// category dial. Wire values match what the dial itself sends, so a
-  /// launcher landing is indistinguishable from a dial filter — except the
-  /// landing happens on a fresh, already-filtered marketplace.
-  ///
-  /// TASK-018: the per-row caption field was dropped — the radial satellites
-  /// carry icon + label only (the dial vocabulary); the sheet's standing
-  /// caption under the title is the single one.
-  static const List<({String wire, String label, IconData icon})>
-      _verticalLauncherEntries = [
-    (wire: 'RETAIL', label: 'Retail', icon: HugeIconsStroke.shoppingBag01),
-    (wire: 'FOOD_BEVERAGE', label: 'Restaurants', icon: HugeIconsSolid.store01),
-    (wire: 'LOGISTICS', label: 'Transit', icon: HugeIconsSolid.arrowDataTransferHorizontal),
-    (wire: 'REAL_ESTATE', label: 'Hotels', icon: HugeIconsSolid.bank),
-  ];
-```
-
-**3c.** Update the launcher's doc comment. Find:
-
-```dart
-  /// Whisper-weight launcher: one compact column, no scrolling, closes on any
-  /// pick. TASK-018 replaces the body of this sheet with the unified radial
-  /// launcher — the long-press gesture and this entry point stay.
-```
-
-Replace with:
-
-```dart
-  /// Radial vertical launcher (TASK-018): satellites burst from the sheet
-  /// centre with the shared liquid vocabulary — kPopSpring launch, goo-rim
-  /// merging, one `AzamanHaptics.confirm()` per pick. The long-press gesture
-  /// and this entry point are unchanged from TASK-010b; only the body changed.
-```
-
-**3d.** Replace the rows with the radial burst. Find:
-
-```dart
-              const SizedBox(height: AzSpace.md),
-              for (final entry in _verticalLauncherEntries)
-                _verticalLauncherRow(colors, entry),
+        Flexible(
+          child: ListView(
+            controller: scrollController,
+            // Five fixed rows: materialise them all eagerly so every target
+            // is in the tree (and findable by semantics) from the first
+            // frame, at every viewport size — the list only ever scrolls on
+            // viewports shorter than the content.
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(AzSpace.lg, AzSpace.xs, AzSpace.lg, AzSpace.md),
+            children: [
+              for (final entry in kVerticalLauncherEntries)
+                _VerticalLauncherRow(
+                  colors: colors,
+                  entry: entry,
+                  onLaunch: onLaunch,
+                ),
             ],
-```
-
-Replace with:
-
-```dart
-              const SizedBox(height: AzSpace.xs),
-              // TASK-018: the radial burst replaces the Whisper rows. The
-              // launcher solves its own satellite geometry inside this box
-              // (bounded constraints are part of its contract) and fires one
-              // AzamanHaptics.confirm() per pick — no extra haptic here.
-              SizedBox(
-                height: 190,
-                width: double.infinity,
-                child: LiquidLauncher(
-                  semanticLabel: 'Market verticals',
-                  items: [
-                    for (final entry in _verticalLauncherEntries)
-                      LiquidLauncherItem(
-                        icon: entry.icon,
-                        label: entry.label,
-                        onTap: () {
-                          Navigator.pop(sheetContext);
-                          _onNavItemSelected(3);
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => MarketplaceHomeScreen(
-                                  initialCategory: entry.wire),
-                            ),
-                          );
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            ],
-```
-
-> Same context mechanics as TASK-010b's row: `Navigator.pop(sheetContext)` pops the topmost
-> route (the sheet); the push uses the still-mounted wrapper's `context`. The
-> `AzamanHaptics.navigation()` line from the old row is intentionally NOT carried over — the
-> launcher's pick already fires one `confirm()`, and two haptics per gesture is the F-051 bug
-> this task removes.
-
-**3e.** Delete `_verticalLauncherRow` — it is now unreferenced. Find the whole method:
-
-```dart
-  Widget _verticalLauncherRow(
-    theme_pkg.AzamanColors colors,
-    ({String wire, String label, IconData icon, String subtitle}) entry,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AzSpace.xs),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: AzRadius.brLg,
-          onTap: () {
-            Navigator.pop(context);
-            AzamanHaptics.navigation();
-            _onNavItemSelected(3);
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => MarketplaceHomeScreen(initialCategory: entry.wire),
-              ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AzSpace.sm, vertical: AzSpace.md),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: colors.accentSurface,
-                    borderRadius: AzRadius.brMd,
-                  ),
-                  child: Icon(entry.icon, size: 20, color: colors.accent),
-                ),
-                const SizedBox(width: AzSpace.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(entry.label, style: AzText.title.copyWith(color: colors.textPrimary)),
-                      Text(entry.subtitle, style: AzText.bodyS.copyWith(color: colors.textTertiary)),
-                    ],
-                  ),
-                ),
-                Icon(HugeIconsSolid.arrowRight01, size: 16, color: colors.textTertiary),
-              ],
-            ),
           ),
         ),
-      ),
-    );
-  }
 ```
 
-Replace with nothing (delete the method entirely).
+Replace with:
+
+```dart
+        // TASK-018: the radial burst replaces the five-row list. The launcher
+        // solves its own satellite geometry inside this box (bounded
+        // constraints are part of its contract) and fires exactly one
+        // AzamanHaptics.confirm() per pick — no extra haptic here or in the
+        // entry point (3e). scrollController stays in the constructor
+        // contract (AzamanSheet.showPanel provides it); the fixed-height
+        // burst needs no scrollable, and the sheet surface still owns the
+        // detent drag.
+        SizedBox(
+          height: 190,
+          width: double.infinity,
+          child: LiquidLauncher(
+            semanticLabel: 'Market verticals',
+            items: [
+              for (final entry in kVerticalLauncherEntries)
+                LiquidLauncherItem(
+                  icon: entry.icon,
+                  label: entry.label,
+                  onTap: () => onLaunch(entry.wire),
+                ),
+            ],
+          ),
+        ),
+```
+
+> The satellites carry icon + label only (the dial vocabulary); the entries' `subtitle`
+> field stays in `kVerticalLauncherEntries` (unchanged, simply unread now) and the sheet's
+> standing caption remains the single displayed caption. `kVerticalLauncherEntries` itself
+> is NOT modified — all five targets, wire values and order byte-identical. The landing
+> mechanics stay in `openVerticalLauncherForTab`'s `onLaunch` closure — pop the sheet with
+> its own context, `selectTab(kMarketTabIndex)`, push with the still-mounted shell context;
+> the satellites only invoke `onLaunch(entry.wire)`, so the pick→landing path is the
+> shipped TASK-010b path minus its double haptic.
+
+**3c.** Update the `VerticalLauncherSheet` doc comment (it describes the old row list and
+its drag coupling). Find:
+
+```dart
+/// The launcher's Panel body: a pinned "Explore the market" header + the five
+/// target rows in the sheet's own scrollable, so a drag on the rows and a drag
+/// on the detent are the same gesture (I.3.4). The sheet surface (colour,
+/// scrim, blur, handle, safe-area, detents) is owned by `AzSheetSurface`; this
+/// widget owns no animation of its own, so reduced motion needs no task-owned
+/// collapse path — the rows are fully rendered on the sheet's first frame.
+```
+
+Replace with:
+
+```dart
+/// The launcher's Panel body: a pinned "Explore the market" header + the
+/// radial vertical launcher (TASK-018). Satellites burst from the body's
+/// centre with the shared liquid vocabulary — kPopSpring launch, goo-rim
+/// merging, one `AzamanHaptics.confirm()` per pick. The sheet surface
+/// (colour, scrim, blur, handle, safe-area, detents) is owned by
+/// `AzSheetSurface`; the burst is fixed-height, and the sheet surface owns
+/// the detent drag.
+```
+
+**3d.** Delete the now-unreferenced `_VerticalLauncherRow` class. Find the whole class:
+
+```dart
+class _VerticalLauncherRow extends StatelessWidget {
+```
+
+…through its final closing `}` (the class body: constructor, fields, and the `build`
+method ending with the trailing-comma `);
+  }
+}`). Replace with nothing (delete the
+class entirely). Do NOT delete anything past the class's closing brace —
+`class MainWrapper` and everything after it is outside this task's surface.
+
+**3e.** Remove the now-double pick haptic from the entry point (F-051 class bug: the
+satellite's `onTap` already fires the single `confirm()`; `onLaunch` firing
+`navigation()` on top of it would double-buzz every pick). Find, inside
+`openVerticalLauncherForTab`'s `onLaunch` closure:
+
+```dart
+        // Close the launcher exactly once: pop the SHEET route with its own
+        // context, then navigate with the still-mounted shell context.
+        Navigator.pop(sheetContext);
+        AzamanHaptics.navigation();
+        selectTab(kMarketTabIndex);
+```
+
+Replace with:
+
+```dart
+        // Close the launcher exactly once: pop the SHEET route with its own
+        // context, then navigate with the still-mounted shell context.
+        // (TASK-018/F-051: navigation() removed — the launcher's satellite
+        // already fired the pick's single confirm(); two haptics per pick is
+        // the double-fire class this task removes.)
+        Navigator.pop(sheetContext);
+        selectTab(kMarketTabIndex);
+```
 
 **3f.** Remove the now-unused haptics import **only if** nothing else uses it:
 
@@ -23019,8 +23000,9 @@ Replace with nothing (delete the method entirely).
 rg -n "AzamanHaptics\." lib/main.dart
 ```
 
-If the count is 0, delete the line `import 'package:azaman/utils/azaman_haptics.dart';`
-(added by TASK-010b Step 4a). If any use remains, keep the import and log it.
+If the count is 0 (expected: the line above was the only use), delete the line
+`import 'package:azaman/utils/azaman_haptics.dart';` (main.dart line 40). If any use
+remains, keep the import and log it.
 
 ---
 
@@ -23245,6 +23227,36 @@ void main() {
       expect(
           solveRadialFan(anchor: anchor, sizes: const [], safe: safe), isEmpty);
     });
+
+    // Production shape (audit 2026-09-29): the Market sheet hosts FIVE
+    // satellites (the shipped kVerticalLauncherEntries incl. Hospitality)
+    // in a tight host — pin that the clamp keeps them safe + anchor-clear.
+    test('production shape: five satellites stay inside a tight host', () {
+      final five = [
+        for (final l in [
+          'Restaurants',
+          'Hotels',
+          'Transit',
+          'Retail',
+          'Hospitality'
+        ])
+          measureSatellitePill(l, _style, TextScaler.noScaling, TextDirection.ltr),
+      ];
+      final tight = LiquidSafeArea(
+          screen: const Size(358, 190), padding: EdgeInsets.zero, margin: 6);
+      final centre =
+          Rect.fromCenter(center: const Offset(179, 95), width: 44, height: 44);
+      final slots = solveRadialFan(anchor: centre, sizes: five, safe: tight);
+      expect(slots.length, 5);
+      for (final s in slots) {
+        expect(s.rect.left, greaterThanOrEqualTo(tight.left - 0.01));
+        expect(s.rect.right, lessThanOrEqualTo(tight.right + 0.01));
+        expect(s.rect.top, greaterThanOrEqualTo(tight.top - 0.01));
+        expect(s.rect.bottom, lessThanOrEqualTo(tight.bottom + 0.01));
+        expect(s.rect.overlaps(centre.deflate(1)), isFalse,
+            reason: 'slot ${s.index} overlaps the anchor');
+      }
+    });
   });
 
   group('LiquidLauncher widget', () {
@@ -23316,15 +23328,16 @@ void main() {
 
 **Notes:**
 
-- All fourteen tests are deterministic: `satelliteScale`/`satelliteTravel` are pure functions
+- All fifteen tests are deterministic: `satelliteScale`/`satelliteTravel` are pure functions
   of `t` and `index`; `solveRadialFan` is pure geometry; the widget tests use bounded pumps and
   one-shot controllers (`pumpAndSettle` is safe — the launcher's controller runs once, never
   repeats).
 - The host boxes the launcher at 390×190 — the same **height** the sheet gives it in
-  Step 3d. The sheet's width is the screen minus `AzSpace.lg` padding on each side, so
+  Step 3b. The sheet's width is the screen minus `AzSpace.lg` padding on each side, so
   production is a *tighter* clamp than the test host; both exercise the same shipped
   safe-area clamp (and the tests deliberately do not assert pairwise non-overlap for that
-  reason).
+  reason). The production-shape test pins the real five-target fan (358×190, anchor at
+  centre) — safe bounds + anchor clearance validated empirically on main@27325e62.
 - If the goo painter's `ImageFilter.compose` path segfaults `flutter_tester` in this
   environment (see the pre-flight caveat), **stop and report** — do not weaken the tests to
   work around it.
@@ -23337,10 +23350,16 @@ void main() {
 dart format lib/widgets/liquid/liquid_launcher.dart lib/widgets/ai_command_menu.dart lib/main.dart
 flutter analyze
 flutter test
-flutter build web --debug
 ```
 
-Expected: **0 errors**, warnings ≤ baseline, all tests pass, build exits 0.
+Build gate (audit 2026-09-29: the project has NO web platform — `flutter build
+web --debug` is impossible and has been removed; TASK-015/016/017 precedent applies):
+push the task branch and require BOTH exact-head CI workflows green on the branch head —
+Flutter Quality + Android Integration (debug APK build). Record both run IDs and the head
+SHA in the sign-off.
+
+Expected: **0 errors**, warnings ≤ baseline (analyze parity with the pristine main
+baseline is the stronger check — record both counts), all tests pass, exact-head CI green.
 
 Cross-check probes:
 
@@ -23349,12 +23368,12 @@ rg -n "AzamanHaptics.confirm\(\);" lib/widgets/liquid/category_speed_dial.dart  
 rg -n "AzamanHaptics.confirm\(\);" lib/widgets/liquid/liquid_dropdown_menu.dart # expect 1 (row only)
 rg -n "AzamanHaptics.confirm\(\);" lib/widgets/liquid/liquid_launcher.dart      # expect 1 (satellite only)
 rg -n "CircularProgressIndicator" lib/widgets/ai_command_menu.dart              # expect 0
-rg -n "ThinkingOrb" lib/widgets/ai_command_menu.dart                            # expect 1
+rg -n "ThinkingOrb\(" lib/widgets/ai_command_menu.dart                         # expect 1 (call site only — the F-052 comment also names ThinkingOrb; the old "expect 1" probe self-contaminated)
 rg -n "HapticFeedback\." lib/widgets/ai_command_menu.dart                       # expect 0
 rg -n "flutter/services.dart" lib/widgets/ai_command_menu.dart                  # expect 0
 rg -n "LiquidLauncher" lib/main.dart                                            # expect 1
-rg -n "_verticalLauncherRow" lib/main.dart                                      # expect 0
-rg -n "subtitle" lib/main.dart                                                  # expect 0
+rg -n "_VerticalLauncherRow" lib/main.dart                                      # expect 0 (capital V — the shipped class name)
+rg -c "subtitle" lib/main.dart                                                  # expect 6 (type decl + five records — the field stays; the old "expect 0" was unreachable)
 rg -n "AzamanHaptics\." lib/main.dart                                           # expect 0 (import removed in 3f)
 rg -n "String.hashCode|MediaQuery\.sizeOf|Future\.delayed|Timer\(" lib/widgets/liquid/liquid_launcher.dart  # expect 0
 rg -n "AnimationController\(" lib/widgets/liquid/liquid_launcher.dart           # expect 1
@@ -23366,7 +23385,7 @@ Then run the complete permanent suite from the application root:
 flutter test
 ```
 
-The §A.8b board is authoritative for the current set (now thirteen files), but `flutter test`
+The §A.8b board is authoritative for the current set (22 files at audit time, 2026-09-29 — count the table at execution; do not trust prose counts), but `flutter test`
 checks those plus all pre-existing regression suites and avoids stale or guessed paths. Record
 any pre-existing failures separately; all task-owned tests must pass before sign-off. The liquid
 widget smoke suite remains included and should keep passing because Step 4b changes only dismissal
@@ -23376,7 +23395,7 @@ haptics, not its trigger path.
 
 | # | Action | Expected |
 |---|---|---|
-| 1 | Long-press the Market tab | The sheet opens; **four satellites burst from the sheet centre** — kPopSpring launch, goo necks merging into a rim, satellites settle into a right-opening fan. Retail is the **topmost** satellite, Hotels bottommost (host list order preserved). At rest the painted **anchor hub** (a 44px squircle) remains visible at the fan's centre — decorative, not tappable, not read out by screen readers. |
+| 1 | Long-press the Market tab | The sheet opens; **five satellites burst from the sheet centre** — kPopSpring launch, goo necks merging into a rim, satellites settle into a right-opening fan. Restaurants is the **topmost** satellite, Hospitality bottommost (host list order preserved: items.first → fan top; all five targets present incl. the F-029 Hospitality variant). At rest the painted **anchor hub** (a 44px squircle) remains visible at the fan's centre — decorative, not tappable, not read out by screen readers. |
 | 2 | Pick "Retail" | **Exactly one** confirm haptic. Sheet closes; the marketplace opens with Retail pre-selected. |
 | 3 | Long-press → tap the barrier (outside the sheet) | The sheet dismisses **silently** — no haptic on dismissal. |
 | 4 | Long-press → immediately try to tap a satellite mid-launch | The tap is gated until the pill is readable (LiquidReveal) — early taps do not misfire. |
@@ -23394,8 +23413,9 @@ haptics, not its trigger path.
   `solveRadialFan` / `measureSatellitePill` / `satelliteScale` / `satelliteTravel` (§A.3).
 - Do not add an `OverlayEntry`/trigger mode to `LiquidLauncher` — the dial and dropdown own
   trigger-style launching; this widget is the embedded burst.
-- Do not change the long-press gesture, the entry point, `_verticalLauncherEntries`' wire
-  values, or the landing push in `main.dart` — only the sheet body changed.
+- Do not change the long-press gesture, the entry point, `kVerticalLauncherEntries`' wire
+  values, order or five-target set, or the landing push in `main.dart` — only the sheet body
+  changed (plus the single `navigation()` removal in 3e).
 - Do not add a haptic to `LiquidLauncher`'s launch or to any dismissal — silent launch,
   silent dismiss, one confirm per pick.
 - Do not make the anchor hub tappable or give it a close affordance — it is a decorative
@@ -23415,10 +23435,96 @@ haptics, not its trigger path.
 
 ### Rollback
 
-Delete `lib/widgets/liquid/liquid_launcher.dart` and `test/liquid_launcher_test.dart`; revert
-`lib/main.dart`, `lib/widgets/ai_command_menu.dart`, `lib/widgets/liquid/category_speed_dial.dart`
-and `lib/widgets/liquid/liquid_dropdown_menu.dart` from git. Every behavioural change is a
-revert of a line-level edit; no public API changed.
+Task-owned surface (exactly six files — audit 2026-09-29): NEW
+`lib/widgets/liquid/liquid_launcher.dart`, NEW `test/liquid_launcher_test.dart`, MODIFY
+`lib/main.dart`, `lib/widgets/ai_command_menu.dart`,
+`lib/widgets/liquid/category_speed_dial.dart`, `lib/widgets/liquid/liquid_dropdown_menu.dart`.
+
+1. Delete the two NEW files.
+2. **Clobber guard FIRST:** `git diff --name-only <task-base>..HEAD` must list ONLY the six
+   files above. Any other file in the diff → **STOP and report** — do not revert anything.
+3. Revert each MODIFY file with `git checkout <task-base> -- <file>`, only after the guard
+   confirms the file's diff vs the task base is entirely task-owned. `<task-base>` is the
+   main tip the task branch was cut from (current reference: 27325e62) — this restores the
+   exact pre-task file WITHOUT ever reaching back to pre-revamp or pre-TASK-010b history.
+   Never full-file checkout from an older revision.
+4. Anything outside the task-owned surface → **STOP and report**, never revert.
+
+Every behavioural change is a revert of a line-level edit; no public API changed.
+
+### First executability audit record (2026-09-29, independent)
+
+Auditor: Solas (as pyraxxz), against live AZM-frontend/main@27325e62 and Planning@a7500ec.
+Verdict: **NOT executable as originally written** — status stays REVIEW REQUIRED; the
+corrective wording above is applied; a separate independent second executability review is
+required before SPEC READY. Do not rely on pre-audit drafts of this section.
+
+Defect register (severity):
+
+- **D1 CRITICAL — dead Step 3 anchors.** TASK-010b shipped `kVerticalLauncherEntries`
+  (5 entries incl. F-029 HOSPITALITY), `openVerticalLauncherForTab`, and the
+  `VerticalLauncherSheet`/`_VerticalLauncherRow` pair — not the spec's private 4-entry
+  `_verticalLauncherEntries`/`_verticalLauncherRow` "Whisper sheet" structure. The original
+  pre-flight probe 2 failed (0 hits vs expect 2), tripping the spec's own stop-condition.
+  Steps 3b–3f re-anchored above against verified current-main text.
+- **D2 HIGH — preserved F-051 double-fire.** `AzamanHaptics.navigation()` lives in
+  `openVerticalLauncherForTab`'s `onLaunch` closure (main.dart:312), not in a row; left
+  there it would double-buzz every pick (confirm + navigation). Removed by corrected 3e.
+- **D3 CRITICAL — Step 1 did not compile.** The six `_k*` dim constants were
+  `_LiquidLauncherState` statics but referenced unqualified from `_LauncherGooPainter` /
+  `_LauncherSatellite` (9 analyzer errors: 8 undefined_identifier + invalid_constant).
+  Fixed by hoisting to top-level consts (D3 wording in Step 1); empirically validated.
+- **D4 MEDIUM — self-contaminating probe.** `rg "ThinkingOrb" … # expect 1` returns 2
+  after Step 2b (the F-052 comment names ThinkingOrb). Probe tightened to `ThinkingOrb\(`.
+- **D5 MEDIUM — impossible build gate.** `flutter build web --debug` — the project has no
+  web platform (Android-only). Replaced with the exact-head Android Integration gate
+  (TASK-015/016/017 precedent).
+- **D6 MEDIUM — stale A.8b count prose.** "now thirteen files" — the table has 22 rows.
+  Made count-independent.
+- **D7 MEDIUM — acceptance table wrong against shipped scope.** "four satellites", "Retail
+  topmost, Hotels bottommost" — the shipped launcher has FIVE targets; fan top is
+  Restaurants (items.first), bottom Hospitality. Corrected.
+- **D8 MEDIUM — unsafe rollback.** Unguarded full-file revert could restore pre-TASK-010b
+  main.dart or clobber unrelated changes. Replaced with task-owned surface + clobber guard
+  + STOP/report.
+- **D9 LOW — status vocabulary conflict.** Board said REVIEW REQUIRED — F.2 while this
+  section said SPEC READY. Section now matches the board: REVIEW REQUIRED.
+- **D10 LOW — dependency-status contradiction.** The pre-flight demands TASK-006 DONE; its
+  board row still reads SPEC READY although the artifact is verifiably shipped on main
+  (probe 1 passes). Flagged for separate housekeeping; not silently edited.
+- **D11 LOW (verified OK, no change required) — Step 2a's 7-line find block** omits the
+  file's 8th import line (`azaman_sheet.dart`) but still matches contiguously (lines 1–7
+  verified identical); execution works; the import stays.
+- **D12 LOW — smoke-suite path.** `liquid_widget_smoke_test.dart` lives at
+  `test/widgets/liquid/`; the caveat reference now cites the exact path. The segfault
+  caveat is real (lines 13–14 of that file).
+- **D13 LOW — ThinkingOrb is a repeating ticker** (`AnimationController…repeat()`, no
+  reduced-motion path in `thinking_orb.dart`, which stays byte-identical per Do-NOT).
+  Consequence: post-Step-2b, `AiCommandMenu` with its loading state visible is a
+  `pumpAndSettle` HANG hazard for any future widget test — test with bounded pumps only.
+  No shipped test touches AiCommandMenu (verified), so the current suite is unaffected.
+- **D14 LOW — unreachable probe expectations as written.** `subtitle` expect 0 was
+  unreachable (8 occurrences exist; 6 legitimately remain after the corrected steps —
+  the field stays in the entry records) and `AzamanHaptics\.` expect 0 was achievable only
+  after D2's removal. Probes corrected.
+
+Empirical validation (detached git worktree at main@27325e62; no repo modification, no
+branch, no frontend commit): the prescribed Step 1 + Step 5 code, with only the D3
+const-hoist applied, analyzes clean (single info-level `prefer_const_constructors` in the
+test file, no errors/warnings) and passes **14/14**; adding the corrected production-shape
+five-satellite test passes **15/15** (run twice; the known flutter_tester first-paint
+loading flake documented in the smoke suite appeared on first runs and cleared on
+immediate rerun, both times). All engine/dial APIs were signature-verified against current
+source (paintGoo/drawNeck/squirclePath/LiquidReveal/kGooBlurRest/kGooBlurActive/
+solveRadialFan/measureSatellitePill/satelliteScale/satelliteTravel/LiquidSafeArea/ArcSlot/
+AzamanColors fields), the launcher dims mirror the dial's (38/13/19/15/12), F-052 confirmed
+(ThinkingOrb has zero importers on main), F-051's line numbers verified (dial `_close()`
+L238–247, dropdown L104–113), and pre-flight probes 1, 3, 4, 5, 6 pass on current main.
+The prescribed pure-math assertions (rest 0.12, mid-launch bounds, 1e-3 spring endpoint
+residual, kHouseSpring overshoot > 1, safe-area bounds, anchor clearance ≥ gap) all hold
+against the shipped curve/source.
+
+---
 
 ### Sign-off
 
@@ -23431,7 +23537,7 @@ Step 3 _verticalLauncherRow gone:      __________
 Step 3 subtitle field gone:            __________
 G2 flutter analyze errors:             __________  (baseline: ____)
 Run full repository suite (flutter test):  __________
-G3 build:                              __________
+G3 build (exact-head CI: Flutter Quality + Android Integration; no web platform):  __________
 Visual 1 (radial burst):               __________
 Visual 2 (Retail pre-selected):        __________
 Visual 3 (silent dismissal):           __________
