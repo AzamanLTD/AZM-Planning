@@ -114,3 +114,18 @@ It records the current product direction and constraints that future audit/imple
 - Current known P0/P1 risks and the staged implementation sequence are recorded in the new document and the appended Wave 11 in `ROADMAP.md`.
 
 This document is now part of the Planning continuity protocol and should be read at the beginning of future sessions.
+## 2026-09-30 — Frontend premium programme: NEW-K closed
+
+Frontend main is verified at merge commit `add1d428132f0c0905a2dac530b4a1eea790ad6d`, following PR #123 (final head `2cbd928e11a499bc5d28f2038a657094ce369756`).
+
+**NEW-K — One image, one avatar:** completed and merged.
+- Canonical `AzamanNetworkImage` now resolves `AzamanColors` from the live theme; placeholder/fallback use `softSurface` + `textTertiary`; canonical widget contains no `surfaceContainerHighest` / `onSurface` usage.
+- `ChatAvatar` remains source-compatible and now supports opt-in `circular`, `storyRing`, `ringStrokeWidth`, and `heroTag` behaviour.
+- `AzAvatar` is a zero-wrapper typedef alias to `ChatAvatar`.
+- Eight consumer screens were migrated in four image-focused and four avatar-focused slices.
+- Final main counts reported by the implementation agent: canonical M3 token leaks 0; one remaining `Image.network` is an excluded `frameBuilder` case; no remaining non-canonical `CachedNetworkImage`; `CircleAvatar` reduced from 35 to 29, with the remainder intentionally outside NEW-K scope.
+- Verification: analyzer 0 errors; 17/17 focused NEW-K tests; full suite 832 passing, with sandbox-only compiler/loader failures retrying individually; Flutter Quality green; Android Integration green on rerun after a transient `plugins.gradle.org` runner outage. Local APK build was unavailable in the sandbox, so CI was authoritative.
+- Residual visual note: forward-dialog group recipients now use the canonical initials/gradient avatar rather than the previous generic group icon. This was an intentional consistency improvement beyond a mechanical widget swap.
+- Test-harness note: the hotel room explorer widget test required a `ProviderScope` once it began rendering the Riverpod-backed canonical image.
+
+**Next implementation slice:** NEW-D — Home intelligence (greeting brain, insight card, pull-to-refresh reward, 4→3 action pills). The authoritative code specification is §G.8 of `docs/AZM-buildBrief.md`; §H.7 applies its anti-pressure correction, especially no streak/flame treatment and no judgmental spending language.
