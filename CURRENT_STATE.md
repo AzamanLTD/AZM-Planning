@@ -129,3 +129,14 @@ Frontend main is verified at merge commit `add1d428132f0c0905a2dac530b4a1eea790a
 - Test-harness note: the hotel room explorer widget test required a `ProviderScope` once it began rendering the Riverpod-backed canonical image.
 
 **Next implementation slice:** NEW-D — Home intelligence (greeting brain, insight card, pull-to-refresh reward, 4→3 action pills). The authoritative code specification is §G.8 of `docs/AZM-buildBrief.md`; §H.7 applies its anti-pressure correction, especially no streak/flame treatment and no judgmental spending language.
+
+
+## 2026-09-30 — Frontend NEW-D merged
+
+PR #124 on `AZM-frontend` was independently reviewed and merged to main as `3145f08a4c15f2dfc5d2c61f4990139fd4cf81ce` from final head `1b5c427cb6a93c6aa71f8e6e8260b6bf0928e48a`.
+
+NEW-D verification at PR head: Flutter Quality run #438 succeeded with Analyze and Test-with-coverage. The main-branch Android Integration run #157 is queued/in progress at the merge commit and remains the final post-merge gate.
+
+Scope shipped: greeting brain with no streak/flame path per §H.7; honest settled-inflow/Susu signals where authoritative sources existed; insight card from already-loaded transaction history only; refresh reward based on before/after canonical balance; four Home action pills reduced to three with Withdraw relocated behind History; 43 new tests plus the corrected Home entrance anchor.
+
+**Dependency-safe next step:** NEW-C is listed next in the execution board, but its authoritative backlog entry explicitly depends on NEW-A. NEW-A therefore becomes the next executable implementation slice unless the router audit proves its required guarantees are already present.
