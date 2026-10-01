@@ -1,6 +1,6 @@
 # AZAMAN Current Engineering State
 
-**Last reconciled:** 2026-09-19 UTC
+**Last reconciled:** 2026-10-01 UTC
 **Authority:** current repository `main` + exact CI/evidence.
 
 ## Current verified baseline
@@ -162,14 +162,14 @@ Fix head `1ee49795cac6800747c9f66e4504d30fd7da4180`: the pill's `onActiveTabReta
 Gates on `1ee4979`: analyze clean on touched files; band suite 8/8, nav cluster 47/47; full suite parity (981 pass, known moving flutter_tester flake only, all previously failing files pass isolated). Exact-head CI green: Flutter Quality 36881589017 + Android Integration 36881590072. Fix report posted to PR #129 (comment 5934381102). PR left open/unmerged for the next independent review per the review's requirement.
 
 
-### 2026-10-01 — Retail checkout recovery, deep-dive step 1: canonical identity boundary + disposition fix
+### 2026-10-01 — Retail checkout recovery, deep-dive step 1: canonical identity boundary + disposition fix — MERGED
 
-PR #130 open/unmerged, head `9421ffb`, branch `retail-checkout-operation-identity` from main. Scope +474/−37, 6 files (1 new test file `test/storefront/checkout_cart_operation_identity_test.dart`, 6 tests).
+PR #130 was independently reviewed and squash-merged to frontend main. Final PR head `9421ffb9e5df0a1cbfa945cd73d32534d13f6352`; merge commit `0fb8d24791088490df0ef5b1088e44cfe557c5a9`.
 
-**Trace audit (recorded in `deep-dives/frontend-operation-lifecycle.md`):** the PRODUCTION retail checkout is `CartScreen` → `StorefrontService.checkoutCart(operationType, ref: FinancialOperationRef)` → `DurableOperationRegistry` → `POST /storefront/:biz/checkout`. The `RetailCheckoutController`/`RetailCheckoutOperation`/`StorefrontRetailCheckoutGateway` chain is NOT production-reachable (gateway's only construction fed a widget field unread since TASK-012; controller constructed by tests only). Convergence decision: the FinancialOperationRef path already provides the full contract, so the chain is NOT wired in — it is quarantined as documented non-production API (contract surface for the step-5 restaurant/hotel/transit audit), dead wiring removed (`RetailCollectionBoxWidget.checkoutGateway`, registry gateway construction).
+**Verified scope:** production retail checkout is `CartScreen` → `StorefrontService.checkoutCart(operationType, ref: FinancialOperationRef)` → `DurableOperationRegistry` → `POST /storefront/:businessProfileId/checkout`. The parallel `RetailCheckoutOperation` / gateway chain is quarantined as non-production API; no second identity lifecycle was introduced.
 
-**Two real production defects fixed:** (1) the r42 disposition never fired — `ApiClient.post` throws `ApiException` for every non-2xx but `checkoutCart`/`placeStorefrontOrder` caught the unreachable `StorefrontApiException`, and the POST sat outside the try scope so a definitive pre-economic 4xx silently left the instance armed; both methods now mirror `postFinancial` (POST inside disposition scope, classification on `ApiException`, shared `_isDefinitivePreEconomic`). (2) `StorefrontService` gained an injectable `ApiClient` seam for service-level testing (production behavior identical).
+**Real defects fixed:** storefront durable checkout and single-item `placeStorefrontOrder` now place the POST inside the disposition scope and classify the actual `ApiException` emitted by `ApiClient.post`. Definitive pre-economic 4xx outcomes retire the instance; ambiguous 401/409/429, 5xx, and transport loss retain it for same-key retry. `StorefrontService` gained an injectable `ApiClient` seam for service-level proof.
 
-**Gates on `9421ffb`:** analyze 0 err/0 warn, 366 info (parity, was 371); identity suite 6/6; storefront + retail suites 61/61; api client idempotency + durable registry + escrow disposition 53/53. Exact-head CI green: Flutter Quality 36891098272 (+ second run 36891091249), Android Integration 36891102453. Verification report: PR #130 comment 5935798904.
+**Evidence:** new durable checkout identity suite 6/6; storefront + retail suites 61/61; API-client idempotency + durable-registry + escrow-disposition suites 53/53; analyze 0 errors / 0 warnings; `git diff --check` clean. Exact-head CI green: Flutter Quality 36891098272 and Android Integration 36891102453. Independent review found no merge-blocking issue. GitHub confirms merge commit `0fb8d247...`.
 
-NOT DONE: steps 2–6 of the deep-dive sequence remain open; PR #130 awaits independent review + merge.
+**Next:** continue the frontend economic-operation lifecycle deep-dive at step 2, while preserving step 3's required cross-repo fingerprint verification as a separate checkpoint.
