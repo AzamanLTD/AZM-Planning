@@ -101,7 +101,7 @@ Status: step 1 COMPLETE and MERGED 2026-10-01 at frontend main merge `0fb8d247..
 1. ~~Trace and wire the real production retail UI caller to retain `RetailCheckoutOperation` across retry/recovery.~~ **DONE + MERGED 2026-10-01 — see "Step 1 outcome" above.**
 2. ~~Classify backend failures instead of treating every exception as retryable.~~ **IMPLEMENTED 2026-10-01, PR #131 (open/unmerged, head `4f410a1`) — see "Step 2 outcome" below.**
 3. ~~Verify the backend request fingerprint covers exactly the immutable economic intent represented by the operation.~~ **VERIFIED 2026-10-01, PR #132 (open/unmerged, test-only, head `0e36b90`) — see "Step 3 outcome" below.**
-4. Audit `placeStorefrontOrder()` as a second economic entry point and determine whether it is live, legacy, or should converge on canonical checkout. Its disposition defect was fixed in step 1; the remaining task is reachability and contract classification, not another identity system.
+4. ~~Audit `placeStorefrontOrder()` as a second economic entry point and determine whether it is live, legacy, or should converge on canonical checkout.~~ **AUDITED 2026-10-01 — LIVE, DISTINCT, NO CONVERGENCE NEEDED — see "Step 4 outcome" below.**
 5. Trace restaurant, hotel and transit economic/booking operations for equivalent retry identity requirements.
 6. Add end-to-end contract tests before declaring the shared operation contract complete.
 
@@ -136,6 +136,22 @@ Status: step 1 COMPLETE and MERGED 2026-10-01 at frontend main merge `0fb8d247..
 **Gates on head `0e36b90`:** analyze 0/0 (366 info parity); contract suite 6/6; identity regression 6/6 (12/12 together); `test/storefront/` 49/49 twice (one documented parallel-load flake, pristine on rerun).
 
 **NOT VERIFIED yet:** PR #132 awaits independent review + merge (and PR #131's review is also still pending).
+
+## Step 4 outcome (2026-10-01): placeStorefrontOrder audited — live, distinct, no convergence (analysis-only, no code change)
+
+**Reachability (traced, all production):** route `/storefront/:businessProfileId` (app_router.dart, reached from StorefrontDiscoveryScreen and BusinessProfileScreen) → `StorefrontScreen`, whose product CTA `'order'` opens `StorefrontOrderSheet` → `placeStorefrontOrder(operationType: 'storefront.order.single', ref: per-sheet FinancialOperationRef)`. NOT legacy. The same screen ALSO has `_addToCart` → cartProvider → CartScreen → `checkoutCart` — so BOTH economic entry points are live side by side, serving distinct user intents: add-to-cart multi-item checkout vs direct single-item order-now.
+
+**Contract classification — every deep-dive requirement is already satisfied:**
+- **Identity:** same canonical boundary as checkout — same `DurableOperationRegistry` via [operationType] + [ref] → `_resolveOperation` (no second identity system; the constraint is respected). One durable identity per sheet submit; retry after a lost response reuses the same key.
+- **Disposition:** the step-1 fix (POST inside the try, definitive 4xx releases the instance) is present in `placeStorefrontOrder` verbatim — same `_isDefinitivePreEconomic` predicate.
+- **Backend contract:** POST `/storefront/:biz/order` runs the IDENTICAL replay-or-conflict discipline as `/checkout` — scoped key lookup (`findFirst` on business+customer+key), `orderFingerprint`, `storefrontReplayOrConflict` (exact replay → 200 `idempotent:true`; fingerprint mismatch → 409). Fingerprint parity with the client's economic view was proven in step 3 (known-answer vectors + 4-case mutation matrix for the /order body).
+- **Failure classification:** shares `classifyStorefrontFailure` and the UI copy fix from step 2/PR #131 (pending merge — main still shows the generic `Order failed` SnackBar until #131 lands).
+
+**Decision: NO CONVERGENCE.** `placeStorefrontOrder` is not a duplicate of the cart checkout needing collapse — it is the only path for the storefront screen's direct-order UX, with a distinct operation type, distinct endpoint, and distinct fingerprint projection. Converging it on `checkoutCart` would erase that UX and add cart machinery to a single-item intent. The two entry points are two OPERATIONS, not two identity systems.
+
+**Documented asymmetry (not a defect):** `/order` carries no `paymentMode` — the direct sheet is direct-payment only; `/checkout` normalizes `paymentMode` (default DIRECT, ESCROW possible server-side). If escrow payment is ever offered on the direct sheet, the backend fingerprint must gain the field FIRST (backend-finer divergence is the forbidden direction — see step 3).
+
+**No code change required by this audit; no new PR.**
 
 ## Important implementation constraints
 
