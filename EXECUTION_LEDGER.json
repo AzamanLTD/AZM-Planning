@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-09-19T13:10:00Z",
+  "updatedAt": "2026-10-01T00:00:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -826,12 +826,29 @@
         }
       },
       "nextStep": "Implement §P.5-E Model B settlement / cost-basis realization only after re-reading current backend main and preserving P5-A through P5-D authority boundaries."
+    },
+    {
+      "id": "frontend-retail-checkout-operation-identity",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "verified",
+      "pr": 130,
+      "mergeSha": "0fb8d24791088490df0ef5b1088e44cfe557c5a9",
+      "objective": "Establish the authoritative production retail checkout identity boundary without duplicating the existing durable operation registry; fix reachable checkout disposition failures and prove same-key retry/recovery semantics.",
+      "notes": "Step 1 completed and merged. Production checkout remains CartScreen → StorefrontService.checkoutCart(operationType/ref) → DurableOperationRegistry. RetailCheckoutOperation/gateway is quarantined non-production. checkoutCart and placeStorefrontOrder now correctly dispose definitive pre-economic 4xx outcomes because the POST is inside the scope and ApiException is classified. New focused production-path tests cover retry identity, changed intent, process-death replay, 400 retirement, 409 retention, and service non-minting. Independent review found no blocker.",
+      "ci": {
+        "exactHead": "9421ffb9e5df0a1cbfa945cd73d32534d13f6352",
+        "flutterQuality": 36891098272,
+        "androidIntegration": 36891102453,
+        "postMergeMain": "0fb8d24791088490df0ef5b1088e44cfe557c5a9"
+      },
+      "nextStep": "Implement frontend economic-operation lifecycle deep-dive step 2: failure classification, then step 3 cross-repo fingerprint equivalence. Preserve the single durable identity boundary."
     }
   ],
   "notes": [
     "2026-09-18: §P.5-B merged and verified (PR #281, main 39a4977). Next slices in canonical order: route-aware quote authority wiring, GHS liquidity states/reconciliation, Kotani Model A, then P5-E cost-basis realization at settlement. Do not invent customer GHS liability, route settlement, spread or realized P&L before their dedicated boundaries.",
     "2026-09-18: P5-B merged; exact-head evidence verified. Main push run #1049 remains in progress; do not mark P5-B fully verified until that run succeeds.",
     "2026-09-19: P5-B final main verification completed successfully via run #1049. P5-C PR #282 remains open under audit and is not mergeable as scoped until rebased onto current main and reduced below 500 changed lines.",
-    "2026-09-19: §P.5-C PR #284 merged/verified and §P.5-D PR #285 merged/verified at backend main baaa4e2. Next canonical boundary is P5-E Model B settlement/cost-basis realization. Financial slices are not constrained by an arbitrary changed-line target; scope and evidence determine slicing."
+    "2026-09-19: §P.5-C PR #284 merged/verified and §P.5-D PR #285 merged/verified at backend main baaa4e2. Next canonical boundary is P5-E Model B settlement/cost-basis realization. Financial slices are not constrained by an arbitrary changed-line target; scope and evidence determine slicing.",
+    "2026-10-01: Frontend PR #130 retail checkout recovery step 1 merged as `0fb8d247`. Next canonical frontend lifecycle step is failure classification, with cross-repo fingerprint equivalence as the following checkpoint."
   ]
 }
