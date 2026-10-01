@@ -140,3 +140,15 @@ NEW-D verification at PR head: Flutter Quality run #438 succeeded with Analyze a
 Scope shipped: greeting brain with no streak/flame path per §H.7; honest settled-inflow/Susu signals where authoritative sources existed; insight card from already-loaded transaction history only; refresh reward based on before/after canonical balance; four Home action pills reduced to three with Withdraw relocated behind History; 43 new tests plus the corrected Home entrance anchor.
 
 **Dependency-safe next step:** NEW-C is listed next in the execution board, but its authoritative backlog entry explicitly depends on NEW-A. NEW-A therefore becomes the next executable implementation slice unless the router audit proves its required guarantees are already present.
+
+## 2026-10-01 — Frontend NEW-C implemented
+
+PR #129 open/unmerged, head `634e7846aaebdda424b03e13c1301f3e081f4159`, branch `new-c-contextual-nav` from main@`bffea7b` (which contains merged NEW-A `8060229`, satisfying NEW-C's declared dependency; the router audit earlier confirmed declarative routing + depth tracking already present).
+
+Scope shipped (§2.3C, closes F-025):
+- **Retap seam** — `PremiumBottomNav.onActiveTabRetap`: re-tapping the active tab scrolls its outermost vertical scrollable to top with `kHouseSpring`; LIFTS content on a never-scrolled page; jumps instantly under reduced motion. `NavRetapController` owns the animation pair; `TabScrollRegistry` records per-tab scrollables and drops dead entries on unmount (SDK-liveness compatible). Legacy callers without the callback keep the haptic-only ack.
+- **Contextual band** — `ContextualNavBand` mounts above the navigator in `MaterialApp.builder`: at router depth ≥ 1 with the shell engaged it shows back chevron (pops ONE router page), route title, and "…" reopening the REAL `PremiumBottomNav` pill (tab tap pops back to shell + hands the tab to the shell bus). Hidden at depth 0, shell-less, and under sanctioned imperative routes (`TopRouteObserver`); deep-link-only stacks back out to the canonical root. Band carries its own transparent `Material` sheet — it lives above the navigator, outside any Scaffold, a production InkWell crash caught by the tests before it shipped.
+
+Gates: analyze 0 err / 0 warn on touched files (parity infos); retap 9/9, band 7/7, all nav suites 46/46; full suite parity — failures were the known moving flutter_tester flake only, every previously failing file passes isolated. Exact-head CI green: Flutter Quality run 36852717370 and Android Integration run 36853450404 on `634e7846`.
+
+NOT DONE: PR awaits independent review + merge; on-device acceptance (band visibility, retap spring/lift, imperative-route hiding) pending.
