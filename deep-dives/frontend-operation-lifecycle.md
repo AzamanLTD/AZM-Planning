@@ -100,7 +100,7 @@ Status: step 1 COMPLETE and MERGED 2026-10-01 at frontend main merge `0fb8d247..
 
 1. ~~Trace and wire the real production retail UI caller to retain `RetailCheckoutOperation` across retry/recovery.~~ **DONE + MERGED 2026-10-01 — see "Step 1 outcome" above.**
 2. ~~Classify backend failures instead of treating every exception as retryable.~~ **IMPLEMENTED 2026-10-01, PR #131 (open/unmerged, head `4f410a1`) — see "Step 2 outcome" below.**
-3. Verify the backend request fingerprint covers exactly the immutable economic intent represented by the operation; this is a cross-repo contract proof comparing the frontend durable economic view with backend `checkoutFingerprint` semantics.
+3. ~~Verify the backend request fingerprint covers exactly the immutable economic intent represented by the operation.~~ **VERIFIED 2026-10-01, PR #132 (open/unmerged, test-only, head `0e36b90`) — see "Step 3 outcome" below.**
 4. Audit `placeStorefrontOrder()` as a second economic entry point and determine whether it is live, legacy, or should converge on canonical checkout. Its disposition defect was fixed in step 1; the remaining task is reachability and contract classification, not another identity system.
 5. Trace restaurant, hotel and transit economic/booking operations for equivalent retry identity requirements.
 6. Add end-to-end contract tests before declaring the shared operation contract complete.
@@ -122,6 +122,20 @@ Status: step 1 COMPLETE and MERGED 2026-10-01 at frontend main merge `0fb8d247..
 **Gates on head `4f410a1`:** analyze 0 err / 0 warn (366 info parity); new classification suite 13/13, UI presentation suite 4/4; PR #130 identity regression 6/6 preserved; test/storefront 60/60; retail 18/18; git diff --check clean; exact-head Flutter Quality + Android Integration dispatched. Scope +738/−4, 6 files.
 
 **NOT VERIFIED yet:** PR #131 awaits independent review + merge. Step 4's reachability/contract question is partially answered (both entry points share the taxonomy; placeStorefrontOrder IS live via StorefrontOrderSheet) but its convergence decision is still open.
+
+## Step 3 outcome (2026-10-01): fingerprint contract verified (PR #132, pending review)
+
+**The contract.** The durable checkout converges iff *client-fingerprint-equal ⇒ backend-fingerprint-equal* — a same-key retry must be an exact replay server-side (`200 idempotent:true`), never a 409 collision. Both sides were traced in source: the client fingerprint is sha256 over the canonical ECONOMIC view (`DurableOperationRegistry.fingerprintOf` → `economicView` strips `idempotencyKey`/`clientRequestId` + the secret denylist); the backend fingerprint is sha256 over a fixed projection (`utils/storefrontOrderIdentity.js` `checkoutFingerprint`/`orderFingerprint`).
+
+**Field matrix (AZM-backend @ `d7dd53c`, AZM-frontend main):** the production wire carries items[{productId, quantity, notes?, variants?}], customerNotes?, deliveryNotes?, paymentMode, idempotencyKey. The backend projection covers EVERY persisted, order-determining field of that set; `variants` is fingerprinted-but-not-persisted (conservative); `businessProfileId`/`customerId` are identity (scoped key `v1:<biz>:<user>:sha256(clientKey)` + composite unique), not fingerprint; the durable key is excluded on BOTH sides. **No backend-finer divergence exists** — every field the backend hashes is client-covered.
+
+**Divergence catalog (all pinned to the safe, client-stricter direction):** paymentMode cosmetic case (backend normalizes `.toUpperCase()`, client is raw → changed retry mints a NEW durable key, harmless); item order (material on both sides — conservative); absent-vs-explicit-DIRECT paymentMode (backend-equal, client-different — same safe direction). Client-stricter divergences create fresh logical operations; they can never break convergence.
+
+**Executable pin (PR #132, test-only):** a Dart mirror of the backend algorithm reproduces known-answer digests produced by the REAL backend module at `d7dd53c` byte-for-byte, plus equivalence-class parity over a 9-case checkout mutation matrix and a 4-case single-item matrix. Backend algorithm drift now fails CI and forces a cross-repo contract review. No production code changed; no gap found this step (unlike step 2's wrap-400 finding, which remains open).
+
+**Gates on head `0e36b90`:** analyze 0/0 (366 info parity); contract suite 6/6; identity regression 6/6 (12/12 together); `test/storefront/` 49/49 twice (one documented parallel-load flake, pristine on rerun).
+
+**NOT VERIFIED yet:** PR #132 awaits independent review + merge (and PR #131's review is also still pending).
 
 ## Important implementation constraints
 
