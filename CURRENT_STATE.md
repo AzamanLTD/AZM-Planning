@@ -152,3 +152,11 @@ Scope shipped (§2.3C, closes F-025):
 Gates: analyze 0 err / 0 warn on touched files (parity infos); retap 9/9, band 7/7, all nav suites 46/46; full suite parity — failures were the known moving flutter_tester flake only, every previously failing file passes isolated. Exact-head CI green: Flutter Quality run 36852717370 and Android Integration run 36853450404 on `634e7846`.
 
 NOT DONE: PR awaits independent review + merge; on-device acceptance (band visibility, retap spring/lift, imperative-route hiding) pending.
+
+### 2026-10-01 — NEW-C review blocker fixed
+
+Independent review of `634e7846` found one release blocker: in the reopened contextual pill, a tap on the ALREADY-SELECTED tab only collapsed the pill via the retap seam — it never returned to the shell, contradicting the band's own "any tab tap returns to the shell" contract. The original regression only pinned tapping a DIFFERENT tab, so the edge was unpinned.
+
+Fix head `1ee49795cac6800747c9f66e4504d30fd7da4180`: the pill's `onActiveTabRetap` now routes through the same `_onBandTabTap(appShellBus.activeTab)` path as every other tab tap (pop to shell base + tab hand-off to AppShellBus). Override is local to the band's pill; the shell's depth-0 retap contract (scroll-to-top / lift) is untouched; only "…"/"Hide tabs" still collapses in place. New regression: pill open on a depth route, tap the already-selected tab → router '/', bus receives that tab, band and pill gone.
+
+Gates on `1ee4979`: analyze clean on touched files; band suite 8/8, nav cluster 47/47; full suite parity (981 pass, known moving flutter_tester flake only, all previously failing files pass isolated). Exact-head CI green: Flutter Quality 36881589017 + Android Integration 36881590072. Fix report posted to PR #129 (comment 5934381102). PR left open/unmerged for the next independent review per the review's requirement.
