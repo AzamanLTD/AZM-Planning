@@ -200,3 +200,15 @@ PR #132 open/unmerged, head `0e36b90`, branch `retail-checkout-fingerprint-contr
 **Gates on `0e36b90`:** analyze 0/0 (366 info parity); contract 6/6; identity regression 6/6 (12/12 together); test/storefront 49/49 twice (one documented parallel-load flake, pristine on rerun); exact-head CI green: Flutter Quality 36897097038 + 36897098707, Android Integration 36897102094. Verification report: PR #132 comment 5936703444. Deep-dive updated (Planning e198e04).
 
 NOT DONE: PR #131 and #132 independent review + merge; deep-dive steps 4–6.
+
+### 2026-10-01 — Retail checkout recovery, deep-dive step 4: placeStorefrontOrder audit (analysis-only)
+
+No code change, no PR. Verdict: **LIVE, DISTINCT, NO CONVERGENCE.**
+
+Reachability traced: route /storefront/:businessProfileId (app_router 583, from StorefrontDiscoveryScreen + BusinessProfileScreen) → StorefrontScreen product 'order' CTA → StorefrontOrderSheet → placeStorefrontOrder(operationType 'storefront.order.single', per-sheet FinancialOperationRef). Both economic entry points live side by side on StorefrontScreen: _addToCart → CartScreen → checkoutCart (multi-item cart UX) vs direct single-item order-now — distinct intents, distinct operation types, distinct identities.
+
+Contract classification: placeStorefrontOrder already satisfies every deep-dive requirement — same registry identity boundary (no second system), step-1 disposition fix present verbatim, backend POST /storefront/:biz/order runs the IDENTICAL replay-or-conflict discipline (scoped key + orderFingerprint + storefrontReplayOrConflict), step-3 fingerprint parity proven for the /order body, step-2 failure classification shared (pending PR #131 merge; main still shows generic 'Order failed' SnackBar until it lands). Decision: converging on checkoutCart would erase the direct-order UX for no contract gain.
+
+Documented asymmetry (not a defect): /order carries no paymentMode (direct payment only) vs /checkout's normalized paymentMode. Constraint recorded: if escrow is ever offered on the direct sheet, the backend fingerprint must gain the field FIRST (backend-finer divergence is the forbidden direction).
+
+Planning deep-dive 715fe6b. NOT DONE: review+merge PRs #131/#132; deep-dive steps 5 (restaurant/hotel/transit economic operations retry-identity audit) and 6 (end-to-end contract tests).
