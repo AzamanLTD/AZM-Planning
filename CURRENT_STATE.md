@@ -173,3 +173,18 @@ PR #130 was independently reviewed and squash-merged to frontend main. Final PR 
 **Evidence:** new durable checkout identity suite 6/6; storefront + retail suites 61/61; API-client idempotency + durable-registry + escrow-disposition suites 53/53; analyze 0 errors / 0 warnings; `git diff --check` clean. Exact-head CI green: Flutter Quality 36891098272 and Android Integration 36891102453. Independent review found no merge-blocking issue. GitHub confirms merge commit `0fb8d247...`.
 
 **Next:** continue the frontend economic-operation lifecycle deep-dive at step 2, while preserving step 3's required cross-repo fingerprint verification as a separate checkpoint.
+
+
+### 2026-10-01 — Retail checkout recovery, deep-dive step 2: failure classification
+
+PR #131 open/unmerged, head `4f410a1`, branch `retail-checkout-failure-classification` from main@`0fb8d24` (merged PR #130). Scope +738/−4, 6 files (new: classification suite, UI presentation suite, `checkout_failure_message.dart`).
+
+**Taxonomy (traced from backend `routes/storefrontRoutes.js`, recorded in the deep-dive):** `StorefrontFailureClass` — definitivePreEconomic (explicit 400/403/404 validations; instance retired), authenticationRequired (401 surviving auto-refresh), rateLimited (429), domainConflict (409 = key fingerprint mismatch; exact replay answers 200 `idempotent:true`), ambiguousOrUnknown (transport loss/timeout/5xx/malformed 2xx; instance armed, same-key retry converges). Classifier is a pure static projection reusing the SAME `_isDefinitivePreEconomic` predicate as the step-1 disposition — no second identity/idempotency abstraction. UI: CartScreen + StorefrontOrderSheet present class-appropriate copy; generic `SnackBar('Order failed: $e')` removed from both live callers; unconfirmed outcomes never worded as definite failure.
+
+**Two adjacent production defects fixed:** (1) malformed 2xx (success payload without `data.order`) was surfaced as SUCCESS with the cart cleared — now an unknown state (FormatException, instance armed); (2) CartScreen read the order at `result['data']['order']` — always null after `_parseResponse` unwraps `{success,data}` — so the confirmation dialog never showed the orderRef; now reads `result['order']`.
+
+**Residual backend gap (documented, not invented in Flutter):** the backend `wrap` catch-all surfaces uncaught internal errors as 400 with no machine-readable code; de-facto pre-economic in current source (all such throws precede the commit), but the contract is implicit — backend should make it explicit before the 400→definitive mapping is treated as contractual.
+
+**Gates on `4f410a1`:** analyze 0/0 (366 info parity); classification 13/13, UI 4/4, PR #130 identity regression 6/6 preserved; storefront 60/60, retail 18/18. Exact-head CI green: Flutter Quality 36894813285 + 36894820232, Android Integration 36894823445. Verification report: PR #131 comment 5936370076. Deep-dive updated (Planning 049a33f).
+
+NOT DONE: PR #131 independent review + merge; deep-dive steps 3–6 (step 4's reachability question partially answered — placeStorefrontOrder IS live via StorefrontOrderSheet; convergence decision still open).
