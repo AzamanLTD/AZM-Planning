@@ -2,7 +2,7 @@
 
 **Scope:** AZM-frontend retail checkout and future financial/economic operations  
 **Status:** IN PROGRESS  
-**Last updated:** 2026-08-30 (UTC)
+**Last updated:** 2026-10-01 (UTC)
 
 ## Verified current state
 
@@ -94,14 +94,14 @@ The current retail gateway maps every non-`FormatException` thrown by the servic
 
 **Regression coverage added:** `test/storefront/checkout_cart_operation_identity_test.dart` (6 tests) pins the real production path end-to-end through the actual durable wiring: same-key retry across lost first attempt and service recreation; materially changed cart → new identity with the old unfinished instance retained; process-death journal replay reproduces the exact wire; definitive 4xx disposes the instance (next attempt = new identity); ambiguous 409 keeps it armed; the service never mints identity itself. 6/6 pass; focused suites (storefront, retail, api client idempotency, durable registry, escrow disposition) 114/114; analyze 0 errors / 0 warnings.
 
-Status: step 1 COMPLETE at PR #130 head (open, unmerged, pending CI + independent review). Steps 2–6 remain open; note that step 2 (backend failure classification) is partially addressed on the checkout path by the disposition fix, but the gateway's coarse `retryable: true` mapping still applies to the quarantined chain only.
+Status: step 1 COMPLETE and MERGED 2026-10-01 at frontend main merge `0fb8d247...`, from exact PR #130 head `9421ffb...`. Steps 2–6 remain open. Step 2 is partially addressed on the live checkout path by the disposition fix; the quarantined gateway still has a coarse `retryable: true` mapping and remains outside the production identity path.
 
 ## Next implementation sequence
 
-1. ~~Trace and wire the real production retail UI caller to retain `RetailCheckoutOperation` across retry/recovery.~~ **DONE 2026-10-01 — see "Step 1 outcome" above: the real production caller already retains a durable identity via the FinancialOperationRef path; the RetailCheckoutOperation chain is quarantined non-production API.**
-2. Classify backend failures instead of treating every exception as retryable.
-3. Verify the backend request fingerprint covers exactly the immutable economic intent represented by the operation.
-4. Audit `placeStorefrontOrder()` as a second economic entry point and determine whether it is live, legacy, or should converge on canonical checkout. (Partially covered: placeStorefrontOrder is not production-reachable via the retail UI trace; its disposition defect was fixed alongside checkoutCart.)
+1. ~~Trace and wire the real production retail UI caller to retain `RetailCheckoutOperation` across retry/recovery.~~ **DONE + MERGED 2026-10-01 — see "Step 1 outcome" above.**
+2. **NEXT — Classify backend failures instead of treating every exception as retryable.** Audit the LIVE production retail checkout error taxonomy from transport through `ApiClient`, `StorefrontService`, and the UI. Distinguish definitive pre-economic failures, ambiguous/unknown outcomes, authentication refresh, domain conflicts, malformed successful responses, and user-correctable validation failures. Do not create a second retry/idempotency abstraction.
+3. Verify the backend request fingerprint covers exactly the immutable economic intent represented by the operation; this is a cross-repo contract proof comparing the frontend durable economic view with backend `checkoutFingerprint` semantics.
+4. Audit `placeStorefrontOrder()` as a second economic entry point and determine whether it is live, legacy, or should converge on canonical checkout. Its disposition defect was fixed in step 1; the remaining task is reachability and contract classification, not another identity system.
 5. Trace restaurant, hotel and transit economic/booking operations for equivalent retry identity requirements.
 6. Add end-to-end contract tests before declaring the shared operation contract complete.
 
@@ -117,7 +117,7 @@ Do not reuse an operation after its cart intent has changed. Start a new operati
 
 ## Current verification state
 
-The source and test changes are committed on the frontend branch `feat/retail-checkout-operation-identity`. CI has intentionally **not** been triggered yet because the agreed workflow is to accumulate a significant coherent batch and perform the full verification cycle at the end.
+Step 1 source/test changes are merged. Exact-head CI was green before merge (Flutter Quality 36891098272; Android Integration 36891102453). Post-merge push CI is not inferred because the available workflow lookup exposes PR-triggered runs only.
 
 The implementation is therefore **PARTIALLY COMPLETE / IN PROGRESS**, not VERIFIED.
 
