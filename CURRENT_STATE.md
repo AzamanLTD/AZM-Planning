@@ -188,3 +188,15 @@ PR #131 open/unmerged, head `4f410a1`, branch `retail-checkout-failure-classific
 **Gates on `4f410a1`:** analyze 0/0 (366 info parity); classification 13/13, UI 4/4, PR #130 identity regression 6/6 preserved; storefront 60/60, retail 18/18. Exact-head CI green: Flutter Quality 36894813285 + 36894820232, Android Integration 36894823445. Verification report: PR #131 comment 5936370076. Deep-dive updated (Planning 049a33f).
 
 NOT DONE: PR #131 independent review + merge; deep-dive steps 3–6 (step 4's reachability question partially answered — placeStorefrontOrder IS live via StorefrontOrderSheet; convergence decision still open).
+
+### 2026-10-01 — Retail checkout recovery, deep-dive step 3: cross-repo fingerprint contract proof
+
+PR #132 open/unmerged, head `0e36b90`, branch `retail-checkout-fingerprint-contract` from main (test-only, +1 file, no production code). Proves the contract the durable checkout converges on: **client-fingerprint-equal ⇒ backend-fingerprint-equal** (a same-key retry is an exact replay server-side; otherwise it would collide as a 409).
+
+**Source-traced proof:** client fp = sha256(canonical(economicView)) strips idempotencyKey/clientRequestId + secret denylist; backend fp (`utils/storefrontOrderIdentity.js` checkoutFingerprint/orderFingerprint) projects items[{productId,quantity,notes,variants}], customerNotes, deliveryNotes, paymentMode(normalized). Field matrix (AZM-backend @ `d7dd53c`): the backend projection covers EVERY persisted order-determining wire field; businessProfileId/customerId are identity (scoped key + composite unique), not fingerprint; variants fingerprinted-but-not-persisted (conservative). **No backend-finer divergence exists** — the critical invariant holds. Divergences are client-stricter only (paymentMode cosmetic case; item order material on both sides) = safe direction (mints a new key, never a conflict). No backend gap found this step (step 2's wrap-400 finding remains open).
+
+**Executable pin:** new test suite mirrors the backend algorithm in Dart and reproduces known-answer digests from the REAL backend module at `d7dd53c` byte-for-byte; equivalence-class parity over a 9-case checkout + 4-case single-item mutation matrix; durable key exclusion pinned on both sides. Backend algorithm drift now fails CI.
+
+**Gates on `0e36b90`:** analyze 0/0 (366 info parity); contract 6/6; identity regression 6/6 (12/12 together); test/storefront 49/49 twice (one documented parallel-load flake, pristine on rerun); exact-head CI green: Flutter Quality 36897097038 + 36897098707, Android Integration 36897102094. Verification report: PR #132 comment 5936703444. Deep-dive updated (Planning e198e04).
+
+NOT DONE: PR #131 and #132 independent review + merge; deep-dive steps 4–6.
