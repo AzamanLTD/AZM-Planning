@@ -102,8 +102,47 @@ Status: step 1 COMPLETE and MERGED 2026-10-01 at frontend main merge `0fb8d247..
 2. ~~Classify backend failures instead of treating every exception as retryable.~~ **IMPLEMENTED 2026-10-01, PR #131 (open/unmerged, head `4f410a1`) — see "Step 2 outcome" below.**
 3. ~~Verify the backend request fingerprint covers exactly the immutable economic intent represented by the operation.~~ **VERIFIED 2026-10-01, PR #132 (open/unmerged, test-only, head `0e36b90`) — see "Step 3 outcome" below.**
 4. ~~Audit `placeStorefrontOrder()` as a second economic entry point and determine whether it is live, legacy, or should converge on canonical checkout.~~ **AUDITED 2026-10-01 — LIVE, DISTINCT, NO CONVERGENCE NEEDED — see "Step 4 outcome" below.**
-5. Trace restaurant, hotel and transit economic/booking operations for equivalent retry identity requirements.
+5. ~~Trace restaurant, hotel and transit economic/booking operations for equivalent retry identity requirements.~~ **TRACED 2026-10-01 — see "Step 5 outcome" below.**
 6. Add end-to-end contract tests before declaring the shared operation contract complete.
+
+## Step 5 outcome (2026-10-01): restaurant / hotel / transit retry-identity audit (analysis-only)
+
+Every consumer-side economic/booking mutation in the three verticals was traced end-to-end (frontend screen → provider → service → wire → backend route → controller → service/transaction). Two live surfaces already satisfy the operation-lifecycle contract; one has a real reconciliation gap; two dead wires were found.
+
+### Restaurant (dine-in) — CONTRACT-CONFORMANT, no change required
+
+- **Live pay path:** DineIn tab screen → `marketplace_extensions_provider.payTab` → `POST /api/dine-in/tabs/:tabId/pay` (`require2FA`, mounted via `src/routes/index.js:77`) → `dineInController.confirmAndPay` → `dineInTabService.confirmAndPay`. This is a REAL payment mutation.
+- **Server side already durable:** `alreadyPaid` short-circuit + `replayPaymentFromDurableState` recovery (FINALIZED→confirmTab, CLOSED re-read) + `notifyRecoveredPayment`. The catch path re-derives the committed state instead of surfacing failure.
+- **Client side already reconciles:** `payTab`'s catch re-reads the durable tab (`parseRecoveredClosedTab`) before reporting failure — a payment lost in transport converges to CLOSED and is presented as paid, not failed. This is exactly the deep-dive's "refresh authoritative state" branch.
+- **Dead wire found:** `MarketplaceBookingService.confirmDineInTab` → `POST /marketplace/business/dine-in/:tabId/confirm`. **No such backend route exists** (`marketplaceRoutes.js` has zero dine-in routes → guaranteed 404), and the provider wrapper (`MarketplaceBookingNotifier.confirmDineInTab`) has zero UI callers. Same category as the step-1 dead gateway: candidate for removal in a small follow-up PR. Recorded, not removed in this analysis-only step.
+
+### Hotel — CONTRACT SATISFIED BY BACKEND AUTO-DEDUPE, no frontend change required
+
+- **Live path:** `HotelBookingScreen._confirmBooking` → `hotelMarketplaceProvider.reserve` → `HotelMarketplaceService.reserve` → `POST /marketplace/business/:bizId/reservations` → `createHotelReservation` (validates room, capacity, blocks, nightly rates server-side — amount is NEVER client-supplied on this path) → **delegates to canonical `reservationController.createReservation`**.
+- **The canonical controller already implements the full durable discipline this deep-dive mandates:** `Idempotency-Key` header (≤128 validated), SHA-256 request fingerprint over business/customer/slot/amount/notes, `auto:${fingerprint}` fallback key for keyless clients → **an identical retry after transport loss returns the SAME reservation (200 `replayed:true`)**, fingerprint-mismatch on a supplied key → 409, plus an overlapping-status availability conflict check (PENDING/CONFIRMED/CHECKED_IN) as a structural double-booking guard. The client need not send a key for safe convergence: identical inputs → identical auto-key → replay.
+- **Frontend posture is acceptable:** no key sent (auto-dedupe converges), `replayed` ignored (harmless — the success shape is identical either way, and `_confirmBooking` requires a non-empty reservation id, which both fresh and replayed responses carry), 409/4xx surface as a generic snackbar (acceptable for a booking claim with no client-side money movement).
+- **Optional hardening (not required for safety):** send a per-booking idempotency key and surface `replayed:true` for observability.
+- **Dead wire found:** `MarketplaceBookingNotifier.createHotelReservation` + `MarketplaceBookingService.createReservation` (productId form, comment says "with escrow" but it POSTs the same reservations route) — zero UI callers. Candidate for the same removal PR.
+
+### Transit — REAL RECONCILIATION GAP (the only step-5 defect)
+
+- **Live path:** `TransitSeatSelectionScreen._bookSeats` → `bookingActionProvider.bookSeats` → `POST /marketplace/transit/trips/:id/book` (`require2FA`) → `bookTripSeats` → `transitBookingService.bookSeats`.
+- **No money at book time:** the transaction creates a PENDING booking + seat rows + decrements `availableSeats`; `amountUsdc` is recorded but not charged. Booking escrow funding (`bookingEscrowService.createBookingEscrow`, with its own funding-claim lock and TRANSIT_FUNDING_CONFLICT discipline) exists server-side but is **not HTTP-wired** (zero route/controller call sites). When it is wired, it must adopt the same identity/replay contract.
+- **Duplicate mutation is structurally guarded for the same seats:** pre-check + `TransitBookingSeat` unique constraint + P2002 race catch. A same-seats retry can never create a second booking.
+- **The gap is convergence/reconciliation, not duplication:** the route accepts **no idempotency key, no fingerprint, no replay**. After an ambiguous outcome (transport loss / timeout / lost 2xx), a same-seats retry hits the pre-check and returns 400 `"Seats already booked"` — TRUE if the first attempt committed, but **indistinguishable from "another customer just took them"**. The frontend presents this via `bookingActionProvider` as a generic definitive failure (`e.toString()`); the user cannot tell their booking committed and may re-select different seats — a genuinely new logical booking the user never intended.
+- **Required hardening (recorded as the step-5 follow-up, mirrored for `placeStorefrontOrder`'s pattern):** backend accepts `Idempotency-Key` + fingerprint (tripId + seatIds + passengerNames + note, scoped by customer) with exact-replay 200 returning the committed booking, fingerprint mismatch → 409 — same shape as `createReservation`; frontend holds one durable identity per seat-selection submit, classifies failures (definitive 4xx vs ambiguous), and on ambiguous outcomes reconciles against "my bookings" before offering re-selection.
+
+### Step 5 verdict
+
+| Surface | Money at mutation | Identity/replay today | Verdict |
+|---|---|---|---|
+| Dine-in tab pay | YES (invoice+payment) | Server durable replay + client authoritative re-read | Conformant — no change |
+| Hotel reservation | NO (claim; server-priced) | Full fingerprint/auto-dedupe/replay in canonical controller | Conformant — no change |
+| Transit seat booking | NO (PENDING claim) | NONE | Reconciliation gap — hardening follow-up |
+| Dine-in confirm (dead) | n/a | 404 route, zero callers | Remove in follow-up |
+| Hotel createReservation wrapper (dead) | n/a | n/a, zero callers | Remove in follow-up |
+
+Status: step 5 COMPLETE (trace + verdicts, analysis-only, no PR). Step 6 (end-to-end contract tests) remains open, as do the two dead-wire removals and the transit hardening follow-up.
 
 ## Step 2 outcome (2026-10-01): error taxonomy traced and implemented (PR #131, pending review)
 
