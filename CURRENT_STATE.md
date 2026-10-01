@@ -212,3 +212,13 @@ Contract classification: placeStorefrontOrder already satisfies every deep-dive 
 Documented asymmetry (not a defect): /order carries no paymentMode (direct payment only) vs /checkout's normalized paymentMode. Constraint recorded: if escrow is ever offered on the direct sheet, the backend fingerprint must gain the field FIRST (backend-finer divergence is the forbidden direction).
 
 Planning deep-dive 715fe6b. NOT DONE: review+merge PRs #131/#132; deep-dive steps 5 (restaurant/hotel/transit economic operations retry-identity audit) and 6 (end-to-end contract tests).
+
+### 2026-10-01 — PR #131 independent-review patch (deep-dive step 2 blockers)
+
+New head `b0982cf` on branch retail-checkout-failure-classification (same PR #131, open/unmerged; +206/−18, 2 files; no replacement PR; frontend main untouched).
+
+Blocker 1 — 408/425 lifecycle contradiction FIXED: _isDefinitivePreEconomic now excludes 408/425 (was terminal via the 4xx catch-all, contradicting StorefrontApiException.isRetryable which treats both as retryable). An answered 408/425 does not prove the backend never received the request (gateway may answer after upstream commit); safe default = ambiguousOrUnknown + instance ARMED for the fingerprint-checked same-key retry. Classification and lifecycle stay consistent by construction (classifier reuses the same predicate). Regression tests: 408 and 425 each pinned for classification + armed + same-key retry (isRetryable parity asserted).
+
+Blocker 2 — malformed-success guard TIGHTENED: new shared _carriesAuthoritativeOrder requires non-empty string id AND orderRef (the minimum authoritative shape guaranteed by BOTH backend success paths — fresh 201 data:{order} = created row; exact-replay 200 {id, orderRef, status} — and required by the caller's confirmation contract). {order: {}} no longer passes as success/retires the instance. 7-case partial/malformed matrix (empty object, missing id, missing orderRef, empty-string id/orderRef, non-string id, order-as-list) + placeStorefrontOrder partial-object case — all FormatException/ambiguousOrUnknown, instance retained, same-key retry converges.
+
+Gates on b0982cf: analyze 0 err/0 warn (366 info parity); classification 17/17; identity 6/6 + UI 4/4 + conflict 29/29 together; test/storefront 64/64; git diff --check clean; exact-head Flutter Quality + Android Integration dispatched. Planning 24c2b8f (step-2 taxonomy doc now explicitly covers 408/425). PR #131 remains open for re-review; #132 untouched.
