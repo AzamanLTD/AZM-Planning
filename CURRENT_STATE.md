@@ -224,3 +224,16 @@ Blocker 2 — malformed-success guard TIGHTENED: new shared _carriesAuthoritativ
 Gates on b0982cf: analyze 0 err/0 warn (366 info parity); classification 17/17; identity 6/6 + UI 4/4 + conflict 29/29 together; test/storefront 64/64; git diff --check clean; exact-head Flutter Quality + Android Integration dispatched. Planning 24c2b8f (step-2 taxonomy doc now explicitly covers 408/425). PR #131 remains open for re-review; #132 untouched.
 
 **Follow-up (same day):** exact-head CI GREEN on b0982cf — Flutter Quality run 36906009757, Android Integration run 36906011382. Patch report PR comment 5936960077, CI-green follow-up 5937117251. PR #131 open/unmerged awaiting re-review; #132 untouched; frontend main untouched.
+
+### 2026-10-01 — Deep-dive step 5: restaurant/hotel/transit audit COMPLETE (analysis-only, no PR)
+
+Planning d6621ce (step-5 outcome in deep-dives/frontend-operation-lifecycle.md). Frontend main 0fb8d24 / backend main d7dd53c untouched.
+
+VERDICTS (all consumer economic/booking mutations traced screen→provider→service→wire→controller→transaction):
+- Dine-in tab pay (extensions payTab → /dine-in/tabs/:tabId/pay, 2FA): CONFORMANT. Server: alreadyPaid + replayPaymentFromDurableState + FINALIZED/CLOSED re-read. Client: catch re-reads durable tab (parseRecoveredClosedTab) before surfacing failure — lost payments converge to CLOSED. No change required.
+- Hotel reservation (HotelBookingScreen → reserve → /marketplace/business/:bizId/reservations → createHotelReservation → canonical createReservation): CONFORMANT. Backend has the full discipline: Idempotency-Key header (≤128), SHA-256 fingerprint, auto:fingerprint dedupe for keyless clients → identical retry replays the SAME reservation (200 replayed:true), mismatch 409, overlapping-status conflict guard. Amount never client-supplied. No frontend change required (optional: send key + surface replayed).
+- Transit seat booking (TransitSeatSelectionScreen → bookSeats → /transit/trips/:id/book, 2FA): REAL RECONCILIATION GAP — no key/fingerprint/replay. Same-seats retry after transport loss → 400 'Seats already booked', indistinguishable from taken-by-another; frontend shows generic definitive failure; user may re-select and create an unintended second booking. No money at book time (PENDING claim; bookingEscrowService.createBookingEscrow exists but is NOT HTTP-wired — when wired it must adopt the same identity/replay contract). Hardening follow-up recorded (mirror createReservation shape).
+- Dead wire 1: MarketplaceBookingService.confirmDineInTab → /marketplace/business/dine-in/:tabId/confirm — backend route DOES NOT EXIST (404), zero UI callers. Removal candidate.
+- Dead wire 2: MarketplaceBookingNotifier.createHotelReservation + service createReservation (productId form) — zero UI callers. Removal candidate.
+
+REMAINING: step 6 (end-to-end contract tests); two dead-wire removals; transit hardening; PR #131/#132 re-review+merge; on-device TASK-020 items 1-5.
