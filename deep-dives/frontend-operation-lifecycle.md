@@ -99,11 +99,29 @@ Status: step 1 COMPLETE and MERGED 2026-10-01 at frontend main merge `0fb8d247..
 ## Next implementation sequence
 
 1. ~~Trace and wire the real production retail UI caller to retain `RetailCheckoutOperation` across retry/recovery.~~ **DONE + MERGED 2026-10-01 — see "Step 1 outcome" above.**
-2. **NEXT — Classify backend failures instead of treating every exception as retryable.** Audit the LIVE production retail checkout error taxonomy from transport through `ApiClient`, `StorefrontService`, and the UI. Distinguish definitive pre-economic failures, ambiguous/unknown outcomes, authentication refresh, domain conflicts, malformed successful responses, and user-correctable validation failures. Do not create a second retry/idempotency abstraction.
+2. ~~Classify backend failures instead of treating every exception as retryable.~~ **IMPLEMENTED 2026-10-01, PR #131 (open/unmerged, head `4f410a1`) — see "Step 2 outcome" below.**
 3. Verify the backend request fingerprint covers exactly the immutable economic intent represented by the operation; this is a cross-repo contract proof comparing the frontend durable economic view with backend `checkoutFingerprint` semantics.
 4. Audit `placeStorefrontOrder()` as a second economic entry point and determine whether it is live, legacy, or should converge on canonical checkout. Its disposition defect was fixed in step 1; the remaining task is reachability and contract classification, not another identity system.
 5. Trace restaurant, hotel and transit economic/booking operations for equivalent retry identity requirements.
 6. Add end-to-end contract tests before declaring the shared operation contract complete.
+
+## Step 2 outcome (2026-10-01): error taxonomy traced and implemented (PR #131, pending review)
+
+**Source audit (what the live wire actually answers).** Both live economic entry points were traced end-to-end (CartScreen → checkoutCart → POST /storefront/:biz/checkout; StorefrontOrderSheet → placeStorefrontOrder → POST /storefront/:biz/order, plus ApiClient.post/_executeWithRefresh and backend routes/storefrontRoutes.js):
+
+- **401 'TOKEN_EXPIRED'** is auto-refreshed ONCE inside `ApiClient._executeWithRefresh` and the request replayed. A 401 that SURFACES therefore means refresh failed or the account is genuinely unauthorized → class `authenticationRequired`.
+- **409 on these routes is NOT an ambiguity signal**: the backend answers it ONLY when the durable key was already used for DIFFERENT cart contents (fingerprint mismatch — `storefrontReplayOrConflict` and the P2002 race-catch). An exact replay answers **200 with `idempotent: true`** — the success path. → class `domainConflict` (reconcile against the existing order; a same-key retry alone cannot converge, but the identity stays armed per the step-1 contract).
+- **400/403/404** are the explicit pre-economic validations (empty/oversized items, paused business, unavailable product, escrow not offered). → class `definitivePreEconomic`; the step-1 disposition retires the instance.
+- **429** → `rateLimited`; **5xx / transport loss / timeout** → `ambiguousOrUnknown`; **malformed 2xx** (success payload without `data.order`) → `ambiguousOrUnknown` via a new malformed-success guard (previously surfaced as SUCCESS with the cart cleared — a real defect this step fixed).
+- **Residual backend gap (documented, NOT invented in Flutter):** the backend `wrap` catch-all surfaces uncaught internal errors as **400 with no machine-readable code**. In current source every such throw precedes the order commit (transaction rollback), so 400 stays de-facto pre-economic — but the contract is implicit. Backend should make internal errors distinguishable (dedicated status/code) before the 400→definitive mapping is treated as contractual.
+
+**Implementation.** `StorefrontFailureClass` (5 classes) + pure `StorefrontService.classifyStorefrontFailure` reusing the SAME `_isDefinitivePreEconomic` predicate as the step-1 disposition — classification is a read-only projection and can never contradict the identity lifecycle. No second identity/idempotency abstraction. UI: CartScreen + StorefrontOrderSheet present class-appropriate copy via shared `checkout_failure_message.dart`; an unconfirmed outcome is never worded as "the order failed" (that invites duplicate orders); the generic `SnackBar('Order failed: $e')` is gone from both live callers.
+
+**Adjacent defect fixed during the audit:** CartScreen read the order at `result['data']['order']` — always null because `_parseResponse` already unwraps `{success,data}` — so the success confirmation dialog NEVER showed the orderRef. Now reads `result['order']` (guaranteed a Map by the malformed-success guard).
+
+**Gates on head `4f410a1`:** analyze 0 err / 0 warn (366 info parity); new classification suite 13/13, UI presentation suite 4/4; PR #130 identity regression 6/6 preserved; test/storefront 60/60; retail 18/18; git diff --check clean; exact-head Flutter Quality + Android Integration dispatched. Scope +738/−4, 6 files.
+
+**NOT VERIFIED yet:** PR #131 awaits independent review + merge. Step 4's reachability/contract question is partially answered (both entry points share the taxonomy; placeStorefrontOrder IS live via StorefrontOrderSheet) but its convergence decision is still open.
 
 ## Important implementation constraints
 
