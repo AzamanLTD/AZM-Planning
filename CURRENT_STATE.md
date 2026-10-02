@@ -247,3 +247,13 @@ Planning f5df11a (implementation record in deep-dives/frontend-operation-lifecyc
 - Report comments posted: frontend PR #133 comment 5946311201, backend PR #316 comment 5946469352.
 
 REMAINING: independent review + merge of PRs #133/#316 (and #131/#132/#130 line); dead-wire removals (confirmDineInTab, createHotelReservation wrapper); step 6 end-to-end contract tests; on-device TASK-020 items 1-5.
+
+### 2026-10-02 — Step-5 dead wires REMOVED: PR #134 open, all CI green on 9b721fa
+
+Planning acb38ab (record in deep-dives/frontend-operation-lifecycle.md). Frontend main dc782dd untouched.
+
+- PR #134 (AzamanLTD/AZM-frontend, branch dead-wire-removal, head 9b721fa): exactly the two step-5 removal candidates — confirmDineInTab (service + provider, POST to a route that cannot exist) and createHotelReservation/createReservation(productId) twin (live hotel path via hotel_marketplace_service untouched). −39 lines, zero UI callers, zero test refs, no behavior change. CI green: FQ 36972604816 + 36972610594, AI 36972612643. Report comment 5946678391.
+- Local gates: analyze 366 parity; marketplace+screens 99/99; full suite 1050 pass, 7 in-run failures all clear isolated (documented flake class).
+- Same-class observation recorded, NOT removed: GET /marketplace/business/dine-in/:tabId family (fetchDineInTab/loadDineInTab + demo branch) — caller-less but outside the recorded removal set.
+
+REMAINING: independent review + merge of PRs #133/#316 (transit identity) and #134 (dead wires); step 6 e2e contract tests; on-device TASK-020 items 1-5.
