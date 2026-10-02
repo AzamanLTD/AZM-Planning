@@ -237,3 +237,13 @@ VERDICTS (all consumer economic/booking mutations traced screen→provider→ser
 - Dead wire 2: MarketplaceBookingNotifier.createHotelReservation + service createReservation (productId form) — zero UI callers. Removal candidate.
 
 REMAINING: step 6 (end-to-end contract tests); two dead-wire removals; transit hardening; PR #131/#132 re-review+merge; on-device TASK-020 items 1-5.
+
+### 2026-10-02 — Transit booking identity IMPLEMENTED: step-5 gap closed, both PRs open with all CI green
+
+Planning f5df11a (implementation record in deep-dives/frontend-operation-lifecycle.md). Frontend main / backend main d7dd53c untouched; both PRs open/unmerged.
+
+- Backend PR #316 (AzamanLTD/AZM-backend, branch transit-booking-identity, head 9131538): shared idempotency authority mounted on POST /marketplace/transit/trips/:id/book (require2FA → idempotency{failurePolicy RELEASE, releaseOn4xx, required:false} → controller). Claim commits INSIDE the booking transaction; keyless legacy wire unchanged. CI green on 9131538: financial-durability 36969931963, Azaman Test Suite 36969931964. Local: pg identity proof 11/11, transit perimeter 33/33 parity with main d7dd53c. First head 1713467 failed the Phase 2.5 require2FA structural audit on route formatting (middleware present, multi-line declaration hid it) — fixed by reformatting to the audited single-line shape, audit untouched.
+- Frontend PR #133 (AzamanLTD/AZM-frontend, head 886b205): bookSeats ref-bound durable instance (Idempotency-Key header, same-key convergence, changed selection = new identity) + TransitBookingFailureClass 5-class taxonomy reusing the lifecycle predicate; malformed 2xx = unknown state, instance armed; demo short-circuits pre-economics; per-screen FinancialOperationRef on TransitSeatSelectionScreen with honest ambiguous-failure copy. CI green on 886b205: Flutter Quality 36929418163, Android Integration 36969272744 (dispatched on exact head). Local: analyze 366 parity, transit identity 9/9, screen+experience+demo 91/91, full suite 1111 pass (4 known flakes clear isolated).
+- Report comments posted: frontend PR #133 comment 5946311201, backend PR #316 comment 5946469352.
+
+REMAINING: independent review + merge of PRs #133/#316 (and #131/#132/#130 line); dead-wire removals (confirmDineInTab, createHotelReservation wrapper); step 6 end-to-end contract tests; on-device TASK-020 items 1-5.
