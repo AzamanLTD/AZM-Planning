@@ -134,6 +134,19 @@ Same key + same payload ⇒ exact replay of the committed booking; materially ch
 
 Both PRs await independent review + merge. Dead-wire removals (confirmDineInTab, createHotelReservation wrapper) still pending. Step 6 end-to-end contract tests still pending. On-device TASK-020 items 1-5 pending.
 
+## Step 5 follow-up 2 (2026-10-02): dead wires REMOVED (PR #134, open/unmerged)
+
+Both step-5 removal candidates are now cut from the live codebase — AzamanLTD/AZM-frontend PR #134, branch dead-wire-removal off main dc782dd, head 9b721fa, −39 lines, 2 files:
+
+- **Dead wire 1 (confirmDineInTab):** service method (`POST /marketplace/business/dine-in/:tabId/confirm`, guaranteed 404 — zero dine-in routes exist under marketplaceRoutes) + provider wrapper. Removed.
+- **Dead wire 2 (createHotelReservation twin):** notifier wrapper + service `createReservation` (productId form). The LIVE hotel path (HotelBookingScreen → hotel_marketplace_service canonical createReservation, same wire) is untouched. Removed.
+
+Zero UI callers and zero test references for both (grep-verified across lib/ + test/). No behavior change — nothing reachable called these.
+
+**Scope discipline note:** the caller-less `GET /marketplace/business/dine-in/:tabId` family (`fetchDineInTab` / `loadDineInTab` + its demo-interceptor branch) is the same dead class but was NOT in the recorded step-5 removal set; recorded here as a future-audit candidate, not removed.
+
+**Gates on 9b721fa:** analyze 366 info = main parity; marketplace + screens perimeter 99/99; full suite 1050 pass in-run, 7 failures all clear on isolated rerun (documented parallel-load flake class). CI green: Flutter Quality 36972604816 + 36972610594, Android Integration 36972612643. PR report comment 5946678391. PR #134 awaits independent review + merge.
+
 ## Step 5 outcome (2026-10-01): restaurant / hotel / transit retry-identity audit (analysis-only)
 
 Every consumer-side economic/booking mutation in the three verticals was traced end-to-end (frontend screen → provider → service → wire → backend route → controller → service/transaction). Two live surfaces already satisfy the operation-lifecycle contract; one has a real reconciliation gap; two dead wires were found.
