@@ -258,6 +258,17 @@ Planning acb38ab (record in deep-dives/frontend-operation-lifecycle.md). Fronten
 
 REMAINING: independent review + merge of PRs #133/#316 (transit identity) and #134 (dead wires); step 6 e2e contract tests; on-device TASK-020 items 1-5.
 
+### 2026-10-02 — Storefront shell review patch: PR #135 head 0504c7f, CI green; all 3 review notes closed
+
+Independent review of #135 landed three notes; patch applied same branch (7cb25e3..0504c7f, +628/−254, 3 files; base untouched).
+
+- Blocker 1 (rebuilt futures): invoice details were a build-minted FutureBuilder future — every sheet-extent tick fired a NEW getMyInvoices request during drags. Now fetched ONCE into stable parent state (_loadUnpaidInvoices + BusinessService seam on the screen); section is a pure projection. Regression market_storefront_invoice_rebuild_test.dart (2 tests, counting seam) FAILS pre-fix Expected <1> Actual <4> (verified on throwaway pre-fix copy), passes 2/2 on 0504c7f.
+- Note 2: redundant in-storefront 'Storefront' action (second entry into the same storefront) removed from shell + screen wiring; action hierarchy now primary CTA → data-driven catalog shortcut → More. No onOpenStorefront/_openStorefront leftovers.
+- Note 3: scroll-owner comment re-worded to the real owner (sheet product ListView).
+- Gates on 0504c7f: analyze 0 err/0 warn 230 info (exact parity); regression 2/2, shell 13/13; full suite 1082 pass, 8 parallel-load flakes each pristine isolated (documented class). Exact-head CI green: FQ 37012962570, AI 37014388840 (release APK). Report: PR #135 comment 5953864577.
+
+REMAINING: re-review + merge of PRs #133/#316 (transit identity), #134 (dead wires), #135 (storefront shell); step 6 e2e contract tests; on-device TASK-020 items 1-5; on-device storefront visual acceptance.
+
 ### 2026-10-02 — Market storefront shell IMPLEMENTED: PR #135 open, all CI green on 7cb25e3
 
 Customer-facing market surface rebuilt as a single-motion storefront (in-conversation brief; no Planning spec doc). Frontend main 30188ef (post-#134) untouched.
