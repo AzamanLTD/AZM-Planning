@@ -257,3 +257,13 @@ Planning acb38ab (record in deep-dives/frontend-operation-lifecycle.md). Fronten
 - Same-class observation recorded, NOT removed: GET /marketplace/business/dine-in/:tabId family (fetchDineInTab/loadDineInTab + demo branch) — caller-less but outside the recorded removal set.
 
 REMAINING: independent review + merge of PRs #133/#316 (transit identity) and #134 (dead wires); step 6 e2e contract tests; on-device TASK-020 items 1-5.
+
+### 2026-10-02 — Market storefront shell IMPLEMENTED: PR #135 open, all CI green on 7cb25e3
+
+Customer-facing market surface rebuilt as a single-motion storefront (in-conversation brief; no Planning spec doc). Frontend main 30188ef (post-#134) untouched.
+
+- PR #135 (AzamanLTD/AZM-frontend, branch market-storefront-shell, head 7cb25e3): NEW lib/screens/marketplace/market_storefront_shell.dart + test file; business_profile_screen.dart re-scoped to data + delegation. Full-bleed hero (banner → cover → logo → gradient priority) overlapped by a draggable white product sheet — snaps 0.46 info / 0.62 overview / 0.78 shopping; market info (About/Hours/Location/Contact/Showcase) lives BEHIND the sheet at 0.46; hero collapses into a compact market pill at 0.78. One scroll owner: sheet ListView on the DSS controller (offset-0 drag recedes the sheet). Single dip-and-settle discovery, once per screen, skipped under reduced motion. Pill tabs / auto ⓘ popover / floating bubbles / NestedScrollView parallax removed; rare utilities in the sheet's More menu; vertical CTAs, flip-book + CatalogStorefront routes, SDUI storefront, reviews/locations delegation preserved.
+- Gates on 7cb25e3: analyze 0 err/0 warn (362 info, parity ≤366); new suite 13/13 (extents measured from sheet rect); marketplace perimeter 234 pass (2 known flakes clear isolated); full suite 1060 pass, 10 in-run failures all the documented flutter_tester parallel-load/segfault class, all 16 affected files pristine in isolated batches. Exact-head CI green: FQ 37008543427 + 37008537850, AI 37008546173 (release APK). Verification report: PR #135 comment 5952821159.
+- Same-class note: Android Integration runner deletes the emulator — APK build is the CI gate; on-device visual acceptance (hero priority, gesture feel, discovery timing) pending, same status as TASK-026 on-device items.
+
+REMAINING: independent review + merge of PRs #133/#316 (transit identity), #134 (dead wires), #135 (storefront shell); step 6 e2e contract tests; on-device TASK-020 items 1-5.
