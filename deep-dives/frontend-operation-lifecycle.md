@@ -105,6 +105,35 @@ Status: step 1 COMPLETE and MERGED 2026-10-01 at frontend main merge `0fb8d247..
 5. ~~Trace restaurant, hotel and transit economic/booking operations for equivalent retry identity requirements.~~ **TRACED 2026-10-01 — see "Step 5 outcome" below.**
 6. Add end-to-end contract tests before declaring the shared operation contract complete.
 
+## Step 5 follow-up (2026-10-02): transit booking identity IMPLEMENTED — the step-5 reconciliation gap is closed (PRs open)
+
+The step-5 transit gap (seat booking with no durable identity → lost response made the customer's same-seat retry an indistinguishable 400 'Seats already booked') is now hardened on BOTH sides of the wire. Two PRs, either merges first; both directions stay honest.
+
+### Backend — AzamanLTD/AZM-backend PR #316 (head 9131538, open/unmerged)
+
+The shared idempotency authority (`src/middleware/idempotency.js`, the same discipline as `/withdraw`) is mounted on `POST /marketplace/transit/trips/:id/book` as `require2FA` → `idempotency({ failurePolicy: 'RELEASE', releaseOn4xx: true, required: false })` → controller. The claim commits INSIDE the booking transaction (one intent → one durable identity → one booking); keyless legacy requests execute with no claim and today's wire unchanged (`required: false` — rollout-safe for un-upgraded clients).
+
+Proof: `__tests__/transit-booking-identity.pg.test.js` 11/11 — identical retry replays the SAME booking byte-identical (handler does not execute again); two concurrent identical requests converge or deterministically 409, never a second mutation; changed seats / passenger-name mapping / customer note / trip each fail closed 409 (note is persisted and part of identity); claims are (userId, endpoint, key)-scoped — another customer with the same key gets an independent operation; a rolled-back transaction (genuine seat conflict) releases the claim so the same key stays usable; keyless requests leave no claim.
+
+Structural-audit note: the route is declared in the audited single-line shape — the Phase 2.5 `require2FA()` check reads the single `router` line for the endpoint. The first head 1713467 failed that audit on formatting (multi-line declaration hid a middleware that was present); the fix is a reformat, the audit itself untouched.
+
+### Frontend — AzamanLTD/AZM-frontend PR #133 (head 886b205, open/unmerged)
+
+`MarketplaceBookingService.bookSeats` gains the ref-bound durable instance (parity with `checkoutCart`): `Idempotency-Key` HEADER on the wire, same-key retry converges on the same booking, materially changed selection = new identity, old unfinished instance stays journal-recoverable. `TransitBookingFailureClass` taxonomy (definitivePreEconomic / authenticationRequired / rateLimited / domainConflict / ambiguousOrUnknown) reuses the SAME disposition predicate as the lifecycle, so classification can never contradict identity. Malformed 2xx without booking id + bookingRef is UNKNOWN economic state: never surfaced as success, instance stays armed, same-key retry converges. Demo mode short-circuits BEFORE economics (postFinancial policy). `TransitSeatSelectionScreen` carries a per-screen `FinancialOperationRef` + operationType 'transit.book_seats'; ambiguous failures now say to check bookings and that a retry reuses the request.
+
+### Cross-repo replay contract (the pairing rule)
+
+Same key + same payload ⇒ exact replay of the committed booking; materially changed selection ⇒ 409 fail-closed; concurrent duplicates ⇒ exactly one booking. Client sends the key only; fingerprint identity is server-side, so a stale client cannot corrupt it.
+
+### Gates
+
+- Frontend head 886b205: Flutter Quality 36929418163 green; Android Integration 36969272744 green (dispatched on the exact head); analyze 366 = main parity; transit identity 9/9; screen + transit experience + demo perimeter 91/91; full suite 1111 pass (4 known parallel-load flakes clear on isolated rerun).
+- Backend head 9131538: financial-durability 36969931963 green; Azaman Test Suite 36969931964 green; pg identity proof 11/11; transit perimeter (phase2 + r28 + seat tiers) 33/33 exact parity with main d7dd53c.
+
+### NOT DONE
+
+Both PRs await independent review + merge. Dead-wire removals (confirmDineInTab, createHotelReservation wrapper) still pending. Step 6 end-to-end contract tests still pending. On-device TASK-020 items 1-5 pending.
+
 ## Step 5 outcome (2026-10-01): restaurant / hotel / transit retry-identity audit (analysis-only)
 
 Every consumer-side economic/booking mutation in the three verticals was traced end-to-end (frontend screen → provider → service → wire → backend route → controller → service/transaction). Two live surfaces already satisfy the operation-lifecycle contract; one has a real reconciliation gap; two dead wires were found.
