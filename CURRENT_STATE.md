@@ -278,3 +278,14 @@ Customer-facing market surface rebuilt as a single-motion storefront (in-convers
 - Same-class note: Android Integration runner deletes the emulator — APK build is the CI gate; on-device visual acceptance (hero priority, gesture feel, discovery timing) pending, same status as TASK-026 on-device items.
 
 REMAINING: independent review + merge of PRs #133/#316 (transit identity), #134 (dead wires), #135 (storefront shell); step 6 e2e contract tests; on-device TASK-020 items 1-5.
+
+### 2026-10-03 — UI-correction Phase A IMPLEMENTED: PR #136 open, all CI green on 5ee0cb6
+
+Design-brief Phase A (in-conversation handoff 2026-10-03; three corrections). Frontend main 30188ef untouched; branch ui-correction-phase-a, single commit 5ee0cb6.
+
+- PR #136 (AzamanLTD/AZM-frontend, branch ui-correction-phase-a, head 5ee0cb6): (1) Odometer rewritten to SLOTS COUNTED FROM THE RIGHT — unchanged digits stay still across comma insertion (999 → 9,990), deleted digits roll OUT downward instead of vanishing, separators fade never slide, amount width animates; pure planner OdometerSlots.plan unit-testable; every cell a switcher for element stability; reduced motion = plain text first frame. (2) Comic Neue = UI/display family, bundled locally with deliberate weight map (800/900 → 700, 600/500 → 400); money stays on Inter (tabular figures). (3) Add Cash §4.2/§4.3: Phantom-style top-left amount, method row directly under it, borderless selected-method row, selector sheet lands its check in-sheet on the tap frame then closes after a 160ms acknowledgement.
+- Tests: new odometer_slot_identity 12, ui_typography, add_cash_phase_a 7 (fail-pre-fix proofs: deleted digit Expected<1> Actual<0>, centered amount, check never moved in-sheet). Updated 2 deposit_payment_method settles (delayed close; pumpAndSettle alone stops at the idle frame before the close timer) + 2 odometer_number cell counts (switcher-per-slot architecture).
+- Gates on 5ee0cb6: analyze 366 issues 0 errors 0 new warnings (exact baseline parity); full suite 1100 pass, 7 documented flutter_tester flakes pristine 22/22 in isolation. Exact-head CI green: FQ 37163081940, AI 37163391096 (dispatch-only on feature branches). Report: PR #136 comment 5974846039.
+- Deposit CTA flow (validation, account selection, Confirm account) untouched; no public API changes; new APIs @visibleForTesting.
+
+REMAINING: independent review + merge of PRs #133/#316 (transit identity), #134 (dead wires), #135 (storefront shell), #136 (Phase A); step 6 e2e contract tests; on-device TASK-020 items 1-5; on-device visual acceptance (Phase A roll feel, sheet delay, Comic Neue).
