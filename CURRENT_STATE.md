@@ -331,4 +331,19 @@ Independent review of d3217d4 found 3 defects reachable today + 2 latent; all fi
 - Tests: +8 (arbiter cancel ×3, viewer system-cancel, viewer swipe-once pin, tray production-stack, tray hidden/render rewrite, gateway feed-pin, media dispose-race); the old go_router-based tray tap test SUPERSEDED (it encoded D2) and replaced by a production-stack test with the real BusinessProfileScreen. Viewer suite 44/44.
 - Gates on 5f40bd1: analyze 362 issues / 0 errors (exact baseline parity with d3217d4); full suite 1206 pass, 38 failures in 10 files all the documented flutter_tester load-flake classes ("loading" shell crashes + "did not complete"), every affected file pristine in isolation. Exact-head CI green: FQ 37194473104, AI 37195413944 (dispatch-only on feature branches). Report: PR #141 comment 5979083392.
 
-REMAINING: independent review + merge of PRs #133/#316 (transit identity), #134 (dead wires), #135 (storefront shell), #136 (Phase A); MERGE of PR #141 (reviewed on 5f40bd1 — review pass done, CI green); Overhaul 02-04 phases not yet started; step 6 e2e contract tests; on-device TASK-020 items 1-5; on-device visual acceptance (Phase A; Overhaul 05: dismiss feel, boost badge, reduced motion, video playback).
+### 2026-10-04 — Home UX corrections: PR #142 open (branch ux-correction-a-home-theme-nav), CI green on 871639b
+
+Home launcher, category dial and nav pill corrections carried on 4 commits over main 6810007 (2f52247, 5e6b2d1, 871639b lineage; exact-head Flutter Quality + Android Integration green at each push, dispatch-only on feature branches). PR open, unmerged; report posted.
+
+### 2026-10-05 — Home reminder FILL PATCH: PR #142 head fe2ec7e, CI green, report posted
+
+The reminder slot above the Activity doorway could sit BLANK when no signal existed — the deck now fills the band Home measures for it and is never blank (fe2ec7e over 871639b, 4 files, +538/−183):
+
+- Real signals fan up to three cards behind the front (alternating shallow rotations, sideways nudges spanning the band); signal-less renders the placeholder fan ("Your reminders will appear here", two ghost slots behind).
+- Demo builds seed the deck from the app's demo data (DemoGuard gated, never in a real build) so the demo Home reads lived-in.
+- Band-driven geometry: peek/card heights derive from the measured band, clamped 88-264dp, tall mode (larger chip/type/position dots) when the band affords it; ghost slots fill the fan so no state shows a blank strip.
+- Doorway-at-the-fold contract preserved (sm overshoot, fold composition): home_ux_correction 12/12, home_activity 12/12.
+- Test-harness discovery: the deck now sits under the handoff test's gesture center, so single-teleport moveBy gestures lose their first delta to dragStartBehavior.start arena resolution (any tappable card under the finger does this app-wide). Helpers stepped into real-finger 20px deltas; the no-signal §7 test now pins the placeholder parking in the peek band (contract change: slot never band-less).
+- Gates on fe2ec7e: analyze 364/0 (baseline parity); touched suites deck 19, handoff 6, viewport QA 6, UX correction 12, activity 12, entrance/avatar/pills/ticker 10 — all green; full battery 1308 pass, 16 suite-load flakes, 148/148 pristine in isolation (known flutter_tester concurrency signature). Exact-head CI green: FQ 37301462953 + 37301456746 (push also auto-triggered a second FQ), AI 37301455945. Report: PR #142 comment 5993424181.
+
+REMAINING: independent review + merge of PRs #133/#316 (transit identity), #134 (dead wires), #135 (storefront shell), #136 (Phase A); MERGE of PR #141 (reviewed on 5f40bd1 — review pass done, CI green); MERGE of PR #142 (fill patch reviewed on fe2ec7e — CI green, report posted); Overhaul 02-04 phases not yet started; step 6 e2e contract tests; on-device TASK-020 items 1-5; on-device visual acceptance (Phase A; Overhaul 05; PR #142: deck fan feel, band tall mode, demo seeding).
