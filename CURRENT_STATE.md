@@ -355,4 +355,14 @@ Pass §6 made the Home scroll the drag surface (doorway tap-only), which surface
 - PASS §6 DRAG GRAMMAR: home_activity entry drag (120px) and reverse-pull test (120px) both sat BELOW the armed point (0.62 × 230px ≈ 143px) so neither could ever commit; both now drag 260px, small-pull counterpart still pins spring-back at 60px — same deliberate-threshold grammar the handoff suite pins.
 - Gates on e8af06e: analyze 364 info / 0 errors, exact parity with head, no new lints (5 new infos from the session's edits cleaned); home batch 15 suites 121/121; activity 12/12; avatar 3/3; UX-correction + handoff + deck 49/49; full suite 1320 pass, 16 suite-load flakes, all pristine in isolation (restaurant_commit_surface clears at concurrency 1). Exact-head CI green: FQ 37348449540 + 37348420441, AI 37348431457. Report: PR #142 comment 5999777706.
 
-REMAINING: independent review + merge of PRs #133/#316 (transit identity), #134 (dead wires), #135 (storefront shell), #136 (Phase A); MERGE of PR #141 (reviewed on 5f40bd1 — review pass done, CI green); MERGE of PR #142 (gate fixes on e8af06e — CI green, report posted); Overhaul 02-04 phases not yet started; step 6 e2e contract tests; on-device TASK-020 items 1-5; on-device visual acceptance (Phase A; Overhaul 05; PR #142: deck fan feel, band tall mode, demo seeding).
+### 2026-10-06 — FINAL PASS §9 STARTUP AUDIT: PR #142 head 4d7cf96, CI green, report posted
+
+Startup path audited and fixed on 4d7cf96 (over e5ee5c9, 7 files, +188/−33):
+
+- SINGLE-FLIGHT ORACLE RATES: currency, hologram, susu and home-summary fetchers each fetched rates independently at startup (4x duplicate upstream calls); the oracle client now coalesces them — first caller performs the fetch, the rest await the same future. The poller stays periodic but gains demo-mode awareness.
+- SPLASH BRANDING FLOOR: the 2s floor ran AFTER the auth waterfall (serial worst case 2s + auth latency); it now overlaps auth, cutting cold-start TTI by the auth latency.
+- POST-AUTH LOADS: parallel rather than sequential.
+- Gates on 4d7cf96: 5 fail-first pins green (single-flight coalescing, demo-mode poller, splash overlap, parallel post-auth, plus the §8 lazy-list pin re-verified at this head); full battery green; analyze parity. Exact-head CI green: FQ 37394324513, AI 37394326659. Report: PR #142 comment 6007657412.
+- Follow-up note: the §8 pin's initial failure (RenderFlex overflow 56px in the eager VendorAdCard row) was an artifact of the eager Column constraints — resolved by the §8 SliverList layout; pin passes at 4d7cf96 and 1013f25.
+
+REMAINING: independent review + merge of PRs #133/#316 (transit identity), #134 (dead wires), #135 (storefront shell), #136 (Phase A); MERGE of PR #141 (reviewed on 5f40bd1 — review pass done, CI green); MERGE of PR #142 (gate fixes on e8af06e — CI green, report posted); Overhaul 02-04 phases not yet started; step 6 e2e contract tests; on-device TASK-020 items 1-5; on-device visual acceptance (Phase A; Overhaul 05; PR #142: deck fan feel, band tall mode, demo seeding, balance-card particle field).
