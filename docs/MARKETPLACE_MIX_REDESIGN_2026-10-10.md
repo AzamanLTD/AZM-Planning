@@ -3,6 +3,7 @@
 > **Agent A, Phase 0 (documentation-only).** Verified against live main on 2026-10-10:
 > frontend `9640face067f45d0cfda6bb95f1569af6878add7`, backend `052370518133c91bdfb119ff271782045194f180`.
 > Open PRs #147 (frontend, receive-request-recent-interaction, head `3a656d8`) and #332 (backend, payment-requests-standalone, head `b51fa80`) were inspected for scope only; neither is modified by this phase.
+> **D-1 CORRECTION (2026-10-10, owner-confirmed):** GHS is the canonical listing currency for Ghana Marketplace — see §3.4 and the companion contract `MARKETPLACE_GHS_PRICING_AND_PAYMENT_CONTRACT_2026-10-10.md` (price model, payment-rail audit, migration and tests). The earlier USDC-default D-1a below is superseded; all D-1-dependent sections were revised in the same pass.
 > This document supersedes the merchant-card-era plan in `overhaul-pack/02_MARKETPLACE_DISCOVERY.md` (branch `pack/02-marketplace-discovery`, not modified). No application source code changed in this phase.
 
 Mission: redesign AZM Marketplace around **customer-led, cross-business discovery**. The item — not the business card — becomes the primary visual subject of a new **Mix** browse mode, while **Stores** remains the deliberate single-business mode. This is a product-direction document: every claim about what exists today is evidence-backed with a file path; everything new is labeled **NEW** and needs an approval decision listed in §9.
@@ -54,7 +55,7 @@ Mission: redesign AZM Marketplace around **customer-led, cross-business discover
 
 **Analytics ingestion:** `POST /api/storefront/:businessProfileId/events` (`routes/storefrontRoutes.js:422`): public optional-auth, allowlist (`storefront_view, widget_view, cta_click, product_tap, follow_click, review_click, message_click, share_click`), free-form `metadata` Json, enriches `viewerId`. **One insert per request — no batching; `product_tap` exists but no impression, viewability, or outcome events.**
 
-**Currency:** every product/order/escrow amount is USDC (`priceUsdc`, `amountUsdc`). GHS appears only in conversion flows (`prisma/schema.prisma:1110` `currency` default GHS; `:1427` live retail rate for the USDC→GHS sell hologram; `GET /api/azm-conversion/rate` is authenticated). **There is no product-level GHS price and no public rate endpoint — see §3.4, decision D-1.**
+**Currency:** today every product/order/escrow amount is USDC (`priceUsdc`, `amountUsdc`); there is no product-level GHS price yet. Correction of the original audit: a public rate endpoint DOES exist (`GET /api/oracle/yellowcard-rate`, `GET /api/oracle/rates`, public per `routes/oracleRoutes.js`, mounted `src/routes/index.js:68`) — it is an oracle/trading display rate, NOT a marketplace quote source, and remains unusable for pricing. Full payment-rail audit (Moolre collections = deposit rail into Azaman's own account crediting the USDC wallet; escrow = USDC-only merchant checkout with no currency field on order snapshots; Moolre disbursement = USDC-denominated user off-ramp; no GHS merchant-checkout collection path exists): see the companion `MARKETPLACE_GHS_PRICING_AND_PAYMENT_CONTRACT_2026-10-10.md` §2. **Canonical listing currency is GHS — see §3.4 (D-1, corrected).**
 
 **Public web/SEO:** none. No sitemap, robots, SSR, or hosted public page anywhere in the backend; `GET /api/storefront/:id/render` and `/public-theme` return JSON intended for a "web ordering integration" surface that does not exist yet. Business portal (`AZM-businessPortal`, React/Vite SPA) and admin portal are auth-gated management UIs. **§6 is greenfield.**
 
@@ -96,7 +97,7 @@ Mix and Stores are a **discovery-mode control** sitting above the category rail,
 | Field | Source | Honesty rule |
 |---|---|---|
 | Item name + primary image | `BusinessProduct.name`, `imageUrls[0]` | real name, real image; placeholder graphic when absent — never a stock fake |
-| Price + currency | `BusinessProduct.priceUsdc` (+ §3.4 decision) | authoritative value as stored; never relabel USDC as GHS |
+| Price + currency | effective `BusinessPrice` GHS row (exact 2dp; companion doc §1) | merchant-confirmed GHS list price; string-serialized 2dp; items without a confirmed GHS price never render a converted/estimated/fabricated figure |
 | Business name + direct link | `BusinessProfile.businessName` | taps through to existing business profile flow (§5.1) |
 | Availability | `isAvailable` + section window + branch | hidden when unsupported, e.g. no fake "sold out" states |
 | Location/branch | `locationId` → nearest active branch label | only when location data exists |
@@ -161,9 +162,10 @@ Response (example):
       "tags": ["SPICY"]
     },
     "pricing": {
-      "amount": "25.00",
-      "currency": "USDC",                  // authoritative, as stored
-      "displayCurrency": "USDC"            // see D-1; "USDC" until a GHS contract is approved
+      "amount": "25.00",                   // exact 2dp GHS string from the effective BusinessPrice row
+      "currency": "GHS",                   // canonical listing currency for Ghana (D-1, corrected §3.4)
+      "displayCurrency": "GHS",
+      "hasUsdcListPrice": true             // informational only; never used to price or estimate
     },
     "variants": [{ "id": "v_small", "label": "Small", "priceDelta": "0" },
                  { "id": "v_large", "label": "Large", "priceDelta": "5.00" }],
@@ -185,7 +187,7 @@ Response (example):
 }
 ```
 
-**Exclusions (server-enforced where clause):** `BusinessProduct.isActive=false` or `isAvailable=false`; section `isActive=false` or window closed at browse time; business `isSuspended=true` or `isPausedByOwner=true` (fixes B-1); catalog unpublished for the storefront-publishing case (per D-5); items whose `locationId` names a branch inactive or outside the user's region filter. **Public DTO never exposes** owner `userId`, emails, `costPrice`, `supplierId`, `totalRevenue`, or internal moderation fields.
+**Exclusions (server-enforced where clause):** `BusinessProduct.isActive=false` or `isAvailable=false`; section `isActive=false` or window closed at browse time; business `isSuspended=true` or `isPausedByOwner=true` (fixes B-1); **no business-confirmed effective GHS price row** (D-1 corrected — a missing GHS price never falls back to `priceUsdc`, an estimate, or any conversion; see companion doc §3.2/§4); catalog unpublished for the storefront-publishing case (per D-5); items whose `locationId` names a branch inactive or outside the user's region filter. **Public DTO never exposes** owner `userId`, emails, `costPrice`, `supplierId`, `totalRevenue`, or internal moderation fields.
 
 ### 3.2 Ordering, stability, cache
 
@@ -203,14 +205,16 @@ CREATE INDEX business_profile_eligible
 -- PostGIS or lat/lng bounding-box index deferred to D-6 (location filter v1 = city/region string).
 ```
 
-### 3.4 Pricing truth for the Ghana market (decision D-1)
+### 3.4 Pricing truth for the Ghana market (decision D-1 — CORRECTED, owner-confirmed)
 
-Today a product's only authoritative price is USDC. **It would be dishonest to** display `priceUsdc` as GHS, invent an exchange rate client-side, or imply a GHS checkout exists. Options:
+**The canonical displayed/listing price for Ghana Marketplace products and services is GHS.** USDC remains a supported payment/funding asset where checkout actually supports it, but it is not the default listing currency. The earlier D-1a USDC-default is withdrawn.
 
-- **D-1a (default in this plan):** display the authoritative USDC price, labeled USDC, everywhere in Mix. Add a *clearly-labeled estimate* line ("≈ GH₵ 312 at the current sell rate") **only if** a public, cached, server-side rate endpoint is added (the existing conversion rate is authenticated and tied to trading semantics — it is NOT a marketplace display rate; do not reuse it).
-- **D-1b (deferred):** business-owned GHS list prices with settlement still in USDC — requires schema, portal, and accounting decisions (§9) and must not be smuggled into Mix v1.
+Contract (full detail in `MARKETPLACE_GHS_PRICING_AND_PAYMENT_CONTRACT_2026-10-10.md`):
 
-Until D-1 is decided: **USDC only.** This is the truthful baseline for price *comparison* (relative ordering is unaffected).
+- **Price storage:** a normalized, scoped, effective-dated `BusinessPrice` model (exact 2dp `Decimal(20,2)`, `currency`, `scope DEFAULT|BRANCH`, `confirmedByType BUSINESS|ADMIN|MIGRATION`) — recommended over an additive `priceGhs` column because the requirement explicitly covers variants, modifiers, branch-specific prices and future multi-country markets, which a column cannot express (companion doc §1).
+- **Decimal truth:** GHS amounts are exact 2-fractional-digit decimals end to end (pesewas-integer discipline per the existing `paymentRequestService` / `toExactGhsDecimal` patterns). Never binary floating-point money, client or server.
+- **Honesty rules preserved:** never relabel `priceUsdc` as GHS, never convert USDC into a GHS price, never display a USDC→GHS estimate as the primary user price, never silently fall back to the legacy USDC amount. A product without a business-confirmed GHS price is **excluded from Mix** and surfaces in a portal worklist — never shown with a fabricated or mislabelled price.
+- **Payment reality (verified from code):** no GHS merchant-checkout collection path exists today. Moolre collections are a deposit rail into Azaman's own account (credits the USDC wallet); escrow checkout is USDC-only; order snapshots carry no currency field. GHS list prices ship in discovery first; "pay this order in GHS" is an explicit, separately-reviewed implementation dependency (companion doc §3.3) — product copy must not promise GHS checkout until that rail ships. USDC payment, where offered, requires a server-authoritative quote (approved rate source, expiry, user confirmation) derived at order time — the GHS list price stays authoritative regardless of how the customer funds payment.
 
 ---
 
@@ -295,8 +299,10 @@ All changes additive; no destructive migration:
 5. NEW endpoints under `/api/discovery/*` — existing `/api/business/search`, storefront routes unchanged (B-1/B-3 fixes are separate small PRs with their own tests, listed in §9 blockers).
 6. Frontend: Mix is additive screens/providers; `MerchantCard`/Stores mode untouched; `world_deck.dart:70` star sort removal is a one-line change shipped inside the Mix PR with updated widget tests.
 7. **Sequencing with open PRs:** #147 touches `app_router.dart`/`route_registry.dart`; the Mix PR adds routes for marketplace sub-paths — rebase Mix after #147 lands (no logic overlap). #332 is backend-only additive; no interaction. Merge order: #320/#317 (existing queue) → #332/#147 → Mix PRs.
+8. **GHS pricing (D-1 corrected):** `BusinessPrice` table + variants/modifierGroups `priceDeltaGhs` JSON option + nullable `currency`/GHS snapshot fields on order models (companion doc §5 phase P1); backfill drafts + portal confirm worklist (P2); discovery/Mix GHS pricing (P3); order-snapshot currency + checkout GHS revalidation (P4). All additive; legacy USDC rows and read paths unchanged.
+9. **GHS collection rail (companion doc §3.3, P6):** separate PR, own financial review, blocked on owner decisions (companion doc §7). Not part of Mix phases P1-P5.
 
-**Never in this phase:** changing `priceUsdc` semantics, the single-business cart, or the escrow flow.
+**Never in this phase:** changing `priceUsdc`/`amountUsdc` semantics or values, the single-business cart, or the escrow flow. GHS is additive data with its own fields, validation and audit path.
 
 ---
 
@@ -330,7 +336,7 @@ Measurement plan: baseline traces on main BEFORE Mix lands (DevTools timeline + 
 - B-4: `tags: ["POPULAR","NEW"]` are owner-declared; Mix must not surface them as evidence-backed labels.
 
 **Decisions needing owner approval:**
-- **D-1 price display:** USDC-only truth in Mix v1 (recommended) vs public estimate line vs GHS list prices (§3.4). Blocks: any price-comparison marketing language.
+- **D-1 price display: DECIDED (owner-confirmed 2026-10-10).** GHS is the canonical listing currency for Ghana Marketplace; Mix shows business-confirmed GHS prices, excludes products without one, never falls back to `priceUsdc` or an estimate (§3.4, companion contract). Follow-up owner decisions moved to companion doc §7: price-model sign-off, merchant GHS settlement leg, GHS collection rail scheduling, order-quote rate source, backfill policy, Stores "price on request" handling.
 - **D-2 taxonomy authority:** mapping-table default + owner override (recommended) vs owner-mandatory categorization.
 - **D-3 new-table strategy:** `MarketplaceDiscoveryEvent` separate from `StorefrontAnalyticsEvent` (recommended — different grain and trust model) vs extending the existing table.
 - **D-4 Stores-mode ranking:** keep business-level `totalEscrows` sort in Stores (recommended) vs applying Mix ranker everywhere.
