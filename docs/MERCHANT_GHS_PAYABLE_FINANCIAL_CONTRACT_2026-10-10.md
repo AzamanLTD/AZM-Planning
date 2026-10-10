@@ -1,139 +1,250 @@
 # AZM Marketplace — Merchant GHS Payable Financial Contract
 
-> **Investigation output for the §3.3.3 workstream** directed by the finalized Mix/GHS owner decisions (2026-10-10, planning head `07e56de`). Companion to `MARKETPLACE_GHS_PRICING_AND_PAYMENT_CONTRACT_2026-10-10.md` §3.3 and `MARKETPLACE_MIX_REDESIGN_2026-10-10.md` §9.
-> **Status: DRAFT FOR OWNER + FINANCIAL REVIEW.** Documentation only. No application source code changed; PR #332, #333, #147 untouched. Nothing here may be treated as approved until the owner signs off and the durability-suite amendment (§7) is pinned.
-> Verified against backend `main` `052370518133c91bdfb119ff271782045194f180` on 2026-10-10, plus the in-repo financial authorities: `docs/CURRENCY_AND_SETTLEMENT_CONTRACT.md`, `docs/PAYOUT_PROVIDER_OWNERSHIP_CONTRACT.md`, `docs/p5d-ghs-liquidity-authority.md`, `docs/p5e-model-b-settlement.md`, `services/ledgerService.js` (fail-closed chart of accounts).
+> **Revision 2 (2026-10-10) — owner financial-review corrections applied.** Revision 1 (`b5b5ec3`) is superseded: the clearing-account normal side, the settlement posting, the provider-fee accounting, the refund postings, the P5-D integration, the payout record economics and the release gates have all been corrected per the owner's review. Companion to `MARKETPLACE_GHS_PRICING_AND_PAYMENT_CONTRACT_2026-10-10.md` §3.3 and `MARKETPLACE_MIX_REDESIGN_2026-10-10.md` §9.
+> **Status: DRAFT FOR OWNER SIGN-OFF.** Documentation only. No application source code changed; PR #332, #333, #147 untouched; nothing merged. No GHS settlement code may be written until this contract is signed off AND the §8 release gates are met.
+> Verified against backend `main` `0523705` on 2026-10-10: `services/ledgerService.js` (chart of accounts, `post` contract, per-asset balancing), `src/services/fiatLiquidityService.js` (receipts, evidence chains, reservations), `docs/p5d-ghs-liquidity-authority.md`, `docs/PAYOUT_PROVIDER_OWNERSHIP_CONTRACT.md` (r15), `services/finance.service.js` (`clearing:fiat:offramp:usdc` posting), `services/modelBSettlementService.js` (`fiat:momo:ghs` precedent), `services/moolreDisbursementService.js:269` (amount serialization boundary).
 
-**Design direction (owner-decided):** GHS merchant payable accounting with supported merchant payouts is the preferred local-market design. Merchant proceeds must NOT be automatically converted to USDC without explicit owner approval and a separately reviewed financial contract. This document specifies that GHS-native path for **GHS-paid marketplace orders only**; the USDC escrow settlement path is unchanged (R2 of the pricing contract: `priceUsdc`/`amountUsdc` semantics preserved everywhere).
+**Design direction (owner-decided, §9):** GHS-native, business-scoped merchant payables with supported merchant payouts; automatic conversion of merchant GHS proceeds to USDC is PROHIBITED unless a separately reviewed contract is explicitly approved. This contract specifies the GHS-native path for **GHS-paid marketplace orders only**; the USDC escrow settlement path and the entire existing USDC chart are unchanged.
 
 ---
 
 ## 1. What exists today (evidence, all traced)
 
-- **Unit of account:** `docs/CURRENCY_AND_SETTLEMENT_CONTRACT.md` — USDC is the authoritative financial and settlement unit; GHS is presentation/fiat payout. A GHS-native merchant payable **amends this invariant for the marketplace order path** (§2 below); the amendment is additive and explicitly scoped.
-- **Merchant settlement today:** escrow release credits `user:{payeeId}:liability` in USDC (`services/escrowService.js`); the merchant is the business owner's user wallet. Platform fee posts to `AdminProfitLog {amountUsdc, source, relatedTxId}` — a USDC-only table (`prisma/schema.prisma`; no currency column).
-- **There is no merchant payout path.** The business portal has no withdrawal surface (Payroll is employee payroll); merchants off-ramp through the customer withdrawal rail (`/api/finance/withdraw`, USDC-denominated, GHS payout via Moolre).
-- **Payout rails:** Moolre disbursement primary, MTN failover, via `PaymentFailoverService` (`services/moolreDisbursementService.js`, `services/paymentFailoverService.js`). The r15 payout-provider-ownership contract (`docs/PAYOUT_PROVIDER_OWNERSHIP_CONTRACT.md`) defines fail-closed ownership recording, dispatch-evidence-before-ownership write order, exactly-once settle/reverse (`financeService.completeFiatWithdrawal` / `reverseFiatWithdrawal`), the Withdrawal reconciliation record created inside the reservation transaction, and the reconciliation parking matrix. **This machinery is the payout authority the merchant rail must reuse — not re-invent.**
-- **GHS liquidity authority (§P.5-D):** append-only `FiatProviderEvent` evidence is the source of GHS custody truth; `SystemFiatPool` is a derived projection updated deterministically inside the authority's transaction boundary; GHS amounts are exact `Decimal(20,2)` pesewas; typed provider outcomes (`NOT_DISPATCHED`/`DEFINITIVE_REJECTION`/`UNKNOWN_OUTCOME`/`DUPLICATE_REFERENCE`) with R15-B same-reference retry semantics.
-- **Double-entry ledger (§P.5-A, `services/ledgerService.js`):** single-asset postings per entry; GHS/USDC never numerically balanced across an entry; `ASSET_CONVERSION` is the only cross-asset mechanism (requires `{identity, rate, quoteReference}`); **fail-closed account catalog** — non-canonical accounts and unrecognized dynamic patterns are rejected; the catalog already contains `'fiat:momo:ghs'` (GHS ASSET) and `'revenue:fees'` (USDC REVENUE), but **no GHS revenue account and no merchant-payable dynamic pattern exist** — they must be added deliberately, exactly like the P5 entries ("catalog entries only, unused until their wave").
-- **Customer GHS collection (deposits):** Moolre collections are a deposit rail into the platform's own account, quoting USDC (`transactionQuoteService`); settled GHS is recorded as platform liquidity (§P.5-D) and the customer's USDC wallet is credited. **No part of this is a merchant settlement.**
+- **Unit of account:** `docs/CURRENCY_AND_SETTLEMENT_CONTRACT.md` — USDC is authoritative; GHS is presentation/payout. §2 amends the scope for GHS-paid marketplace orders only.
+- **Merchant settlement today:** escrow release credits `user:{payeeId}:liability` in USDC; platform fee posts to `AdminProfitLog {amountUsdc}` (USDC-only table). **No merchant payout path exists** — merchants off-ramp through the customer withdrawal rail.
+- **Ledger authority (`services/ledgerService.js`):** fail-closed chart of accounts (sign, class, asset and normal side are part of each account's canonical identity; a persisted row that disagrees refuses to post); `post()` requires the CALLER-OWNED transaction, a durable idempotencyKey, ≥2 lines, exactly one non-zero side per line, and **per-asset balance — a normal posting lives in ONE asset; `ASSET_CONVERSION` is the only cross-asset mechanism and is never used on this path**; exact decimal strings (`toFixed(2)` for GHS); replay converges (`replayed=true`, no second posting).
+- **Clearing precedent:** `clearing:fiat:offramp:usdc` is `CLEARING`/`CREDIT`-normal — "its positive balance is the OUTSTANDING value handed to the fiat rail awaiting GHS-side reconciliation"; credited when principal enters the rail, debited when the fiat asset movement is confirmed (§P.5). The merchant payout clearing accounts mirror exactly this semantics.
+- **GHS asset precedent:** `fiat:momo:ghs` (`ASSET`, `DEBIT`-normal, GHS) is the catalogued platform MoMo GHS asset; Model B deposits land `D fiat:momo:ghs / C equity:treasury:ghs` from evidenced settlement. Order collections use the same asset account but credit merchant payable + fee revenue — merchant-owned GHS never enters treasury equity.
+- **GHS-liquidity authority (§P.5-D, `src/services/fiatLiquidityService.js`):** append-only `FiatProviderEvent` raw evidence; `FiatLiquidityReceipt` (AVAILABLE created only by service-verified transitions — matched-deposit chain, reconciliation match, or treasury opening; never caller say-so; full semantic identity per dedupKey, §L quote-substitution closure); `FiatLiquidityReservation` (RESERVED → IN_TRANSIT → PAID_OUT | RELEASED | RECONCILIATION_REQUIRED, single-winner gte-CAS claim); `SystemFiatPool` a derived projection only.
+- **Deposit receipts are deposit-specific:** `verifyDepositEvidenceChain` requires a `TransactionHistory` row that IS a `DEPOSIT_FIAT`, IS `COMPLETED`, has a consumed route-bound `TransactionQuote`, and a durable INBOUND provider event matching provider, amount and reference exactly. **An order-linked collection is none of these** — no USDC amount, no wallet deposit, no quote of that class.
+- **Payout rails:** Moolre MoMo disbursement primary, MTN failover (`PaymentFailoverService`), under the r15 ownership contract: dispatch evidence → canonical ownership write → IN_TRANSIT, fail-closed identity, one terminal winner, durable exceptions, never refund after provider acceptance. **Moolre MoMo is the only proposed launch payout rail; no bank payout is claimed.**
+- **Serialization defect (traced):** `services/moolreDisbursementService.js:269` serializes the transfer amount as `String(Number(amountGhs))` — a binary floating-point boundary. It must be corrected before P6b dispatch (§6.4); authoritative money must never pass through `Number()`.
 
 ---
 
 ## 2. Scope amendment to the currency invariant
 
-`CURRENCY_AND_SETTLEMENT_CONTRACT.md` remains authoritative for everything except one sentence of its scope: for **marketplace orders paid via the GHS collection rail (P6)**, merchant earnings exist as a **GHS-denominated payable**, and merchant payout settles in GHS. USDC remains the authoritative unit of account for every other flow (escrow, conversions, withdrawals, order book, deposits). Concretely:
+`CURRENCY_AND_SETTLEMENT_CONTRACT.md` remains authoritative except for one scoped amendment: for **marketplace orders paid via the GHS collection rail**, merchant earnings exist as a business-scoped GHS payable and merchant payouts settle in GHS. USDC remains authoritative everywhere else.
 
-1. **No conversion on this path, ever.** GHS-paid orders never create an `ASSET_CONVERSION` entry; no USDC value is synthesized for the merchant; no GHS value is derived from an oracle rate for accounting purposes. The GHS amounts are the listing-snapshot and collection-confirmed amounts, exactly.
-2. **One path, one currency.** A given order's payment record dictates its settlement currency: GHS-paid → GHS payable; USDC escrow → existing USDC settlement. Mixed-currency settlement of one order is prohibited.
-3. **The amendment merges as documentation with the P6 PR**, never before, and the durability suite must pin §7 before any settlement code lands.
-
----
-
-## 3. Merchant payable accounting model (§3.3.3-a)
-
-### 3.1 Account catalog additions (fail-closed catalog, deliberate entries)
-
-```
-// NEW — merchant payable sub-ledgers (GHS only; added to the catalog deliberately,
-// unused until P6):
-'merchant:{bizId}:payable:ghs'   accountClass LIABILITY  normalSide CREDIT asset GHS
-'merchant:{bizId}:receivable:ghs' accountClass ASSET     normalSide DEBIT  asset GHS
-'revenue:fees:ghs'               accountClass REVENUE    normalSide CREDIT asset GHS
-'clearing:payout:pending:ghs'     accountClass CLEARING   normalSide DEBIT  asset GHS
-```
-
-- `merchant:{businessProfileId}:payable:ghs` — **business-scoped, not user-scoped.** Payable follows the KYB business identity (the entity that owns the storefront and prices), not the owner's personal wallet. This is the key difference from today's `user:{payeeId}:liability` escrow credit, and it is what makes "merchant" a first-class financial counterparty. A business may have multiple owner users; none of them "owns" the payable balance directly.
-- The dynamic pattern must be registered alongside the existing `USER_LIABILITY_RE`-style patterns in the fail-closed catalog, with the same rejection semantics for malformed ids.
-- `revenue:fees:ghs` is a separate account from `'revenue:fees'` (USDC): per-asset leg balance already forbids mixing, and reporting must aggregate fees per currency without post-hoc conversion.
-
-### 3.2 Order-confirmation postings (single-asset GHS entries, exact pesewas)
-
-When the P6 collection webhook confirms a GHS payment against an order (quote-matched, typed outcomes per §P.5-D), inside the provider-confirmation transaction:
-
-```
-gross   = settled GHS (provider-confirmed, quote-matched, exact 2dp)
-fee     = commission (§5, computed from the listing snapshot, exact 2dp)
-payable = gross - fee
-
-D fiat:momo:ghs              gross        (platform GHS asset up, per §P.5-D evidence)
-C merchant:{biz}:payable:ghs  payable      (merchant liability up)
-C revenue:fees:ghs           fee          (platform GHS fee revenue)
-```
-
-- The posting references the order's **three-fact snapshot** (listing group, payment group, payable group) so the ledger line, the order row and the fee record are one auditable unit (`relatedTxId` = order payment reference; idempotent on the collection externalRef — replays converge on the existing row, never double-post).
-- **Ordering guarantee:** postings happen only after the provider-confirmed state; `UNKNOWN_OUTCOME` never posts. A confirmation is idempotent exactly-once via the §P.5-D dedup key plus the ledger's economic-identity guard (`LEDGER_REPLAY_IN_CLAIMED_OPERATION` pattern).
-- The customer GHS collection itself (money into the platform Moolre account) is recorded by the existing collection rails; this entry models the split of that settled GHS into merchant payable and platform fee. `fiat:momo:ghs` debits here must equal the collection rails' credited GHS — the §P.5-D authority reconciles the asset side.
-
-### 3.3 Fee record (additive, USDC authority untouched)
-
-`AdminProfitLog` stays USDC-only (`amountUsdc` is its authority; R2). NEW `MerchantFeeGhs` table (additive): `id`, `businessProfileId`, `orderId`, `amountGhs Decimal(20,2)`, `feeScheduleId`, `computedFrom` (the listing-snapshot line totals), `relatedTxId` (the ledger entry id), `createdAt`. Every GHS fee has an order reference and a ledger twin; reporting sums per currency and never converts.
-
-### 3.4 Projections (derived, deterministic)
-
-`MerchantPayableSummary` (per business): `payableGhs`, `pendingPayoutGhs`, `receivableGhs`, `lifetimeFeeGhs`, `lastSettledAt` — a derived projection reconciled nightly against the ledger, exactly the §P.5-D pattern (projection updated inside the authority's transaction boundary; never the source of truth). The business portal displays this summary; it never computes payable from order rows.
+1. **No conversion on this path, ever.** No `ASSET_CONVERSION` entry; no USDC synthesized for the merchant; no oracle-derived accounting amounts. **Automatic conversion of merchant GHS proceeds to USDC is PROHIBITED unless a separately reviewed contract is explicitly approved by the owner.**
+2. **One order, one settlement currency.** The payment record's currency dictates settlement: GHS-paid → GHS payable; USDC escrow → existing USDC path unchanged. Mixed-currency settlement of one order is prohibited.
+3. **USDC payment for a GHS-priced order (owner-decided):** requires a separate, purpose-specific, approved server quote (order-checkout purpose, explicit expiry, explicit customer confirmation) — the public trading oracle (`/api/oracle/rates`) is a presentation feed and is NEVER the checkout quote. That quote contract needs its own approval before any such payment path is built (§9).
+4. The amendment merges as documentation with the P6 PR; §8 gates precede any settlement code.
 
 ---
 
-## 4. Merchant payout rail (§3.3.3-b)
+## 3. Account catalog additions (fail-closed chart, deliberate entries)
 
-**Supported rail at launch: Moolre MoMo disbursement to the merchant's registered MoMo number** (MTN failover per `PaymentFailoverService`), reusing the r15 machinery verbatim:
+All added to `CANONICAL_ACCOUNTS` (and the dynamic-pattern registry) as catalog-only entries, unused until P6, each with canonical sign, class, asset and normal side:
 
-1. **Initiation:** merchant requests a payout (portal) for an amount ≤ `payableGhs` (the projection is advisory; the authoritative check is inside the transaction). The payable debit and payout reservation happen **in one transaction**: `D merchant:{biz}:payable:ghs` / `C clearing:payout:pending:ghs`, plus the Withdrawal-shaped reconciliation record created inside that same transaction (the r15 controller reservation contract: if the record cannot be established, the whole reservation rolls back — fail-closed, no provider I/O).
-2. **Dispatch:** through the existing disbursement chain. After provider acceptance, the r15 write order applies unchanged: dispatch evidence → canonical ownership write → `IN_TRANSIT` transition; every failure path parks with a durable exception; the user (merchant) is never refunded after acceptance.
-3. **Settlement:** provider-confirmed success → `D clearing:payout:pending:ghs` / `D fiat:momo:ghs` (asset down) / settle exactly once via the r15 terminal claim; late provider failure that arrives after settlement must not claw back (same rule as the fiat withdrawal lifecycle).
-4. **Reversal:** provider-confirmed failure of a still-pending payout → the reservation reverses: `D clearing:payout:pending:ghs` / `C merchant:{biz}:payable:ghs` — the payable balance is restored exactly, idempotent re-reconcile.
-5. **Reconciliation:** the existing `withdrawalReconciliationWorker` parking matrix applies verbatim (UNKNOWN ownership → exception queue check → park, never cross-rail guessing).
-6. **Provider fees:** any Moolre disbursement fee is borne by the platform at launch (recorded as GHS cost against `revenue:fees:ghs`, with the provider fee visible in the payout record) — a decision point in §9; merchant-borne fees are NOT assumed.
-7. **Bank-transfer payouts: explicitly unsupported until a bank rail is integrated and audited.** No speculative design; the contract names MoMo only because MoMo is the audited rail.
+| Account | Class | Normal side | Asset | Meaning |
+|---|---|---|---|---|
+| `merchant:{bizId}:payable:ghs` | LIABILITY | CREDIT | GHS | What the platform owes the KYB business for GHS-paid orders (business-scoped — never a user wallet). Positive balance = credit side. |
+| `merchant:{bizId}:receivable:ghs` | ASSET | DEBIT | GHS | What the business owes the platform (refund beyond already-paid earnings). |
+| `revenue:fees:ghs` | REVENUE | CREDIT | GHS | Marketplace commission in GHS — separate from `revenue:fees` (USDC); per-asset balancing forbids mixing and reporting aggregates per currency without conversion. |
+| `clearing:payout:pending:ghs` | CLEARING | **CREDIT** | GHS | **Corrected (rev 1 wrongly proposed DEBIT-normal).** Mirrors `clearing:fiat:offramp:usdc`: positive balance = outstanding GHS committed to the merchant payout rail awaiting provider-confirmed movement. CREDITed at reservation; DEBITed exactly once at provider-confirmed settlement or reversal. |
+| `clearing:refund:pending:ghs` | CLEARING | CREDIT | GHS | Same semantics for customer-bound GHS refunds — a distinct counterparty never shares the merchant-payout clearing account. |
+| `expense:provider:fees:ghs` | EXPENSE | DEBIT | GHS | **NEW (rev 1 wrongly booked provider costs against a revenue account).** Provider disbursement costs absorbed by the platform, recognized from provider evidence at settlement. |
 
-**Payout availability rule:** payable funds are eligible for payout only from the provider-confirmed state. There is no payout against pending/unsettled collections, and no advance/credit facility. Minimum payout threshold and schedule (on-demand vs batched) are §9 decision points.
+New `JournalEntryType` enum values (additive): `MERCHANT_COLLECTION`, `MERCHANT_PAYOUT`, `MERCHANT_REFUND`. The existing USDC chart and every historical posting are untouched.
+
+## 4. Balanced postings (the complete economic examples)
+
+All amounts are exact 2dp GHS strings from the pesewas/Decimal authority (`toFixed(2)`); every posting is single-asset GHS, per-asset balanced, inside the caller-owned economic transaction, with a durable idempotencyKey; replays converge without a second posting. Notation: `biz` = businessProfileId; `X` = payout amount; `F` = provider fee; `R` = customer refund amount.
+
+### 4.1 Order-linked collection confirmed (collection + fee recognition)
+
+Provider callback confirms the GHS collection for order payment reference `ref`:
+
+```
+MERCHANT_COLLECTION  (idempotencyKey: ledger:merchant:collection:{ref})
+D fiat:momo:ghs                gross
+C merchant:{biz}:payable:ghs    payable = gross − fee
+C revenue:fees:ghs              fee
+```
+
+Balanced: `gross = payable + fee` (conservation pinned). This is the **single point of GHS asset recognition** (§5.3). The `MerchantFeeGhs` row and the payable projection update commit in the same transaction (§5.4).
+
+### 4.2 Payout reservation (merchant-initiated, manual only)
+
+```
+MERCHANT_PAYOUT  (idempotencyKey: ledger:merchant:payout:reserve:{payoutRef})
+D merchant:{biz}:payable:ghs    X
+C clearing:payout:pending:ghs   X
+```
+
+Balanced. The merchant's payable is released into the rail clearing account atomically with the liquidity reservation and the `MerchantPayout` record (§6.1) — the committed amount is immediately unavailable for another payout (single-winner reservation, §6.3).
+
+### 4.3 Dispatch-related transitions — NO ledger posting
+
+Provider acceptance, the r15 ownership writes (dispatch evidence → canonical ownership → IN_TRANSIT) and reconciliation parkings are **record-state transitions on `MerchantPayout` and `FiatLiquidityReservation`, never ledger postings**. The ledger moves only at reservation and terminal provider-confirmed outcomes. This matches the user-withdrawal rail, where deferred economics realize only at provider SUCCESS.
+
+### 4.4 Provider-confirmed payout SUCCESS (settlement + provider cost)
+
+```
+MERCHANT_PAYOUT  (idempotencyKey: ledger:merchant:payout:settle:{payoutRef})
+D clearing:payout:pending:ghs    X
+D expense:provider:fees:ghs      F        (only if the provider charged a fee)
+C fiat:momo:ghs                  X + F
+```
+
+Balanced: `X + F = X + F`. The GHS asset falls by exactly what left the platform account per provider evidence; the pending clearing balance clears exactly once; the platform absorbs `F` (owner-decided) as a GHS expense, **not** against revenue. When `F = 0` the posting is `D clearing X / C fiat X`. **The deduction model is rejected:** the merchant must receive exactly `X`; a provider configuration that delivers `X − F` to the merchant fails closed before dispatch.
+
+### 4.5 Provider-confirmed payout FAILURE (reversal of a pending payout)
+
+```
+MERCHANT_PAYOUT  (idempotencyKey: ledger:merchant:payout:reverse:{payoutRef})
+D clearing:payout:pending:ghs    X
+C merchant:{biz}:payable:ghs     X
+```
+
+Balanced. Payable restored exactly; idempotent re-reconcile. A late failure callback after a terminal SUCCESS claim must not claw back — the same no-clawback rule as the fiat withdrawal lifecycle; contradictory evidence parks (`RECONCILIATION_REQUIRED`), never reverses.
+
+### 4.6 Refund — payable sufficient
+
+Commit (atomic with the refund record and its reference):
+
+```
+MERCHANT_REFUND  (idempotencyKey: ledger:merchant:refund:commit:{refundRef})
+D merchant:{biz}:payable:ghs    payablePortion
+D revenue:fees:ghs              feePortion          (commission reversal)
+C clearing:refund:pending:ghs   R = payablePortion + feePortion
+```
+
+Balanced. Amounts derive **only** from the order's immutable listing/payment snapshots and the fee-schedule version recorded on the original `MerchantFeeGhs` row — never recomputed from a different schedule. Full refund: `payablePortion + feePortion = gross` (the entire commission reverses). Partial refund: the same line-level derivation for the refunded lines. **No hidden merchant charge:** the merchant's payable falls by exactly the refunded lines' payable portion, and the reversed commission is returned to it — an incomplete payable model must never leave the merchant net-negative on a refunded order.
+
+Disbursement to the customer's MoMo confirmed:
+
+```
+MERCHANT_REFUND  (idempotencyKey: ledger:merchant:refund:settle:{refundRef})
+D clearing:refund:pending:ghs    R
+D expense:provider:fees:ghs     F       (platform-absorbed refund-dispatch fee, if any)
+C fiat:momo:ghs                 R + F
+```
+
+Disbursement failure: reverse the commit exactly — `D clearing:refund:pending R / C payable payablePortion / C revenue:fees feePortion` (the customer refund obligation is cancelled, payable and commission restored).
+
+### 4.7 Refund — payable insufficient (receivable path)
+
+When the refunded lines' payable portion exceeds the business's remaining payable (earnings already paid out):
+
+```
+MERCHANT_REFUND
+D merchant:{biz}:receivable:ghs   shortfall = payablePortion − payableAvailable
+D merchant:{biz}:payable:ghs      payableAvailable
+D revenue:fees:ghs                feePortion
+C clearing:refund:pending:ghs     R
+```
+
+Balanced: `shortfall + payableAvailable + feePortion = payablePortion + feePortion = R`. The customer is made whole from platform GHS liquidity; the merchant owes the shortfall as a durable receivable. Payable **never goes negative**; a receivable blocks further payouts for that business until settled under a four-eyes audited release. Reversal of a settled payout is only ever an audited manual decision — never automatic.
+
+Every posting above is a complete, balanced entry; no path leaves a dangling one-sided or cross-asset line, and no path posts a USDC amount.
 
 ---
 
-## 5. Fee/commission model in GHS (§3.3.3-c)
+## 5. Integration with the GHS-liquidity authority (§P.5-D)
 
-- Commission is computed **at order-payment confirmation time from the GHS listing-snapshot line totals** — never from a converted USDC value, an oracle rate, or a payment record in another currency.
-- All arithmetic in integer pesewas (BigInt); rounding mode round-half-up at 2dp; **fee ≤ gross** enforced structurally; fee floor/cap and the percentage live in a versioned `MerchantFeeSchedule` (config, not code), so a schedule change never rewrites historical fees.
-- Whether the GHS schedule mirrors the escrow `feePct` (`services/escrowService.js` `_round6(amount * feePct)`) or carries marketplace-specific rates is a §9 decision point. The escrow path is untouched in any case.
+### 5.1 A new receipt class — order-linked collections are NOT deposits
 
-## 6. Refund and dispute handling (§3.3.3-d)
+`recordReceipt`'s matched-deposit path requires `DEPOSIT_FIAT` + a consumed route-bound quote + a USDC wallet credit — a shape an order collection must never borrow: **no `TransactionHistory` USDC amount is manufactured, and no user wallet is credited.** P6 adds a fourth receipt path to the same authority — `recordOrderCollectionReceipt` — with its own fail-closed evidence chain, mirroring `verifyDepositEvidenceChain`:
 
-- **Refund currency == payment currency** (already owner-decided). A GHS-paid order refunds in GHS to the customer's MoMo via the disbursement rail; no USDC is created or consumed on either side.
-- **Payable-first refund ordering:** a refund first debits the merchant's still-settled payable (`D merchant:{biz}:payable:ghs`); if the payable is insufficient (earnings already paid out), the refund is funded from platform GHS liquidity and the merchant owes the platform: `D merchant:{biz}:receivable:ghs` (asset up — a real receivable, never a negative payable). Future payouts are blocked while a receivable exists for that business.
-- Refund idempotency mirrors the collection path: exactly-once on the refund reference; the refund record carries the original payment group reference.
-- **Disputes** use the existing parking/exception machinery (`ReconciliationException`) and the control-plane four-eyes force-action governance; no automatic claw-back of a settled payout ever occurs — reversal of a settled payout is an audited manual decision, mirroring "the user is NEVER refunded after acceptance" with the merchant symmetric ("the merchant is never debited after settlement except via an audited receivable decision").
+- a durable INBOUND `FiatProviderEvent` exists, reports a successful collection, matches the receipt's provider and **amount exactly**, and its `relatedReference` equals the order payment reference;
+- the order-linked **collection intent** (created at checkout: unique collection reference + exact quoted GHS amount for that order payment) exists and matches the event amount exactly — the receipt must name **its own** intent identity (§L-style substitution closure; a twin intent with identical economics must not unlock liquidity);
+- the order's payment record exists, is the payment named by the intent, and is CAS-claimed `PENDING → COMPLETED` **inside the same caller transaction**;
+- the receipt's dedupKey carries the economic class `ORDER_COLLECTION` — distinct from deposit dedupKeys, so one real collection can never be claimed as both.
 
-## 7. Financial invariants amendment (§3.3.3-e) — durability-suite pins
+Only then does the receipt land AVAILABLE. Amount mismatch, unknown intent, contradictory evidence → quarantine (`RECONCILIATION_REQUIRED`), never auto-credit.
 
-The P6 PR must extend the financial-durability suite with these pins before any settlement code merges (each becomes a real PG test):
+### 5.2 Atomicity — one transaction per economic boundary
 
-1. **Conservation per order:** `payable + fee == gross` for every confirmation posting, on exact pesewas.
-2. **No cross-asset leakage:** no GHS-paid order path ever posts `ASSET_CONVERSION`; GHS and USDC entries never share a posting; the payable, receivable and fee accounts never hold USDC.
-3. **Exactly-once:** duplicate collection webhooks, duplicate payout dispatches and re-reconciled reversals each converge to one economic mutation (dedup keys + terminal claims).
-4. **No negative payable:** `merchant:{biz}:payable:ghs` never goes debit-balance; a refund beyond payable forces the receivable path, which is itself a durable row with four-eyes release.
-5. **Snapshot-linkage integrity:** every confirmation posting references an order with its three fact groups intact; a payment record without its listing snapshot or fee twin fails reconciliation.
-6. **Projection equality:** `MerchantPayableSummary` equals the ledger-derived balances per business (nightly proof, mismatch parks an exception — never silent drift).
-7. **R15 ownership compliance:** merchant payouts inherit the ownership contract's tests (evidence-before-ownership write order, fail-closed identity, parking matrix, never-refund-after-acceptance).
-8. **Fee invariants:** fee schedule version recorded per fee; fee ≤ gross; schedule changes never recompute historical fees.
-9. **Refund invariants:** refund ≤ payment; refund currency == payment currency; settled-payout reversals only via audited manual paths.
+**Collection confirmation** (single caller-owned transaction): FiatProviderEvent (already durable, append-only) → receipt evidence verification → order payment CAS claim → ledger posting (§4.1) → `MerchantFeeGhs` row → payable projection update. Any failure rolls back the whole transaction; a replay converges on every element (receipt dedupKey, ledger idempotencyKey, CAS claim) with zero mutation.
 
-## 8. Rollout gates (in order)
+**Payout reservation** (single transaction): `MerchantPayout` record creation → `reserveForPayout` single-winner liquidity claim (gte-CAS; a loser rolls back everything, including the ledger posting §4.2) → destination re-verification. **Terminal outcomes** (single transaction, worker-driven): provider outcome typed per §P.5-D (`NOT_DISPATCHED`/`DEFINITIVE_REJECTION`/`UNKNOWN_OUTCOME`/`DUPLICATE_REFERENCE`) → terminal single-winner claim on `MerchantPayout` + `settleReservation`/`releaseReservation` → the §4.4/§4.5 ledger posting exactly once.
 
-1. Owner sign-off of THIS document (including the §9 decision points).
-2. Catalog + schema PR: account entries (catalog-only, unused), `MerchantFeeGhs`, `MerchantPayableSummary`, payable/receivable dynamic patterns, payout record wiring — zero behavior change, durability suite already pinning §7 where testable statically.
-3. GHS collection rail (P6a) with order-linked references, behind its own review.
-4. Settlement + payout PR (P6b): confirmation postings, payable projection, merchant payout endpoints reusing r15 — full §7 durability battery required.
-5. Four-eyes monitoring on the first live merchant payouts; reconciliation-exception queue alerting; then automatic payouts only if the owner separately approves (§9).
+### 5.3 Where the GHS asset is recognized — exactly once
 
-## 9. Decision points for the owner (none may be assumed by implementation)
+The **only** point of GHS asset recognition on this path is the `MERCHANT_COLLECTION` posting's `fiat:momo:ghs` debit (§4.1), sourced exclusively from durable provider evidence. Distinct responsibilities, one real collection:
 
-1. **Sign-off of this contract** — including the §2 scope amendment to `CURRENCY_AND_SETTLEMENT_CONTRACT.md`.
-2. **Fee schedule:** mirror escrow `feePct`, or marketplace-specific GHS schedule (recommended: separate versioned schedule, so marketplace pricing can evolve independently).
-3. **Payout fee bearer:** platform absorbs provider disbursement fees at launch (recommended) vs merchant-borne.
-4. **Minimum payout threshold + schedule:** on-demand with a threshold (recommended), vs automatic periodic batch.
-5. **Business-scoped payable:** confirm the KYB business is the financial counterparty (recommended) rather than the owner user's wallet.
-6. **Payout destination:** merchant's registered business MoMo (recommended; same KYB identity) vs owner personal MoMo — a compliance-relevant choice.
-7. **Automatic payout of unclaimed balances:** explicitly out of scope at launch; only on separate approval.
+- **Provider evidence** — append-only `FiatProviderEvent` (raw observation, never rewritten);
+- **Liquidity availability** — the `FiatLiquidityReceipt` (ORDER_COLLECTION class) making settled GHS available for payouts; `SystemFiatPool` stays a derived projection updated deterministically inside the authority's boundary;
+- **Ledger truth** — the single `fiat:momo:ghs` debit.
 
-— End of merchant GHS payable investigation draft. Documentation only; no application source code changed.
+Reconciliation proves the three are 1:1:1 per collection reference: no receipt without its event, no ledger asset debit without its receipt, and no second debit for the same reference (the ledger's economic-identity guard plus the receipt dedupKey are the race fences). One real collection is never counted as multiple asset increases — the deposit rail, the treasury path and the order path have disjoint dedupKey classes and disjoint evidence chains.
+
+### 5.4 Projections
+
+`MerchantPayableSummary` (per business): `payableGhs`, `pendingPayoutGhs`, `receivableGhs`, `lifetimeFeeGhs`, `lastSettledAt` — derived only, updated inside the authority's transactions, reconciled nightly against the ledger (mismatch parks an exception, never silent drift). `MerchantFeeGhs` (additive table): order reference, fee-schedule version, computed-from snapshot line totals, ledger entry id. `AdminProfitLog` stays USDC-only.
+
+---
+
+## 6. Merchant payout rail — r15 safety, business-scoped economics
+
+### 6.1 The payout record is not a user withdrawal
+
+NEW `MerchantPayout` table (business-scoped): `businessProfileId`, `reference`, `amountGhs Decimal(20,2)`, `destinationId`, `status` (`PENDING → DISPATCHED → IN_TRANSIT → PAID_OUT | RELEASED | RECONCILIATION_REQUIRED`), ownership metadata (`payoutProvider`, `payoutProviderName`, `intendedProvider`), `relatedReservationReference`, terminal claim fields, linked `MerchantFeeGhs`/ledger references. **No `TransactionHistory` row, no fabricated USDC value, no personal user-wallet debit or credit** — the business's GHS payable balance is the only economic source. A merchant payout is **manual and merchant-initiated only** (owner-decided); automatic payouts are out of scope at launch.
+
+### 6.2 Verified payout destinations
+
+NEW `MerchantPayoutDestination` per business: `msisdn`, `beneficiaryName`, `verificationStatus`, `verifiedAt`, `verifiedBy/method`, `active`. Verification supports a **registered-business MoMo (KYB evidence)** or a **legitimate sole-proprietor's verified MoMo (KYC/KYB evidence of beneficial ownership)** — the contract does not assume every business owns a separate registered business number (owner-decided). Payouts dispatch only to an active, verified destination. Destination changes require re-verification, an audit record and four-eyes approval; payout initiation requires an authorized business-portal role and is fully audited (who, when, destination, amount).
+
+### 6.3 r15 guarantees retained verbatim
+
+Dispatch evidence before ownership persistence; fail-closed provider identity (no invented rail, no `|| 'MTN_MOMO'` fallback); one terminal winner; durable exceptions with the parking matrix (`PROVIDER_STATUS_UNRESOLVED`, `PROVIDER_REFERENCE_NOT_FOUND`, `PAYOUT_OWNERSHIP_CONFLICT`, `DISPATCHED_OWNERSHIP_NOT_DURABLE`); never refund/debit after provider-confirmed acceptance. The ownership module's semantics apply against `MerchantPayout` rows (same resolve/fail-closed logic; whether the module is parameterized or mirrored is an implementation choice, the semantics are identical and tested identically). Reconciliation reuses `reserveForPayout`'s single-winner reservation machinery for the GHS liquidity claim.
+
+### 6.4 The exact-2dp boundary through provider dispatch — adapter contract fix required
+
+The traced defect `String(Number(amountGhs))` (`services/moolreDisbursementService.js:269`) passes authoritative money through binary floating-point. **P6b implementation prerequisite:** the disbursement boundary must accept and serialize a **canonical exact-2dp GHS string** derived from the pesewas authority (integer pesewas or `Decimal.toFixed(2)`), validated against a strict `/^\d+\.\d{2}$/` pattern before any provider I/O; `Number()`/float arithmetic anywhere on an authoritative money path is rejected in review; provider minimum/maximum limits are enforced from configuration before dispatch. **Moolre MoMo is the only proposed launch payout rail; no bank payout is available or claimed.**
+
+---
+
+## 7. Financial invariants — the durability-suite pins
+
+Each pin becomes a real-PostgreSQL test in the financial-durability suite before any GHS settlement code merges:
+
+1. **Per-order conservation:** `payable + fee == gross` for every confirmation posting (exact pesewas).
+2. **No cross-asset leakage:** no GHS-paid order path ever posts `ASSET_CONVERSION` or mixes assets in one posting; payable/receivable/fee/clearing accounts never hold USDC.
+3. **Exactly-once economics:** duplicate collection callbacks, duplicate payout dispatches, duplicate refund submissions and re-reconciled reversals each converge to one economic mutation (receipt dedupKey, ledger idempotencyKey, terminal single-winner claims).
+4. **Single-winner transitions:** concurrent reservations/payouts/refunds race under real PG and produce exactly one winner; losers roll back completely (no partial ledger rows).
+5. **No negative payable:** payable never crosses to debit balance; a refund beyond payable forces the durable receivable path (which itself blocks payouts until a four-eyes release).
+6. **No duplicate GHS asset recognition:** event↔receipt↔ledger-entry 1:1:1 per collection reference; the deposit, treasury and order receipt classes are disjoint and cross-claiming fails closed.
+7. **Projection equality:** `MerchantPayableSummary` equals ledger-derived balances per business, and `SystemFiatPool` equals the receipt/reservation authority (nightly proofs; mismatch parks an exception).
+8. **r15 ownership compliance on merchant payouts:** evidence-before-ownership write order, fail-closed identity, parking matrix, no debit after confirmed acceptance.
+9. **Fee invariants:** fee ≤ gross; schedule version recorded per fee; schedule changes never recompute historical fees; full-refund commission reversal restores the merchant's payable exactly (no hidden merchant charge).
+10. **Refund invariants:** refund ≤ payment; refund currency == payment currency; every refund path balanced (§4.6/§4.7), including the receivable path; refund disbursement failure restores payable + commission exactly.
+11. **Provider-evidence reconciliation:** UNKNOWN_OUTCOME never posts and never fails silently; late and contradictory callbacks park with durable exceptions and never settle or reverse a terminal row.
+12. **Float-free money:** authoritative GHS values are exact-2dp strings end to end; any `Number()`-mediated serialization on a money path fails the review gate.
+
+## 8. Release gates — required before GHS settlement is enabled
+
+The contract and rollout must not be treated as satisfied until ALL of these exist and pass:
+
+1. **This document signed off by the owner** (including the §9 decisions marked open).
+2. **Complete balanced accounting examples** for collection, payment, fee, payout, refund, reversal and provider cost — provided in §4, pinned by the §7 tests that assert each example's conservation under real PG concurrency and durability (duplicate callbacks/payouts/refunds, single-winner transitions, no-negative-payable, receivable handling, reconciliation).
+3. **No-duplicate-asset-recognition and ledger-vs-projection equality proofs** (§7.6, §7.7) as executable reconciliation tests.
+4. **Provider evidence and reconciliation tests** covering unknown outcomes and late/contradictory callbacks (§7.11).
+5. **Verified payout destinations and permissions** — destination verification, change control and payout authorization implemented and tested (§6.2) before the first live payout; four-eyes on first payouts.
+6. **Explicit commission and fee terms** — the versioned GHS fee schedule, its percentage/basis and merchant terms approved as commercial terms, not implementation constants (§9).
+7. **Approved collection/settlement quote contract for USDC-paying customers** (§2.3): purpose-specific server quote, expiry, explicit confirmation — reviewed separately; the public oracle is never the checkout quote.
+8. **Honesty boundary preserved:** GHS listing prices and discovery development remain distinct from GHS checkout claims. Until collection AND merchant settlement are implemented and verified, **no UI, API capability flag, or product copy may promise GHS order payment** (`payableIn` never reports "GHS" before that point).
+
+Rollout order (unchanged): sign-off → catalog/schema PR (additive, no behavior) → GHS collection rail (own review) → settlement + payout PR (full §7 battery) → four-eyes monitored first payouts. Discovery/Mix GHS listing work proceeds independently and never gates on P6.
+
+## 9. Decision status (owner, 2026-10-10)
+
+**Decided:**
+1. **Business-scoped GHS merchant liability:** APPROVED — the KYB business is the payable counterparty, not the owner user wallet.
+2. **Automatic conversion of merchant GHS proceeds to USDC:** PROHIBITED unless a separately reviewed contract is explicitly approved.
+3. **Merchant payouts:** manual, merchant-initiated only at launch; automatic payouts out of scope.
+4. **Payout fees:** the platform absorbs provider disbursement costs initially, recorded to `expense:provider:fees:ghs`.
+5. **Payout beneficiary:** business-authorized, verified MoMo destination; legitimate sole-proprietor verification is supported — not every business is assumed to own a separate registered business number.
+6. **Free/zero-priced items:** unsupported for GHS Mix v1 until a separate model is approved.
+7. **Full refunds:** commission reverses and all entries balance; a merchant is never charged a hidden additional amount.
+8. **USDC payment for a GHS-priced order:** separate approved purpose-specific server quote with expiry and explicit customer confirmation; the public trading oracle is never the checkout quote.
+
+**Still open (owner-only):**
+1. **Sign-off of this contract** (rev 2), including the §2 scope amendment and the §4 postings.
+2. **Minimum payout threshold:** must be configured; the numeric value remains open until actual provider fees, limits and operating costs are evaluated.
+3. **Marketplace commission terms:** separate, versioned GHS schedule confirmed — but the percentage, fee basis and merchant terms remain open commercial approvals until explicitly set; the escrow fee rate must never be inherited accidentally.
+4. **Collection/settlement quote contract for USDC-paying customers:** needs its own approval (gate 7).
+
+— End of revision 2. Documentation only; no application source code changed, nothing deployed, nothing merged.
