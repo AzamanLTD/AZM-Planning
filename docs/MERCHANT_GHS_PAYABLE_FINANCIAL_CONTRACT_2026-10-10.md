@@ -256,10 +256,10 @@ Rollout order (unchanged): sign-off → catalog/schema PR (additive, no behavior
 8. **USDC payment for a GHS-priced order:** separate approved purpose-specific server quote with expiry and explicit customer confirmation; the public trading oracle is never the checkout quote.
 
 **Still open (owner-only):**
-1. **Sign-off of this contract** (rev 2), including the §2 scope amendment and the §4 postings.
+1. **Sign-off of this contract** (rev 2.1), including the §2 scope amendment and the §4 postings.
 2. **Minimum payout threshold:** must be configured; the numeric value remains open until actual provider fees, limits and operating costs are evaluated.
 3. **Fee-inclusive liquidity reservation design (§6.5):** the two candidate designs are specified; selecting one requires the provider fee schedule (a commercial confirmation). Until then the reservation model is explicitly incomplete for `F > 0` and P6 settlement code stays blocked (gate 6, pin 13).
 4. **Marketplace commission terms:** separate, versioned GHS schedule confirmed — but the percentage, fee basis and merchant terms remain open commercial approvals until explicitly set; the escrow fee rate must never be inherited accidentally.
 5. **Collection/settlement quote contract for USDC-paying customers:** needs its own approval (gate 7).
 
-— End of revision 2. Documentation only; no application source code changed, nothing deployed, nothing merged.
+— End of revision 2.1. Documentation only; no application source code changed, nothing deployed, nothing merged.
