@@ -1,6 +1,6 @@
 # AZM Marketplace — Merchant GHS Payable Financial Contract
 
-> **Revision 2.1 (2026-10-11) — verification pass over rev 2 (2026-10-10).** No accounting change: every §4 posting verified balanced per asset against the owner's correction list. Rev 2.1 adds the explicit **immutable internal business identity** definition (§6.1), the MerchantPayout correlation-record statement (§6.1), and labels the §3 account-catalog entries as **future implementation work**. Revision 1 (`b5b5ec3`) is superseded: the clearing-account normal side, the settlement posting, the provider-fee accounting, the refund postings, the P5-D integration, the payout record economics and the release gates have all been corrected per the owner's review. Revision 1 (`b5b5ec3`) is superseded: the clearing-account normal side, the settlement posting, the provider-fee accounting, the refund postings, the P5-D integration, the payout record economics and the release gates have all been corrected per the owner's review. Companion to `MARKETPLACE_GHS_PRICING_AND_PAYMENT_CONTRACT_2026-10-10.md` §3.3 and `MARKETPLACE_MIX_REDESIGN_2026-10-10.md` §9.
+> **Revision 2.1 (2026-10-11) — verification pass over rev 2 (2026-10-10).** No accounting change: every §4 posting verified balanced per asset against the owner's correction list. Rev 2.1 adds the explicit **immutable internal business identity** definition (§6.1), the MerchantPayout correlation-record statement (§6.1), and labels the §3 account-catalog entries as **future implementation work**. Revision 1 (`b5b5ec3`) is superseded: the clearing-account normal side, the settlement posting, the provider-fee accounting, the refund postings, the P5-D integration, the payout record economics and the release gates have all been corrected per the owner's review. Supersedes revision 1 (`b5b5ec3`) and rev 2 (`80f9204`). Companion to `MARKETPLACE_GHS_PRICING_AND_PAYMENT_CONTRACT_2026-10-10.md` §3.3 and `MARKETPLACE_MIX_REDESIGN_2026-10-10.md` §9.
 > **Status: DRAFT FOR OWNER SIGN-OFF.** Documentation only. No application source code changed; PR #332, #333, #147 untouched; nothing merged. No GHS settlement code may be written until this contract is signed off AND the §8 release gates are met.
 > Verified against backend `main` `0523705` on 2026-10-10: `services/ledgerService.js` (chart of accounts, `post` contract, per-asset balancing), `src/services/fiatLiquidityService.js` (receipts, evidence chains, reservations), `docs/p5d-ghs-liquidity-authority.md`, `docs/PAYOUT_PROVIDER_OWNERSHIP_CONTRACT.md` (r15), `services/finance.service.js` (`clearing:fiat:offramp:usdc` posting), `services/modelBSettlementService.js` (`fiat:momo:ghs` precedent), `services/moolreDisbursementService.js:269` (amount serialization boundary).
 
@@ -39,8 +39,8 @@ All added to `CANONICAL_ACCOUNTS` (and the dynamic-pattern registry) as catalog-
 
 | Account | Class | Normal side | Asset | Meaning |
 |---|---|---|---|---|
-| `merchant:{bizId}:payable:ghs` | LIABILITY | CREDIT | GHS | What the platform owes the KYB business for GHS-paid orders (business-scoped — never a user wallet). Positive balance = credit side. |
-| `merchant:{bizId}:receivable:ghs` | ASSET | DEBIT | GHS | What the business owes the platform (refund beyond already-paid earnings). |
+| `merchant:{businessProfileId}:payable:ghs` | LIABILITY | CREDIT | GHS | What the platform owes the KYB business for GHS-paid orders (business-scoped — never a user wallet). Positive balance = credit side. |
+| `merchant:{businessProfileId}:receivable:ghs` | ASSET | DEBIT | GHS | What the business owes the platform (refund beyond already-paid earnings). |
 | `revenue:fees:ghs` | REVENUE | CREDIT | GHS | Marketplace commission in GHS — separate from `revenue:fees` (USDC); per-asset balancing forbids mixing and reporting aggregates per currency without conversion. |
 | `clearing:payout:pending:ghs` | CLEARING | **CREDIT** | GHS | **Corrected (rev 1 wrongly proposed DEBIT-normal).** Mirrors `clearing:fiat:offramp:usdc`: positive balance = outstanding GHS committed to the merchant payout rail awaiting provider-confirmed movement. CREDITed at reservation; DEBITed exactly once at provider-confirmed settlement or reversal. |
 | `clearing:refund:pending:ghs` | CLEARING | CREDIT | GHS | Same semantics for customer-bound GHS refunds — a distinct counterparty never shares the merchant-payout clearing account. |
@@ -50,7 +50,7 @@ New `JournalEntryType` enum values (additive): `MERCHANT_COLLECTION`, `MERCHANT_
 
 ## 4. Balanced postings (the complete economic examples)
 
-All amounts are exact 2dp GHS strings from the pesewas/Decimal authority (`toFixed(2)`); every posting is single-asset GHS, per-asset balanced, inside the caller-owned economic transaction, with a durable idempotencyKey; replays converge without a second posting. Notation: `biz` = businessProfileId; `X` = payout amount; `F` = provider fee; `R` = customer refund amount.
+All amounts are exact 2dp GHS strings from the pesewas/Decimal authority (`toFixed(2)`); every posting is single-asset GHS, per-asset balanced, inside the caller-owned economic transaction, with a durable idempotencyKey; replays converge without a second posting. Notation: `biz` = the immutable internal business identity, `businessProfileId` (§6.1 — never a userId, wallet address or provider id); `X` = payout amount; `F` = provider fee; `R` = customer refund amount.
 
 ### 4.1 Order-linked collection confirmed (collection + fee recognition)
 
@@ -159,7 +159,7 @@ Only then does the receipt land AVAILABLE. Amount mismatch, unknown intent, cont
 
 **Collection confirmation** (single caller-owned transaction): FiatProviderEvent (already durable, append-only) → receipt evidence verification → order payment CAS claim → ledger posting (§4.1) → `MerchantFeeGhs` row → payable projection update. Any failure rolls back the whole transaction; a replay converges on every element (receipt dedupKey, ledger idempotencyKey, CAS claim) with zero mutation.
 
-**Payout reservation** (single transaction): `MerchantPayout` record creation → `reserveForPayout` single-winner liquidity claim (gte-CAS; a loser rolls back everything, including the ledger posting §4.2) → destination re-verification. **Terminal outcomes** (single transaction, worker-driven): provider outcome typed per §P.5-D (`NOT_DISPATCHED`/`DEFINITIVE_REJECTION`/`UNKNOWN_OUTCOME`/`DUPLICATE_REFERENCE`) → terminal single-winner claim on `MerchantPayout` + `settleReservation`/`releaseReservation` → the §4.4/§4.5 ledger posting exactly once.
+**Payout reservation** (single transaction): `MerchantPayout` record creation → `reserveForPayout` single-winner liquidity claim (gte-CAS; a loser rolls back everything, including the ledger posting §4.2) → destination re-verification. **The reservation must cover the full evidenced asset outflow of the dispatch — principal PLUS platform-absorbed provider fee coverage per §6.5** (reserving only `X` understates the committed GHS by `F` and overstates the pool projection; §6.5 is an open blocker). The same coverage rule applies to the refund disbursement (`R + F`, §4.6). **Terminal outcomes** (single transaction, worker-driven): provider outcome typed per §P.5-D (`NOT_DISPATCHED`/`DEFINITIVE_REJECTION`/`UNKNOWN_OUTCOME`/`DUPLICATE_REFERENCE`) → terminal single-winner claim on `MerchantPayout` + `settleReservation`/`releaseReservation` → the §4.4/§4.5 ledger posting exactly once.
 
 ### 5.3 Where the GHS asset is recognized — exactly once
 
@@ -201,6 +201,15 @@ The traced defect `String(Number(amountGhs))` (`services/moolreDisbursementServi
 
 ---
 
+### 6.5 Fee-inclusive liquidity coverage — OPEN FINANCIAL DESIGN BLOCKER
+
+The ledger settles asset outflows of `X + F` (payout, §4.4) and `R + F` (refund disbursement, §4.6) against `fiat:momo:ghs`, and `F` is recognized ONLY from durable provider evidence — it is never invented. But a reservation of the principal alone (`X` / `R`) leaves the pool projection overcommitted by exactly `F` whenever the provider charges a fee: the `SystemFiatPool` would report GHS as available that is in fact committed to the provider fee. Two candidate designs, both inside the P5-D authority and both requiring the provider fee schedule as a **commercial input that is still open** (§9):
+
+1. **Fee-inclusive reservation (preferred candidate):** the payout/reservation claims `X + F_cap`, where `F_cap` is a per-rail, configuration-verified maximum provider fee. Dispatch fails closed if a provider-quoted fee exceeds `F_cap`. At settlement, the evidenced `F` reconciles the claim: `F_cap − F` is released back to AVAILABLE, so the projection is exact at every terminal state (PAID_OUT claims `X + F`; RELEASED claims nothing).
+2. **Separately reserved, evidenced fee debit:** the principal claims `X`, and a distinct fee reservation (bounded by `F_cap`) claims the fee allowance; the provider-fee event — not an estimate — decrements it; unused allowance is released at settlement.
+
+Both keep reserved ≥ evidenced outflow and never invent `F`. **Until one design is selected and the provider fee schedule is commercially confirmed, this reservation model is NOT complete for `F > 0`** — this section is an open financial design blocker on P6 settlement code (it is folded into gate 6). With `F = 0` (fee-free dispatch) the §5.2 model is complete as written.
+
 ## 7. Financial invariants — the durability-suite pins
 
 Each pin becomes a real-PostgreSQL test in the financial-durability suite before any GHS settlement code merges:
@@ -217,6 +226,7 @@ Each pin becomes a real-PostgreSQL test in the financial-durability suite before
 10. **Refund invariants:** refund ≤ payment; refund currency == payment currency; every refund path balanced (§4.6/§4.7), including the receivable path; refund disbursement failure restores payable + commission exactly.
 11. **Provider-evidence reconciliation:** UNKNOWN_OUTCOME never posts and never fails silently; late and contradictory callbacks park with durable exceptions and never settle or reverse a terminal row.
 12. **Float-free money:** authoritative GHS values are exact-2dp strings end to end; any `Number()`-mediated serialization on a money path fails the review gate.
+13. **Fee-coverage (blocked on §6.5):** total reserved (principal + fee coverage) ≥ evidenced asset outflow for every dispatch; the pool projection never understates committed GHS; the unused fee allowance is released exactly once at settlement. Testable once the §6.5 design is selected.
 
 ## 8. Release gates — required before GHS settlement is enabled
 
@@ -227,7 +237,7 @@ The contract and rollout must not be treated as satisfied until ALL of these exi
 3. **No-duplicate-asset-recognition and ledger-vs-projection equality proofs** (§7.6, §7.7) as executable reconciliation tests.
 4. **Provider evidence and reconciliation tests** covering unknown outcomes and late/contradictory callbacks (§7.11).
 5. **Verified payout destinations and permissions** — destination verification, change control and payout authorization implemented and tested (§6.2) before the first live payout; four-eyes on first payouts.
-6. **Explicit commission and fee terms** — the versioned GHS fee schedule, its percentage/basis and merchant terms approved as commercial terms, not implementation constants (§9).
+6. **Explicit commission and fee terms** — the versioned GHS fee schedule, its percentage/basis and merchant terms approved as commercial terms, not implementation constants (§9) — **including resolution of the fee-inclusive liquidity coverage design (§6.5, pin 13): reservations must cover the full evidenced asset outflow, principal plus platform-absorbed provider fee.**
 7. **Approved collection/settlement quote contract for USDC-paying customers** (§2.3): purpose-specific server quote, expiry, explicit confirmation — reviewed separately; the public oracle is never the checkout quote.
 8. **Honesty boundary preserved:** GHS listing prices and discovery development remain distinct from GHS checkout claims. Until collection AND merchant settlement are implemented and verified, **no UI, API capability flag, or product copy may promise GHS order payment** (`payableIn` never reports "GHS" before that point).
 
@@ -248,7 +258,8 @@ Rollout order (unchanged): sign-off → catalog/schema PR (additive, no behavior
 **Still open (owner-only):**
 1. **Sign-off of this contract** (rev 2), including the §2 scope amendment and the §4 postings.
 2. **Minimum payout threshold:** must be configured; the numeric value remains open until actual provider fees, limits and operating costs are evaluated.
-3. **Marketplace commission terms:** separate, versioned GHS schedule confirmed — but the percentage, fee basis and merchant terms remain open commercial approvals until explicitly set; the escrow fee rate must never be inherited accidentally.
-4. **Collection/settlement quote contract for USDC-paying customers:** needs its own approval (gate 7).
+3. **Fee-inclusive liquidity reservation design (§6.5):** the two candidate designs are specified; selecting one requires the provider fee schedule (a commercial confirmation). Until then the reservation model is explicitly incomplete for `F > 0` and P6 settlement code stays blocked (gate 6, pin 13).
+4. **Marketplace commission terms:** separate, versioned GHS schedule confirmed — but the percentage, fee basis and merchant terms remain open commercial approvals until explicitly set; the escrow fee rate must never be inherited accidentally.
+5. **Collection/settlement quote contract for USDC-paying customers:** needs its own approval (gate 7).
 
 — End of revision 2. Documentation only; no application source code changed, nothing deployed, nothing merged.
