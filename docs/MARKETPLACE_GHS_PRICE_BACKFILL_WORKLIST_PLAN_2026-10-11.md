@@ -20,7 +20,7 @@ P2 closes the gap between "the BusinessPrice foundation exists" and "the active 
 - `BusinessPrice.status` supports **`ACTIVE | ARCHIVED` only. There is no `DRAFT` status** in this plan. "Unconfirmed" means: the identity's current `ACTIVE` row (effectiveTo null) has `confirmedAt = null` (typically `confirmedByType: MIGRATION`, `confirmedById = null`).
 - `resolveEffectiveGhsPrice` returns the current ACTIVE GHS row **only if** `confirmedByType ∈ {BUSINESS, ADMIN}` AND `confirmedAt != null`. Unconfirmed rows are excluded from every public surface. That exclusion IS the draft semantics.
 - `setPrice` **archives the identity's current ACTIVE row before inserting the new one** — it is a replace operation, not an append. Consequence: **backfill must NOT call `setPrice` on an identity that already has a current row** (§6.1); a guarded insert path is required (future implementation work, reviewed with the P2 PR).
-- The DB partial unique index (`business_price_current_unique`) enforces exactly one ACTIVE current row per (product, currency, scope, branch); concurrent inserts fail closed.
+- The DB partial unique index (`business_price_current_unique`) enforces exactly one ACTIVE current row per (product, currency, scope, branch); concurrent inserts fail closed (P2002). The P1 hardening pass additionally pins: the scope/location shape (`business_price_scope_location_check`: DEFAULT ⇔ NULL location, BRANCH ⇔ non-null), single-winner CAS confirmation (one actor/timestamp persists; losers converge; retries never rewrite the audit trail), BRANCH tenant verification in `setPrice` (a branch price names only a real location of the product's own `businessProfileId`), and NO scheduled future pricing in v1 (a future-dated confirmed current row fails closed in the resolver, never served early).
 - This plan introduces **no new status value, no staging model, no schema change**. Any such change would be separate, explicitly reviewed design work.
 
 ## 3. Provenance requirements for imported amounts
@@ -77,9 +77,16 @@ The partial unique index is the race fence: a concurrent merchant `setPrice` and
 |---|---|
 | Backfill finds confirmed current row | skip — never touched |
 | Backfill finds unconfirmed MIGRATION row from an earlier batch | skip — one worklist row per product; reruns never duplicate |
-| Merchant sets/enters a price while backfill runs | unique index → one winner; loser skips; merchant's row wins ties (backfill only ever creates-if-absent) |
+| Merchant sets/enters a price while backfill runs | the unique index guarantees exactly ONE winner, NOT an ordering — see the two interleavings below |
 | Merchant confirms while backfill scans the same product | confirmation only touches unconfirmed rows; backfill only creates absent rows — disjoint mutations, no interleaving hazard |
 | Partial batch failure (crash mid-run) | cursor + per-product keys → rerun converges; no orphan duplicates |
+
+**Merchant-write vs backfill race — the index does not order the winner.** Both interleavings are legal and must both converge to a merchant-authoritative outcome:
+
+1. **Merchant write wins** (merchant transaction commits first, or backfill's create-if-absent loses the race): the merchant's row is the current row; backfill's create-if-absent sees it and skips — whether it is confirmed or unconfirmed. Backfill never writes over any existing row.
+2. **Backfill wins** (backfill's unconfirmed MIGRATION row commits first): the merchant operation gets a unique-violation (P2002) on the current-row identity, aborts, and MUST retry rather than fail: re-read (sees the backfill's unconfirmed row), then save the merchant's price through the normal setPrice flow, which archives the unconfirmed backfill row and creates the merchant-authored row (confirmed, actor + timestamp, if the merchant confirmed it). The merchant's amount is authoritative; the backfill amount is superseded as worklist input, never silently kept.
+
+In both interleavings: backfill never overwrites a merchant-entered or merchant-confirmed amount (create-if-absent only), and the merchant operation never loses data to the race — it either wins outright or retries and supersedes the backfill row through the audited setPrice path. The loser-side skip/retry obligations are part of the P2 PR's test matrix (§8 T5).
 
 ## 7. Admin coverage/drain reporting and the P3 gate
 
