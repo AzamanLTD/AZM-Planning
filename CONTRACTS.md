@@ -19,6 +19,10 @@
 | Notifications | Backend event/push producers | Flutter, Business, Admin | payload, dedup, action routing |
 | Realtime | Backend Socket.IO | all clients | event ordering/filtering/reconnect |
 | Experience Blueprint | Backend | Business config + Flutter renderer | schema/version/fallback/published consistency |
+| Marketplace discovery & mix | Backend (contract: `MARKETPLACE_MIX_REDESIGN_2026-10-10.md`, §1–§9) | Flutter, Business | taxonomy/eligibility gates, ranking inputs, storefront kill-switch semantics |
+| GHS listing price (`BusinessPrice`) | Backend (contract: `MARKETPLACE_GHS_PRICING_AND_PAYMENT_CONTRACT_2026-10-10.md`) | Flutter, Business, Admin | price scope/date model, effective resolution, backfill no-inference policy, eligibility |
+| Merchant GHS payable | Backend (contract: `MERCHANT_GHS_PAYABLE_FINANCIAL_CONTRACT_2026-10-10.md`, **REV 2.1 canonical**) | Flutter, Business, Admin | payable posting balance, fee bearer, payout correlation record, refund paths |
+| GHS price backfill (P2) | Backend (plan: `MARKETPLACE_GHS_PRICE_BACKFILL_WORKLIST_PLAN_2026-10-11.md`) | Admin tooling | coverage states, provenance rules, guarded create-if-absent, race contract |
 
 ## Dine-in — first deep contract audit
 
@@ -53,3 +57,14 @@ For each event document: producer, transaction boundary, audience, payload schem
 - **BROKEN:** mismatch reproduced.
 
 Never upgrade a contract to VERIFIED from discussion alone.
+
+## Marketplace — GHS economy canonical versioning (2026-10-13)
+
+One canonical version per document; superseded text is corrected in place, never left ambiguous:
+
+- **Marketplace mix architecture:** `docs/MARKETPLACE_MIX_REDESIGN_2026-10-10.md` — D-1 corrected in place (GHS canonical listing currency; the earlier USDC-default D-1a is explicitly superseded in the header). Decisions D-2..D-8 finalized per §9.
+- **GHS pricing & payment:** `docs/MARKETPLACE_GHS_PRICING_AND_PAYMENT_CONTRACT_2026-10-10.md` — the single price-model authority (`BusinessPrice` scope/date model, exact 2-dp pesewas, no USDC inference, drafts ineligible).
+- **Merchant GHS payable:** `docs/MERCHANT_GHS_PAYABLE_FINANCIAL_CONTRACT_2026-10-10.md` — **REV 2.1 is canonical** (immutable business identity §6.1, platform payout correlation record). REV 2 and earlier are superseded; the revision header in the document is the version register.
+- **Backfill worklist (P2):** `docs/MARKETPLACE_GHS_PRICE_BACKFILL_WORKLIST_PLAN_2026-10-11.md` — planning only; blocked on PR #334 lead review; merchant/backfill race contract per its latest correction.
+
+Implementation status lives in the repos, not here: price foundation PR AzamanLTD/AZM-backend#334, discovery-eligibility PR #333, receive/request provisioning PR #339 — all open, none merged at the time of this entry.
