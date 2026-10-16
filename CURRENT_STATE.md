@@ -4,42 +4,42 @@
 **Authority:** current repository `main` + exact CI/evidence.
 
 
-## Current verified snapshot — 2026-10-16 UTC
+## Current verified snapshot — 2026-10-16 late reconciliation
 
-**Authority:** GitHub main + exact-head CI evidence; Render live state is separately verified. This top snapshot supersedes conflicting old per-repository baselines later in this historical document. Historical notes remain for traceability.
+**This snapshot supersedes the earlier 20:38 UTC handoff snapshot immediately below and any older repo baseline later in this file.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
 
-### Current repository/PR state
+### Exact current PR evidence
 
-- **AZM-frontend main:** `ee12a90fdf254d201984f52eca93bb39b9486912`.
-  - PR #154 wallet pouch: OPEN/UNMERGED, head `8d084462823cab43a34959b0b1ceb1c494ecdb2c`; Flutter Quality #566 and Android Integration #274 green. Device smoke outstanding. Active follow-up: tap active selector to tuck; visual selector text "Visa"; stable empty/typewriter heading geometry and less space before cards; verify full first-viewport wallet layout without compromising 44dp controls or the intentional Home scroll/activity handoff.
-  - PR #155 settings redesign: OPEN/UNMERGED, head `cc1da24f6bb9ed2e84784784fa4e05101c6b98bf`; Flutter Quality #569 and Android Integration #277 green. Review findings: Deposit quick action routes to Accounts hub; Edit Profile opens read-only ProfileDetails; Clear Cache shows fabricated fixed MB freed without actual cache deletion; Language only persists a setting and does not change MaterialApp locale; Security label/chip conflates 2FA/PIN and biometric-only status; FAQ factual claims need endpoint/flow proof before release.
-- **AZM-backend main latest verified merge:** PR #352 merge commit `48c17ab10248e39689683772c88695a4c8b0c0e8` (Firebase Admin SDK v14 modular API). Render deployment `dep-db8gcf9srm7s73e9asq0` was observed LIVE with log `Firebase Admin SDK Initialized Successfully` at 2026-10-15 16:59:34 UTC. This proves SDK initialization, not end-to-end push delivery; registered Android device smoke remains pending.
-- **AZM-Planning:** prior current-state/loop/ledger timestamps were 2026-10-01 or earlier. This change re-establishes a dated continuation pointer; it does not imply any product PR is merged.
-- Settings PR #155 and wallet PR #154 are independent and based on frontend main `ee12a90fdf254d201984f52eca93bb39b9486912`; do not merge either merely because CI passes.
+- Frontend main ee12a90fdf254d201984f52eca93bb39b9486912.
+- PR #154 OPEN at 708a0f8ae77169784c59bbadef10be0eb78789a8; Flutter Quality 38971032050, Android Integration 38971032048 succeeded. Toggle-to-tuck, Visa label, stable typewriter footprint and 12/16px spacing pass are landed. Real Android device smoke still pending.
+- PR #155 OPEN at 6a55d1609e1bcc5233f7982d6bddabdee4889f9b; Flutter Quality 38969900926, Android Integration 38969900788 succeeded. Deposit route, Edit Profile, honest cache clearing, language truth, security state and FAQ corrections were implemented/tested. Full localization and authoritative backend 2FA field remain deferred.
+- PR #156 OPEN at 267dd8bcab2770e294a182dd47cefc637c575e59; Flutter Quality 38975394627, Android Integration 38975394586 succeeded. In-place All-mode and die/taxonomy behaviour are present. Its current offer card is still a horizontal 96×96 thumbnail plus adjacent text, not the intended near-square product tile with the store logo/name in a separate lower panel. Discovery DTO and Mix model have no business-logo URL yet. **Do not accept visual completion/merge #156 until fixed.**
+- PR #157 OPEN at 525b9ab0bbd1d1c3999e56fb90ce9068e2a903b0; Flutter Quality 38977174754, Android Integration 38977174991 succeeded. Selected labels and explicit Tabs control are present. Main passes the AZM logo launcher into the trailing/right slot; the composition still needs the logo/action on the left of the nav and the combined cluster visually centred.
+- Backend main 48c17ab10248e39689683772c88695a4c8b0c0e8. PR #353 OPEN at 24f3bdbcaabd1044451b368b505ae916c7332d0d; test lane 38978189219 and financial durability 38978189222 succeeded. Kotani is canonical transaction rate; no API onboarding/credentials yet.
 
-### Active product work
+### Visa transfer feature — new active requirement
 
-- Fix and retest Settings wiring findings before PR #155 is ready for merge. A UI destination test must tap each row and assert the correct destination/behavior; render-only tests are insufficient.
-- Finish PR #154's selector toggle/label and stable Home top-layout adjustments, then do an actual device smoke.
-- Create separate focused PRs for the compact/selected-label bottom nav and the in-place Marketplace Mix experience. Do not let these modify overlapping files in parallel.
-- Run a read-only app-wide wiring audit with a per-control evidence inventory; do not allow the audit agent to make overlapping code edits.
-- Preserve truthful Marketplace Mix contracts: cross-store discovery is category-first, GHS list prices must be real server-confirmed exact decimal strings, and display price is not a GHS payment capability. No fake ranking or price-on-request state.
+The design is a separate PR, not an extension to wallet PR #154. Add a circular control at the stable seam between the two Home cards. It opens a Receive-like full-height sheet with the exact same shared card renderers/models as Home, two bottom tabs ("To Visa"/"From Visa") connected to horizontal swipe, animated direction flow, and reusable AmountKeypad. Review/confirmation and backend-authored transaction status are required.
 
-### Backend and release gates that remain open
+**Hard stop before money mutation:** frontend lib/widgets/home/azm_visa_card.dart expressly labels the card a SAMPLE; default DemoCardProgramme is a placeholder with session-only PIN and no funding or transfer methods. Contact/confirm Flutterwave issuer access for Ghana, supported denominations, funding and reverse-transfer capabilities and webhooks. Keep submit disabled with honest copy until real issuer API + backend ledger/idempotency/settlement contract exists. Do not debit/credit client balances or invent a card funding route.
 
-- Kotani Pay remains the agreed canonical USDC↔GHS transaction-rate provider, but vendor onboarding/credentials are not yet available. The current fallback composite can still refresh the transaction-eligible canonical rate; it must be hardened so only a valid, fresh Kotani observation can refresh transaction-rate authority. Do not use a CoinGecko+FX composite as a substitute for the agreed provider.
-- The Firebase service initializes on Render after PR #352, but end-to-end notification delivery to a real registered test device is unproven.
-- Render backend remains a free/single-instance service with no `REDIS_URL`; single-instance fallback is a deliberate demo mode. Paid/always-on backend + paid Render Key Value, secret configuration and distributed scheduling/socket/rate-limit verification are onboarding gates. No resources/settings were changed by this documentation task.
-- Marketplace Discovery remains disabled in production. Do not enable it until effective business-confirmed GHS price rows are present and API behavior is verified; a zero-item/disabled feed must be reported honestly.
-- Do not onboard external users or perform real-money tests until provider-rate authority, financial recovery, deployed infrastructure and operational alerting gates have explicit evidence.
+### Read-only wiring audit reported high-severity problems (requires lead verification + individual fixes)
 
-### Engineering/control rules
+- P0 Send Money posts to unregistered /finance/internal-transfer. The UI searches arbitrary AZM ID/username; peer rail /friends/transfer/send takes friendshipId. Preserve direct AZM-ID product intent by designing a backend-authoritative, retry-safe transfer route/service; do not redirect to vendor-pool rails or invent a friendship.
+- P0 Web demo guard checks /api/health although actual health is rooted at /health, risking false demo-mode enablement.
+- P0 Worker EWA uses a double /api prefix through the central ApiClient; real requests 404.
+- P0 Auction's ad picker uses demo-only /p2p/my-ads; canonical endpoint is /ads/mine.
+- P1 double-prefix calls span Worker, swaps/time-off, chat message actions, forwarding, call history and notification preferences. Group forwarding also targets a nonexistent /api/groups, requiring the real group-chat endpoint—not merely prefix cleanup.
+- P1 marketplace stories target a demo-only path and assume groups where backend returns stories. No-op snooze, Document attachment and promo CTA are further wiring gaps.
+- Audit was read-only; no fixes exist yet. Re-verify current source lines, then use non-overlapping code PRs with request/route/response/test evidence.
 
-- No main-direct commits, merges or production setting changes by this handoff. PRs remain open for eligible review and owner approval.
-- Every agent report must identify repo, branch, exact full head SHA, files, tests run/results, exact-head CI links, known gaps and intended next step. The lead independently inspects code/test truth before calling work accepted.
-- Parallel work is allowed only with explicit non-overlapping file ownership. A read-only audit agent must report findings without editing.
-- Preserve existing financial/product safety contracts while speeding UI work. No invented API routes, placeholder prices, fake cache-cleared messages, unsupported FAQ claims, or feature toggles that only persist without changing runtime behavior.
+### Other live gates carried forward
 
+- Firebase Admin initializes on Render after PR #352, but push delivery to an actual registered device is unproven.
+- Render backend is Free/single-instance without REDIS_URL; paid always-on + paid Render Key Value and distributed-mode verification remain external onboarding gates.
+- Discovery remains disabled until business-confirmed effective GHS price rows exist and response/flag behaviour is tested.
+- No external-user onboarding or real-money testing until Kotani authority/credentials, financial recovery, card issuer contracts, deployment durability, and operational alerts are evidence-backed.
+- PR #72 is documentation-only. No merges/deployments/Render resource or setting changes are implied by this state reconciliation.
 
 ## Current verified baseline (historical snapshot, retained for audit trail)
 
