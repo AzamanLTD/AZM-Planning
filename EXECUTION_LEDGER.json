@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-16T20:38:00Z",
+  "updatedAt": "2026-10-16T23:30:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -848,40 +848,56 @@
       "repo": "AzamanLTD/AZM-frontend",
       "status": "open",
       "pr": 154,
-      "headSha": "8d084462823cab43a34959b0b1ceb1c494ecdb2c",
+      "headSha": "708a0f8ae77169784c59bbadef10be0eb78789a8",
       "ci": {
-        "flutterQualityRun": 38935295368,
+        "flutterQualityRun": 38971032050,
         "flutterQualityConclusion": "success",
-        "androidIntegrationRun": 38935295369,
+        "androidIntegrationRun": 38971032048,
         "androidIntegrationConclusion": "success"
       },
-      "notes": "Open/unmerged. Pouch design, travel-with-card branded header, gesture scroll arbitration, per-card semantics, stale PIN token guard, no-spill geometry and state-aware z-order are implemented and tested. Android hardware smoke remains outstanding. Next requested changes: tapping active selector toggles tucked; selector says 'Visa'; hold heading footprint stable while typewriter string is empty/typing/erasing; reduce Home top spacing and fit core controls without breaking 44dp touch targets or intentional scroll/activity handoff."
+      "notes": "OPEN/unmerged. Selector toggle-to-tuck, visible Visa label, stable typewriter slot and 20→12px / 24→16px spacing pass landed; four viewport sizes 320x667, 360x740, 390x844, 412x915 covered. Android device smoke pending. Home Visa transfer is a separate feature; current Visa is sample."
     },
     {
       "id": "frontend-settings-redesign-pr155",
       "repo": "AzamanLTD/AZM-frontend",
       "status": "open",
       "pr": 155,
-      "headSha": "cc1da24f6bb9ed2e84784784fa4e05101c6b98bf",
+      "headSha": "6a55d1609e1bcc5233f7982d6bddabdee4889f9b",
       "ci": {
-        "flutterQualityRun": 38955661858,
+        "flutterQualityRun": 38969900926,
         "flutterQualityConclusion": "success",
-        "androidIntegrationRun": 38955661789,
+        "androidIntegrationRun": 38969900788,
         "androidIntegrationConclusion": "success"
       },
-      "notes": "Open/unmerged, visual design/tests promising. Review findings to resolve before approval: Deposit quick action routes to AccountsScreen rather than DepositScreen; Edit Profile routes to read-only ProfileDetailsScreen; Clear Cache claims a fixed 42 MB freed without clearing; Language only persists/syncs a preference and is not wired to MaterialApp.locale/localization; security row's 2FA/PIN wording exposes biometric-only status; audit FAQ claims against real backend/frontend flows. Do not merge based on render/IA tests alone."
+      "notes": "OPEN/unmerged, review corrections landed and 31 scoped tests green. Deposit→DepositScreen, Edit Profile→ProfileScreen editor, real memory-image cache clear, misleading language picker removed, security chip truth corrected, FAQ corrected and source-claim tests added. Full localization deferred; backend-authoritative 2FA status missing."
     },
     {
       "id": "frontend-selected-label-compact-bottom-nav",
       "repo": "AzamanLTD/AZM-frontend",
       "status": "open",
-      "notes": "Planned separate PR, not implemented. Shrink-wrap navigation pill around its content; selected labels read Home/Chat/Market; maintain >=44dp targets, badges, scroll compression, plus launcher, retap-to-top, long-press and safe-area contracts. Replace contextual-page ellipsis with explicit tab-switch affordance without losing its capability."
+      "notes": "OPEN/unmerged, labels Home/Chat/Market, compact pill and explicit pushed-route Tabs are green. Placement follow-up remains: AZM logo/action is still passed as trailing/right; move logo/action left of nav and center the combined cluster responsively while preserving all nav/shell invariants.",
+      "pr": 157,
+      "headSha": "525b9ab0bbd1d1c3999e56fb90ce9068e2a903b0",
+      "ci": {
+        "flutterQualityRun": 38977174754,
+        "flutterQualityConclusion": "success",
+        "androidIntegrationRun": 38977174991,
+        "androidIntegrationConclusion": "success"
+      }
     },
     {
       "id": "frontend-marketplace-mix-in-place",
       "repo": "AzamanLTD/AZM-frontend",
       "status": "open",
-      "notes": "Planned separate PR, not implemented. Mix becomes an in-place Marketplace mode, default All/unfiltered cross-store feed; category selection reveals applicable subcategory taxonomy bubbles; custom isometric die and one-shot restrained reduced-motion-aware animation; small divider/spacing. Preserve canonical taxonomy IDs, GHS exact-string prices, server order and payableIn truth. Map the storefront dial's REAL_ESTATE Stay value to discovery HOSPITALITY only at an explicit mapping boundary. Production discovery flag remains off until real effective GHS price rows and runtime verification."
+      "notes": "OPEN/unmerged, functional in-place All mode, category mapping, die animation and taxonomy bubbles are green. Visual acceptance not met: MixOfferCard remains horizontal 96x96 thumbnail + right-hand text. Required near-square image-led card grid with a distinct bottom panel showing product name/price and actual store logo + name. MixOffer DTO and backend discovery DTO currently lack logo URL. Keep open for a frontend card/model/test update plus a separately owned additive backend business-logo DTO PR.",
+      "pr": 156,
+      "headSha": "267dd8bcab2770e294a182dd47cefc637c575e59",
+      "ci": {
+        "flutterQualityRun": 38975394627,
+        "flutterQualityConclusion": "success",
+        "androidIntegrationRun": 38975394586,
+        "androidIntegrationConclusion": "success"
+      }
     },
     {
       "id": "frontend-app-wide-wiring-audit",
@@ -893,13 +909,95 @@
       "id": "backend-kotani-canonical-rate-authority",
       "repo": "AzamanLTD/AZM-backend",
       "status": "open",
-      "notes": "Kotani Pay is the agreed canonical USDC↔GHS transaction-rate provider, but API onboarding/credentials remain outstanding. The current CoinGecko+FX composite must not refresh transaction-eligible canonical rate/freshness; only a valid, fresh Kotani observation may do so. Fail closed when Kotani is missing/stale. No code PR created yet; vendor onboarding and code hardening are separate tasks."
+      "notes": "OPEN/unmerged. Kotani-only canonical USDC/GHS transaction-rate source, fail-closed without valid/fresh observation; CoinGecko stablecoin data display-only, no FX composite transaction fallback. Independent review/merge and vendor onboarding are outstanding.",
+      "pr": 353,
+      "headSha": "24f3bdbcaabd1044451b368b505ae916c7332d0d",
+      "ci": {
+        "mainTestRun": 38978189219,
+        "mainTestConclusion": "success",
+        "financialDurabilityRun": 38978189222,
+        "financialDurabilityConclusion": "success"
+      }
     },
     {
       "id": "release-firebase-push-real-device-smoke",
       "repo": "AzamanLTD/AZM-backend",
       "status": "open",
       "notes": "After PR #352 was merged/deployed, Render logs show Firebase Admin SDK initialized. This is not proof of push delivery. Still pending: actual test notification to a registered Android device with logs + arrival verified."
+    },
+    {
+      "id": "frontend-mix-card-layout-square-store-footer",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "Follow-up to frontend PR #156; not implemented yet. Replace the existing horizontal 96x96 thumbnail + right-text MixOfferCard with near-square responsive tiles. Item image occupies the upper area; lower panel displays product/item identity and exact verified GHS price, then real store logo + store name. Keep server order, offerKey identity, tracking, capability/availability truth. Add tests/goldens 320/360/390dp, light/dark, logo-present and logo-missing."
+    },
+    {
+      "id": "backend-discovery-business-logo-url",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "open",
+      "notes": "Add nullable real BusinessProfile logo URL to /api/discovery/items DTO using existing schema data, in a dedicated backend PR with route/service contract tests and no price/capability changes. Frontend will tolerate missing/bad URLs gracefully. Verify actual field/schema before writing."
+    },
+    {
+      "id": "frontend-nav-center-logo-left",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "pr": 157,
+      "headSha": "525b9ab0bbd1d1c3999e56fb90ce9068e2a903b0",
+      "notes": "Follow-up on existing PR #157, not a second nav PR. Reposition the cumulative AZM logo launcher to the left of the compact nav pill and visually centre the combined cluster, adapting width to viewport and Marketplace focused mode. Preserve 44dp targets, badges, keyboard/safe area, scroll compression, retap-to-top, long press, Tabs and reduced motion."
+    },
+    {
+      "id": "frontend-visa-card-transfer-experience",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "New distinct feature; design/implementation pending. Add a circular transfer control anchored to the stable overlap seam between Home's balance and Visa cards. Full-height Receive-like sheet reuses same Home card components/models; bottom To Visa/From Visa tabs are tappable and swipe-synced; directional money-flow animation; reuse AmountKeypad; review/confirmation and truthful operation states. Hard stop: azm_visa_card.dart currently uses SAMPLE + DemoCardProgramme (PIN/display only), no issuance/funding/reverse-transfer methods. No live mutation/false success until Flutterwave programme/currency/funding/withdrawal capability and backend ledger/idempotency/settlement contracts are proven. Confirm Ghana availability with provider."
+    },
+    {
+      "id": "release-flutterwave-issuer-programme-discovery",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "open",
+      "notes": "Owner/vendor follow-up for Visa transfer dependency: confirm current Flutterwave AZM issuer/card-programme access for Ghana, card currency/denomination, funding from AZM customer available balance, card-to-wallet/reverse transfer support, fees/exchange and webhook/settlement evidence. Public legacy v2 virtual-card docs say the service is not publicly available and require vendor contact; don't assume availability from the SDK or SAMPLE card."
+    },
+    {
+      "id": "frontend-app-wiring-p0-send-money-azm-id",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "Read-only audit reported SendMoneyScreen POST /finance/internal-transfer has no mounted backend route. Current UI supports direct AZM ID/username lookup, while friend transfer requires friendshipId. Preserve direct-transfer product intent via a reviewed backend-authoritative, idempotent ledger/operation contract. No client balance write, vendor-pool route, friendship fabrication or invented success. Verify source and cross-repo tests before implementation."
+    },
+    {
+      "id": "frontend-app-wiring-p0-root-health-demo-guard",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "Read-only audit found splash_screen.dart probes apiClient.get('/health'), producing /api/health while health endpoint is rooted at /health. A healthy web app may enter demo mode. Verify current route/base URL; fix root health probe and test true-up/unreachable behavior so live deployment never silently falls back to seeded data on a path mismatch."
+    },
+    {
+      "id": "frontend-app-wiring-p0-worker-ewa",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "Read-only audit found worker_ewa_screen.dart calls /api/business-os/... through ApiClient whose base already includes /api, causing double-prefix 404. Verify exact URL and fix with endpoint construction tests; preserve EWA financial idempotency and result semantics."
+    },
+    {
+      "id": "frontend-app-wiring-p0-auction-ad-source",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "Read-only audit found auction target loading uses demo-only /p2p/my-ads; canonical current endpoint appears /ads/mine. Verify response DTO and existing ad service before switching; add test proving a live ad can be selected and bid flow reaches the existing backend route."
+    },
+    {
+      "id": "frontend-api-prefix-and-route-wiring-p1",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "Audit-reported /api double-prefix calls span worker_provider, worker swaps/time-off, message_action_service, forward_dialog, call_history and notification_preferences. Audit exact source, normalize via a focused helper or remove incorrect prefixes with one test per file. Group forwarding is special: /api/groups has no route and must map to actual /group-chats contract; not just strip /api."
+    },
+    {
+      "id": "frontend-marketplace-story-ring-wiring-p1",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "Audit-reported mismatch: /stories/business/:bizId is demo-only; live backend /marketplace/business/:id/stories returns {stories}, while consumer expects {groups}. Add adapter and tests, coordinate with Mix PR #156 so Marketplace Home branches don't overlap or overwrite each other."
+    },
+    {
+      "id": "frontend-noop-affordances-p1",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "Audit-reported visible no-ops: notification snooze (onSnooze: () {}), Chat Document attachment onTap empty, configured storefront promo CTA onPressed empty. Verify reachability/capability contracts; implement supported outcome or remove/disable the promise. Dead unreferenced code cleanup is lower priority."
     }
   ],
   "notes": [
