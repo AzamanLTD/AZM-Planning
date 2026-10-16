@@ -2,9 +2,32 @@
 
 **Priority authority:** YES  
 **Status:** ACTIVE  
-**Last reconciled:** 2026-09-03 UTC
+**Last reconciled:** 2026-10-16 UTC
 
 This is the **single active execution plan** for the five-repository AZAMAN platform. It incorporates the prior master roadmap and Lyra's independent assessment. Dated plans are historical evidence, not competing instructions.
+
+
+## Current execution focus — founder direction, 2026-10-16
+
+This dated execution overlay is the current work-selection layer. It does not waive or close the north-star financial/release gates below; work should run in parallel where ownership is disjoint.
+
+### Parallel work, exact ownership and stop conditions
+
+1. **AZM-frontend PR #155 (settings/drawer):** fix confirmed misroutes and misleading actions, confirm every Help/FAQ claim against actual endpoints and business flows, then re-run exact-head CI. Keep work within Settings/Drawer/Support and tests.
+2. **AZM-frontend PR #154 (wallet pouch):** add active Balance/Visa selector toggle-to-tuck, relabel the selector only to "Visa", stabilize the typewriter heading's layout footprint, and compact Home spacing/buttons while preserving touch targets, card geometry, semantics, reduced motion and the intentional scroll/activity handoff. Run device smoke before final completion.
+3. **AZM-frontend bottom navigation:** separate PR. Make the nav pill content-sized; selected labels must read Home / Chat / Market; replace the contextual-bar ellipsis with an explicit tab-switch control without removing the ability to switch tabs while a pushed page is open.
+4. **AZM-frontend Marketplace Mix:** separate PR. Mix is an in-place Marketplace mode, defaulting to an unfiltered All/cross-store feed. Specific category selection shows the matching server-canonical taxonomy row. Add a custom-drawn isometric die and a short, one-shot reduced-motion-aware activation animation plus a light separator. Preserve server ordering, exact GHS price semantics and `payableIn` truth; never make up listing/checkout capabilities.
+5. **AZM-frontend whole-app wiring audit:** read-only, all meaningful routes/buttons/settings/CTAs. Inventory user intent → actual callback → route/API/provider/state change → test/evidence. Classify VERIFIED / PARTIAL / DEAD-MISROUTED / UNSUPPORTED. Do not edit code; convert verified findings to separately owned small PRs after review.
+6. **AZM-backend rate authority lane:** Kotani is the agreed canonical transaction-rate provider, but access/credentials remain outstanding. Make canonical rate freshness fail closed unless refreshed by Kotani; CoinGecko+FX can be supplemental display data only, never transaction-authoritative. Vendor onboarding proceeds separately.
+7. **Release gates in parallel:** execute a Firebase test push to a registered real device; plan and prove paid Render + paid Key Value/Redis distributed mode before external onboarding; keep Discovery disabled until real effective business-confirmed GHS prices exist. No live money testing or onboarding as a substitute for the gates.
+
+### Parallel-agent discipline
+
+- One code agent per owned file set. The wiring audit is read-only.
+- Existing PRs #154/#155 are open and unmerged. Exact-head CI is necessary but not sufficient; validate behavior and screenshots/real-device evidence for the interaction surfaces.
+- Every substantial checkpoint updates `ACTIVE_LOOP.md`, `CURRENT_STATE.md`, and `EXECUTION_LEDGER.json` with dates, exact SHAs, evidence and residual gaps.
+- On a new ChatGPT conversation, load `START_HERE.md`, then the current top snapshot in `ACTIVE_LOOP.md`, `CURRENT_STATE.md`, and the execution ledger. Do not assume a model has the full prior transcript.
+
 
 ## North-star definition of done
 
