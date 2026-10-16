@@ -1,9 +1,47 @@
 # AZAMAN Current Engineering State
 
-**Last reconciled:** 2026-10-01 UTC
+**Last reconciled:** 2026-10-16 UTC
 **Authority:** current repository `main` + exact CI/evidence.
 
-## Current verified baseline
+
+## Current verified snapshot — 2026-10-16 UTC
+
+**Authority:** GitHub main + exact-head CI evidence; Render live state is separately verified. This top snapshot supersedes conflicting old per-repository baselines later in this historical document. Historical notes remain for traceability.
+
+### Current repository/PR state
+
+- **AZM-frontend main:** `ee12a90fdf254d201984f52eca93bb39b9486912`.
+  - PR #154 wallet pouch: OPEN/UNMERGED, head `8d084462823cab43a34959b0b1ceb1c494ecdb2c`; Flutter Quality #566 and Android Integration #274 green. Device smoke outstanding. Active follow-up: tap active selector to tuck; visual selector text "Visa"; stable empty/typewriter heading geometry and less space before cards; verify full first-viewport wallet layout without compromising 44dp controls or the intentional Home scroll/activity handoff.
+  - PR #155 settings redesign: OPEN/UNMERGED, head `cc1da24f6bb9ed2e84784784fa4e05101c6b98bf`; Flutter Quality #569 and Android Integration #277 green. Review findings: Deposit quick action routes to Accounts hub; Edit Profile opens read-only ProfileDetails; Clear Cache shows fabricated fixed MB freed without actual cache deletion; Language only persists a setting and does not change MaterialApp locale; Security label/chip conflates 2FA/PIN and biometric-only status; FAQ factual claims need endpoint/flow proof before release.
+- **AZM-backend main latest verified merge:** PR #352 merge commit `48c17ab10248e39689683772c88695a4c8b0c0e8` (Firebase Admin SDK v14 modular API). Render deployment `dep-db8gcf9srm7s73e9asq0` was observed LIVE with log `Firebase Admin SDK Initialized Successfully` at 2026-10-15 16:59:34 UTC. This proves SDK initialization, not end-to-end push delivery; registered Android device smoke remains pending.
+- **AZM-Planning:** prior current-state/loop/ledger timestamps were 2026-10-01 or earlier. This change re-establishes a dated continuation pointer; it does not imply any product PR is merged.
+- Settings PR #155 and wallet PR #154 are independent and based on frontend main `ee12a90fdf254d201984f52eca93bb39b9486912`; do not merge either merely because CI passes.
+
+### Active product work
+
+- Fix and retest Settings wiring findings before PR #155 is ready for merge. A UI destination test must tap each row and assert the correct destination/behavior; render-only tests are insufficient.
+- Finish PR #154's selector toggle/label and stable Home top-layout adjustments, then do an actual device smoke.
+- Create separate focused PRs for the compact/selected-label bottom nav and the in-place Marketplace Mix experience. Do not let these modify overlapping files in parallel.
+- Run a read-only app-wide wiring audit with a per-control evidence inventory; do not allow the audit agent to make overlapping code edits.
+- Preserve truthful Marketplace Mix contracts: cross-store discovery is category-first, GHS list prices must be real server-confirmed exact decimal strings, and display price is not a GHS payment capability. No fake ranking or price-on-request state.
+
+### Backend and release gates that remain open
+
+- Kotani Pay remains the agreed canonical USDC↔GHS transaction-rate provider, but vendor onboarding/credentials are not yet available. The current fallback composite can still refresh the transaction-eligible canonical rate; it must be hardened so only a valid, fresh Kotani observation can refresh transaction-rate authority. Do not use a CoinGecko+FX composite as a substitute for the agreed provider.
+- The Firebase service initializes on Render after PR #352, but end-to-end notification delivery to a real registered test device is unproven.
+- Render backend remains a free/single-instance service with no `REDIS_URL`; single-instance fallback is a deliberate demo mode. Paid/always-on backend + paid Render Key Value, secret configuration and distributed scheduling/socket/rate-limit verification are onboarding gates. No resources/settings were changed by this documentation task.
+- Marketplace Discovery remains disabled in production. Do not enable it until effective business-confirmed GHS price rows are present and API behavior is verified; a zero-item/disabled feed must be reported honestly.
+- Do not onboard external users or perform real-money tests until provider-rate authority, financial recovery, deployed infrastructure and operational alerting gates have explicit evidence.
+
+### Engineering/control rules
+
+- No main-direct commits, merges or production setting changes by this handoff. PRs remain open for eligible review and owner approval.
+- Every agent report must identify repo, branch, exact full head SHA, files, tests run/results, exact-head CI links, known gaps and intended next step. The lead independently inspects code/test truth before calling work accepted.
+- Parallel work is allowed only with explicit non-overlapping file ownership. A read-only audit agent must report findings without editing.
+- Preserve existing financial/product safety contracts while speeding UI work. No invented API routes, placeholder prices, fake cache-cleared messages, unsupported FAQ claims, or feature toggles that only persist without changing runtime behavior.
+
+
+## Current verified baseline (historical snapshot, retained for audit trail)
 
 - Backend main: `6802ab6` (2026-09-15) — invoice creation/payment concurrency proofs, prior financial/dine-in hardening, the route-checker mount-registry fix (`6b7a884`), the merged P0 adapter authority proof (PR #236), the admin dine-in lifecycle projection endpoint (`117cebe`), PR #241 control-plane integrity: every privileged control-plane mutation (permission replacement, department create/update, staff create, suspend/activate/deactivate, staff PATCH, duty assign/revoke) now commits atomically with its STAFF audit event in one transaction; authority-sensitive UPDATEs are TOCTOU-guarded (validated-state WHERE clause, zero rows -> 409); concurrent permission replacement is serialized by FOR UPDATE on the target profile after the new race test proved parallel replacements could commit a union of both grant sets. Exact-head CI green at `f5aabaa` (1149 tests), post-merge main-head run green at `6d8da48`; prod healthy. Schema note: control-plane tables exist only in migration `20260828040000_control_plane_staff_access` (not schema.prisma models) — `prisma db push` cannot provision them; the integrity suite applies that migration's DDL idempotently for prod-schema parity.
 
