@@ -7,27 +7,28 @@
 This is the **single active execution plan** for the five-repository AZAMAN platform. It incorporates the prior master roadmap and Lyra's independent assessment. Dated plans are historical evidence, not competing instructions.
 
 
-## Current execution focus — founder direction, 2026-10-16
+## Current execution focus — founder direction, 2026-10-16 (late reconciliation)
 
-This dated execution overlay is the current work-selection layer. It does not waive or close the north-star financial/release gates below; work should run in parallel where ownership is disjoint.
+This is the current task-selection layer; it does not close any financial/release gate or authorise a merge. Exact current heads/evidence are in ACTIVE_LOOP.md and CURRENT_STATE.md.
 
-### Parallel work, exact ownership and stop conditions
+### Parallel, non-overlapping workstreams
 
-1. **AZM-frontend PR #155 (settings/drawer):** fix confirmed misroutes and misleading actions, confirm every Help/FAQ claim against actual endpoints and business flows, then re-run exact-head CI. Keep work within Settings/Drawer/Support and tests.
-2. **AZM-frontend PR #154 (wallet pouch):** add active Balance/Visa selector toggle-to-tuck, relabel the selector only to "Visa", stabilize the typewriter heading's layout footprint, and compact Home spacing/buttons while preserving touch targets, card geometry, semantics, reduced motion and the intentional scroll/activity handoff. Run device smoke before final completion.
-3. **AZM-frontend bottom navigation:** separate PR. Make the nav pill content-sized; selected labels must read Home / Chat / Market; replace the contextual-bar ellipsis with an explicit tab-switch control without removing the ability to switch tabs while a pushed page is open.
-4. **AZM-frontend Marketplace Mix:** separate PR. Mix is an in-place Marketplace mode, defaulting to an unfiltered All/cross-store feed. Specific category selection shows the matching server-canonical taxonomy row. Add a custom-drawn isometric die and a short, one-shot reduced-motion-aware activation animation plus a light separator. Preserve server ordering, exact GHS price semantics and `payableIn` truth; never make up listing/checkout capabilities.
-5. **AZM-frontend whole-app wiring audit:** read-only, all meaningful routes/buttons/settings/CTAs. Inventory user intent → actual callback → route/API/provider/state change → test/evidence. Classify VERIFIED / PARTIAL / DEAD-MISROUTED / UNSUPPORTED. Do not edit code; convert verified findings to separately owned small PRs after review.
-6. **AZM-backend rate authority lane:** Kotani is the agreed canonical transaction-rate provider, but access/credentials remain outstanding. Make canonical rate freshness fail closed unless refreshed by Kotani; CoinGecko+FX can be supplemental display data only, never transaction-authoritative. Vendor onboarding proceeds separately.
-7. **Release gates in parallel:** execute a Firebase test push to a registered real device; plan and prove paid Render + paid Key Value/Redis distributed mode before external onboarding; keep Discovery disabled until real effective business-confirmed GHS prices exist. No live money testing or onboarding as a substitute for the gates.
+1. **Settings PR #155:** OPEN at 6a55d16, both exact-head CI lanes green. Deposit/Edit Profile/cache/biometric/language/FAQ issues have been corrected; review current diff and keep full localisation/authoritative 2FA status as explicit follow-ups.
+2. **Wallet PR #154:** OPEN at 708a0f8, both lanes green. Toggle-to-tuck, "Visa" selector label, stable heading slot and measured spacing now land. Still needs physical Android smoke. New Visa transfer is not part of this PR.
+3. **Mix PR #156:** OPEN at 267dd8b, both lanes green. Functionally in-place, but visual acceptance fails the founder's required card grammar: replace 96×96 left-thumb horizontal rows with near-square product cards and a separate bottom info panel with item name/price + business logo/name. Add nullable businessLogoUrl to backend discovery DTO and frontend model, with graceful fallback and backend contract tests. Store order, real confirmed GHS exact-string price and payableIn semantics are unchanged.
+4. **Nav PR #157:** OPEN at 525b9ab, both lanes green. Selected labels and Tabs affordance are present; reposition the AZM logo launcher to the LEFT of the pill and center the combined cluster. Keep all existing 44dp/safe-area/compression/retap/badge/long-press/focus behaviour.
+5. **New Visa transfer feature:** separate work item. Circular Home deck control → Receive-like full-height page; same exact cards rendered from shared components/models; "To Visa"/"From Visa" tabs support both tap and horizontal swipe; restrained directional flow animation; reuse AmountKeypad. Review/confirmation and backend-authored transaction status required. Transfer submission stays disabled until Flutterwave confirms an AZM/Ghana issuer programme, denomination, loading and reverse transfer capabilities, and backend ledger/idempotency/settlement authority is implemented. No client-side balance mutation and no false success.
+6. **P0 app-wiring fixes in parallel, independent file sets:** (a) web root health probe vs /api/health demo fallback; (b) Worker EWA doubled API prefix; (c) auction target route /p2p/my-ads → canonical /ads/mine; (d) direct Send Money route is missing and needs a safe backend-authoritative AZM-ID/username transfer contract. Don't route arbitrary users through a friendship-ID endpoint or vendor transfer endpoint.
+7. **P1 wiring sweep:** normalize double-/api callsites across worker/chat/call-history/notification preferences; separately fix group-forwarding route mapping; repair Marketplace story path + response-shape adapter; wire or remove visible no-op notification snooze, Document attachment and promo CTA. Keep the audit itself read-only.
+8. **Backend PR #353:** OPEN at 24f3bdb, test + financial durability lanes green. Kotani remains canonical transaction rate but credentials/onboarding are outstanding. Independent review before merge; never roll back to a non-authoritative CoinGecko+FX financial fallback.
+9. **Release operations:** Firebase registered-device push test, paid Render+Redis distributed-mode proof, and the GHS BusinessPrice/discovery enablement gate stay active.
 
-### Parallel-agent discipline
+### Agent governance
 
-- One code agent per owned file set. The wiring audit is read-only.
-- Existing PRs #154/#155 are open and unmerged. Exact-head CI is necessary but not sufficient; validate behavior and screenshots/real-device evidence for the interaction surfaces.
-- Every substantial checkpoint updates `ACTIVE_LOOP.md`, `CURRENT_STATE.md`, and `EXECUTION_LEDGER.json` with dates, exact SHAs, evidence and residual gaps.
-- On a new ChatGPT conversation, load `START_HERE.md`, then the current top snapshot in `ACTIVE_LOOP.md`, `CURRENT_STATE.md`, and the execution ledger. Do not assume a model has the full prior transcript.
-
+- Current exact heads: frontend #154 708a0f8..., #155 6a55d16..., #156 267dd8b..., #157 525b9ab...; backend #353 24f3bdb....
+- One agent per file set. Card redesign uses frontend Mix card/model/tests; backend business-logo DTO is a separate agent/file set. Navigation owns only nav band, shell wiring and nav tests. New transfer must not touch financial route/service until provider and accounting contract is approved.
+- For each task: verify current main/PRs first; test the exact head, obtain Flutter Quality + Android Integration where relevant, and report full SHA, changed files, workflows, screenshots, and unresolved facts. Passing CI alone is not visual/functional acceptance.
+- Every material checkpoint updates ACTIVE_LOOP.md, CURRENT_STATE.md and EXECUTION_LEDGER.json. For new chats use START_HERE.md and those current snapshots rather than recreating a parallel tracker.
 
 ## North-star definition of done
 
