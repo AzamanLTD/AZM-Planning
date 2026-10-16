@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-01T00:00:00Z",
+  "updatedAt": "2026-10-16T20:38:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -842,6 +842,64 @@
         "postMergeMain": "0fb8d24791088490df0ef5b1088e44cfe557c5a9"
       },
       "nextStep": "Implement frontend economic-operation lifecycle deep-dive step 2: failure classification, then step 3 cross-repo fingerprint equivalence. Preserve the single durable identity boundary."
+    },
+    {
+      "id": "frontend-wallet-pouch-deck-pr154",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "pr": 154,
+      "headSha": "8d084462823cab43a34959b0b1ceb1c494ecdb2c",
+      "ci": {
+        "flutterQualityRun": 38935295368,
+        "flutterQualityConclusion": "success",
+        "androidIntegrationRun": 38935295369,
+        "androidIntegrationConclusion": "success"
+      },
+      "notes": "Open/unmerged. Pouch design, travel-with-card branded header, gesture scroll arbitration, per-card semantics, stale PIN token guard, no-spill geometry and state-aware z-order are implemented and tested. Android hardware smoke remains outstanding. Next requested changes: tapping active selector toggles tucked; selector says 'Visa'; hold heading footprint stable while typewriter string is empty/typing/erasing; reduce Home top spacing and fit core controls without breaking 44dp touch targets or intentional scroll/activity handoff."
+    },
+    {
+      "id": "frontend-settings-redesign-pr155",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "pr": 155,
+      "headSha": "cc1da24f6bb9ed2e84784784fa4e05101c6b98bf",
+      "ci": {
+        "flutterQualityRun": 38955661858,
+        "flutterQualityConclusion": "success",
+        "androidIntegrationRun": 38955661789,
+        "androidIntegrationConclusion": "success"
+      },
+      "notes": "Open/unmerged, visual design/tests promising. Review findings to resolve before approval: Deposit quick action routes to AccountsScreen rather than DepositScreen; Edit Profile routes to read-only ProfileDetailsScreen; Clear Cache claims a fixed 42 MB freed without clearing; Language only persists/syncs a preference and is not wired to MaterialApp.locale/localization; security row's 2FA/PIN wording exposes biometric-only status; audit FAQ claims against real backend/frontend flows. Do not merge based on render/IA tests alone."
+    },
+    {
+      "id": "frontend-selected-label-compact-bottom-nav",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "Planned separate PR, not implemented. Shrink-wrap navigation pill around its content; selected labels read Home/Chat/Market; maintain >=44dp targets, badges, scroll compression, plus launcher, retap-to-top, long-press and safe-area contracts. Replace contextual-page ellipsis with explicit tab-switch affordance without losing its capability."
+    },
+    {
+      "id": "frontend-marketplace-mix-in-place",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "Planned separate PR, not implemented. Mix becomes an in-place Marketplace mode, default All/unfiltered cross-store feed; category selection reveals applicable subcategory taxonomy bubbles; custom isometric die and one-shot restrained reduced-motion-aware animation; small divider/spacing. Preserve canonical taxonomy IDs, GHS exact-string prices, server order and payableIn truth. Map the storefront dial's REAL_ESTATE Stay value to discovery HOSPITALITY only at an explicit mapping boundary. Production discovery flag remains off until real effective GHS price rows and runtime verification."
+    },
+    {
+      "id": "frontend-app-wide-wiring-audit",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "Planned READ-ONLY audit, not an implementation PR. Inventory every important CTA, button, setting, nav item and contextual menu with actual callback/route/API/provider, state result, tests and evidence. Classify VERIFIED/PARTIAL/DEAD-MISROUTED/UNSUPPORTED. No code edits by audit agent; separate owned PRs for verified gaps."
+    },
+    {
+      "id": "backend-kotani-canonical-rate-authority",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "open",
+      "notes": "Kotani Pay is the agreed canonical USDC↔GHS transaction-rate provider, but API onboarding/credentials remain outstanding. The current CoinGecko+FX composite must not refresh transaction-eligible canonical rate/freshness; only a valid, fresh Kotani observation may do so. Fail closed when Kotani is missing/stale. No code PR created yet; vendor onboarding and code hardening are separate tasks."
+    },
+    {
+      "id": "release-firebase-push-real-device-smoke",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "open",
+      "notes": "After PR #352 was merged/deployed, Render logs show Firebase Admin SDK initialized. This is not proof of push delivery. Still pending: actual test notification to a registered Android device with logs + arrival verified."
     }
   ],
   "notes": [
