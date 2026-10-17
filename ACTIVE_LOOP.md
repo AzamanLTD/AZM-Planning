@@ -17,6 +17,57 @@
 
 **Status:** ACTIVE — DO NOT CLOSE
 
+
+
+### Current continuation snapshot — 2026-10-16 23:30 UTC
+
+**This block supersedes the earlier snapshot below.** GitHub main and exact-head CI remain implementation authority. The PRs listed here are open and unmerged; these notes do not authorise a merge.
+
+#### Verified code/PR status
+
+- **AZM-frontend main:** ee12a90fdf254d201984f52eca93bb39b9486912.
+- **PR #154 — wallet pouch/deck:** OPEN, head 708a0f8ae77169784c59bbadef10be0eb78789a8. Flutter Quality run 38971032050 and Android Integration run 38971032048 green. Toggle-to-tuck, visible selector label "Visa", stable typewriter footprint and spacing pass landed; viewports 320×667, 360×740, 390×844 and 412×915 verified in widget evidence. Physical Android device smoke remains outstanding. The new inter-card transfer button/page is a separate feature, not part of #154.
+- **PR #155 — settings redesign:** OPEN, head 6a55d1609e1bcc5233f7982d6bddabdee4889f9b. Flutter Quality run 38969900926, Android Integration run 38969900788, green. Deposit now routes to DepositScreen, Edit Profile to the real editing flow, cache action clears the in-memory image cache honestly, bogus Language picker was removed, biometric state wording is honest, and FAQ claims were corrected/tested. Full app localization is deferred; authoritative 2FA status is absent until the backend exposes it. This PR is ready for independent review, not auto-merge.
+- **PR #156 — in-place Marketplace Mix:** OPEN, head 267dd8bcab2770e294a182dd47cefc637c575e59. Flutter Quality 38975394627 and Android Integration 38975394586 green. In-place mode, All/unfiltered default, dial-to-discovery category mapping, die animation, and taxonomy bubbles are implemented. **Visual acceptance is NOT complete:** mix_offer_card.dart still uses a horizontal row with a 96×96 thumbnail on the left and text to the right, visually similar to store/list cards. The approved Mix direction is a near-square tile grid with product image above, product name/price in a distinct lower information panel, and store logo + store name in that lower panel. The discovery DTO/model currently carry businessName but not a logo URL; backend DTO work is required. Keep #156 open until its card grammar is corrected and previewed.
+- **PR #157 — compact bottom nav:** OPEN, head 525b9ab0bbd1d1c3999e56fb90ce9068e2a903b0. Flutter Quality 38977174754 and Android Integration 38977174991 green. Selected Home/Chat/Market label and explicit Tabs control are implemented. **Position is not yet the founder's requested layout:** the brand launcher still uses the trailing slot (to the right) and the compact group isn't explicitly centered. Desired: AZM logo/action to the LEFT of the compact pill, close to it, with the combined control group visually centered and responsive. Keep #157 open for this placement correction.
+- **AZM-backend main:** 48c17ab10248e39689683772c88695a4c8b0c0e8 (PR #352 merged).
+- **PR #353 — Kotani-only transaction rate authority:** OPEN, head 24f3bdbcaabd1044451b368b505ae916c7332d0d. Main test run 38978189219 and financial durability run 38978189222 green. Only validated Kotani observations can update canonical transaction-rate/freshness; the CoinGecko+FX composite no longer acts as a transaction source. Kotani onboarding/credentials are still outstanding. Do not merge/deploy by inference.
+- **PR #72 — this Planning handoff:** OPEN on docs/current-handoff-2026-10-16; this update adds the latest agent results, visual acceptance gaps, transfer contract and app-wiring P0s. Keep the durable project brain synchronized.
+
+#### New product acceptance requirements
+
+1. **Mix card layout:** near-square image-led grid tiles, with a real lower panel for item identity/price and a clear small store-logo + business-name row. Add responsive tests/goldens at 320/360/390dp and both themes. Current screenshots show the actual tree and correctly expose the mismatch; this is not just a screenshot mix-up.
+2. **Mix logo data:** add an additive nullable business logo URL to GET /api/discovery/items from the actual BusinessProfile logo field, with backend contract tests. Frontend must tolerate absent/bad logo with a graceful initials/monogram fallback. Do not fabricate a store image.
+3. **Nav position:** logo/action button at left, adjacent to the nav pill, combined cluster centered. Preserve selected labels, 44dp hit targets, badges, long-press, retap-to-top, scroll compression, reduced motion, safe area, Marketplace focus mode and pushed-route Tabs.
+4. **Balance↔Visa transfer:** separate feature. Add a circular action anchored to the stable overlap seam between the two Home cards; open a full-height pull-up surface matching Receive. Reuse the EXACT same card component/model/provider so customisation on Home and transfer stays in sync. Bottom tabs "To Visa" and "From Visa" must be both tappable and swipeable. The page shows both cards, direction-of-money flow lines/particles, and reuses the existing AmountKeypad. On amount submission, require a review/confirmation stage and authoritative operation status; maintain durable idempotency, exact asset/currency semantics, and secure auth.
+   - **Financial blocker:** azm_visa_card.dart is explicitly a SAMPLE and the current DemoCardProgramme only supplies demo display data and session-only PIN operations—no issuance, funding or reverse-transfer authority. No transfer may show false success or mutate wallet balances locally. Keep execution disabled / honestly labelled until the real Flutterwave card programme confirms Ghana availability, card denomination, funding and reverse-transfer APIs, and backend ledger/settlement authority exists. Provider discovery is an active prerequisite, not permission to invent endpoints.
+5. **App-wide wiring audit:** report returned against frontend ee12a90 and backend 48c17ab. Start with the reported P0s below; audit was read-only and no fixes were made. Re-check exact current source before implementing any finding.
+
+#### App wiring audit — highest-priority reported defects
+
+- **P0: Send Money:** send_money_screen.dart posts /finance/internal-transfer, which the audit did not find in the backend route registry. The UI searches arbitrary AZM ID/username, whereas the existing /friends/transfer/send rail is friendship-ID scoped. Product direction is direct AZM-ID sending; preserve that intended experience by designing a real backend-authoritative, retry-safe transfer contract or document a deliberate product change. Never fake a friendship or route to vendor pool transfer.
+- **P0: web demo fallback:** Splash's apiClient.get('/health') resolves under /api/health, while the verified health route is at root /health. A healthy backend may be mistaken for an outage and web may silently enable seeded demo mode. Use the root health URL and test healthy/unhealthy cases.
+- **P0: Worker EWA:** worker_ewa_screen.dart prepends /api despite ApiClient already adding it, yielding a double prefix and a broken real EWA request.
+- **P0: auction bidding:** auction target selection reads /p2p/my-ads, reported as demo-only/no backend route. The canonical mine endpoint is /ads/mine; fix using the existing service/DTO and add a selection + live-path widget test.
+- **P1 double-prefix family:** worker_provider.dart, worker swaps/time off, message actions, forward dialog, call history and notification preferences contain calls requiring root/path normalization review; /api/groups has no matching route and should map to the actual group-chat contract rather than only stripping a prefix.
+- **P1 marketplace stories:** /stories/business/:bizId is reported as demo-only and expects groups, while live backend /marketplace/business/:id/stories returns stories; needs a response adapter and tests. Coordinate with Mix because both touch Marketplace Home (use a distinct method/file or sequence branches).
+- **P1 dead affordances:** no-op notification snooze and chat Document action; storefront promo CTA is a no-op when configured. Implement supported outcomes or remove/disable the promise. Dead unused methods can be a later cleanup after call-site proof.
+- Audit evidence report is advisory pending lead-level source verification; do not label all app controls verified from a path scan alone.
+
+#### Current execution order and parallel ownership
+
+1. Finish independent review of PR #155; no merge until owner instruction.
+2. Amend PR #156 for the near-square store-branded item card, and have a separate backend agent add the nullable logo field/tests; front end must gracefully render before backend deploy.
+3. Amend PR #157 to put the AZM logo/action on the left and center the combined nav cluster.
+4. Keep PR #154's verified interaction/layout fixes; complete Android device smoke. Specify Balance↔Visa transfer separately and do not implement a false live-money action.
+5. Parallel P0 remediations: web-health/demo-mode guard; EWA API path; auction ad-source route; cross-repo AZM-ID Send Money authority. Separate owners/file sets; the Send Money lane requires a canonical financial transaction design and adversarial/idempotency tests.
+6. Then P1 API-path family, story response adapter, and no-op affordance fixes. Wiring audit stays read-only.
+7. PR #353 rate-authority fix, Firebase registered-device push test, paid Redis/distributed-mode gate and Discovery GHS price gate continue in parallel.
+
+#### Cross-chat continuity contract
+
+On every new chat: read START_HERE.md, this latest current continuation block, the current dated snapshot at the top of CURRENT_STATE.md, and EXECUTION_LEDGER.json; reconcile GitHub heads, exact CI and Render. Treat memory as a convenience, not the implementation authority. Do not duplicate verified work or infer approval/merge/deploy from agent completion.
+
 ### Verified current GitHub state — 2026-09-19 UTC
 
 - Backend main: `baaa4e2359d404fe2bc0b81638c2314b279cf976` (2026-09-19) — §P.4, §P.5-A, §P.5-B, §P.5-C and §P.5-D are merged. P5-C route-aware quote authority is closed at squash `19671d7`; P5-D evidence-backed GHS liquidity authority is closed at squash `baaa4e2` from exact head `22ebebd`. P5-D has 55 dedicated real-PostgreSQL proofs and a 227-suite / 1,719-test clean battery; exact-head CI #1060 succeeded. P5-D preserves 271C external-rate freshness, uses exact-pesewa GHS accounting, keeps `SystemFiatPool` as compatibility projection, follows recorded withdrawal regime, and sends the originally reserved GHS amount despite later rate drift. Main is at the verified squash merge SHA. The available workflow lookup does not independently expose a post-merge push-triggered run for the squash commit, so none is inferred. Next boundary: §P.5-E Model B settlement / cost-basis realization.

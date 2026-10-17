@@ -2,9 +2,33 @@
 
 **Priority authority:** YES  
 **Status:** ACTIVE  
-**Last reconciled:** 2026-09-03 UTC
+**Last reconciled:** 2026-10-16 UTC
 
 This is the **single active execution plan** for the five-repository AZAMAN platform. It incorporates the prior master roadmap and Lyra's independent assessment. Dated plans are historical evidence, not competing instructions.
+
+
+## Current execution focus — founder direction, 2026-10-16 (late reconciliation)
+
+This is the current task-selection layer; it does not close any financial/release gate or authorise a merge. Exact current heads/evidence are in ACTIVE_LOOP.md and CURRENT_STATE.md.
+
+### Parallel, non-overlapping workstreams
+
+1. **Settings PR #155:** OPEN at 6a55d16, both exact-head CI lanes green. Deposit/Edit Profile/cache/biometric/language/FAQ issues have been corrected; review current diff and keep full localisation/authoritative 2FA status as explicit follow-ups.
+2. **Wallet PR #154:** OPEN at 708a0f8, both lanes green. Toggle-to-tuck, "Visa" selector label, stable heading slot and measured spacing now land. Still needs physical Android smoke. New Visa transfer is not part of this PR.
+3. **Mix PR #156:** OPEN at 267dd8b, both lanes green. Functionally in-place, but visual acceptance fails the founder's required card grammar: replace 96×96 left-thumb horizontal rows with near-square product cards and a separate bottom info panel with item name/price + business logo/name. Add nullable businessLogoUrl to backend discovery DTO and frontend model, with graceful fallback and backend contract tests. Store order, real confirmed GHS exact-string price and payableIn semantics are unchanged.
+4. **Nav PR #157:** OPEN at 525b9ab, both lanes green. Selected labels and Tabs affordance are present; reposition the AZM logo launcher to the LEFT of the pill and center the combined cluster. Keep all existing 44dp/safe-area/compression/retap/badge/long-press/focus behaviour.
+5. **New Visa transfer feature:** separate work item. Circular Home deck control → Receive-like full-height page; same exact cards rendered from shared components/models; "To Visa"/"From Visa" tabs support both tap and horizontal swipe; restrained directional flow animation; reuse AmountKeypad. Review/confirmation and backend-authored transaction status required. Transfer submission stays disabled until Flutterwave confirms an AZM/Ghana issuer programme, denomination, loading and reverse transfer capabilities, and backend ledger/idempotency/settlement authority is implemented. No client-side balance mutation and no false success.
+6. **P0 app-wiring fixes in parallel, independent file sets:** (a) web root health probe vs /api/health demo fallback; (b) Worker EWA doubled API prefix; (c) auction target route /p2p/my-ads → canonical /ads/mine; (d) direct Send Money route is missing and needs a safe backend-authoritative AZM-ID/username transfer contract. Don't route arbitrary users through a friendship-ID endpoint or vendor transfer endpoint.
+7. **P1 wiring sweep:** normalize double-/api callsites across worker/chat/call-history/notification preferences; separately fix group-forwarding route mapping; repair Marketplace story path + response-shape adapter; wire or remove visible no-op notification snooze, Document attachment and promo CTA. Keep the audit itself read-only.
+8. **Backend PR #353:** OPEN at 24f3bdb, test + financial durability lanes green. Kotani remains canonical transaction rate but credentials/onboarding are outstanding. Independent review before merge; never roll back to a non-authoritative CoinGecko+FX financial fallback.
+9. **Release operations:** Firebase registered-device push test, paid Render+Redis distributed-mode proof, and the GHS BusinessPrice/discovery enablement gate stay active.
+
+### Agent governance
+
+- Current exact heads: frontend #154 708a0f8..., #155 6a55d16..., #156 267dd8b..., #157 525b9ab...; backend #353 24f3bdb....
+- One agent per file set. Card redesign uses frontend Mix card/model/tests; backend business-logo DTO is a separate agent/file set. Navigation owns only nav band, shell wiring and nav tests. New transfer must not touch financial route/service until provider and accounting contract is approved.
+- For each task: verify current main/PRs first; test the exact head, obtain Flutter Quality + Android Integration where relevant, and report full SHA, changed files, workflows, screenshots, and unresolved facts. Passing CI alone is not visual/functional acceptance.
+- Every material checkpoint updates ACTIVE_LOOP.md, CURRENT_STATE.md and EXECUTION_LEDGER.json. For new chats use START_HERE.md and those current snapshots rather than recreating a parallel tracker.
 
 ## North-star definition of done
 

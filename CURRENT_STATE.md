@@ -1,9 +1,47 @@
 # AZAMAN Current Engineering State
 
-**Last reconciled:** 2026-10-01 UTC
+**Last reconciled:** 2026-10-16 UTC
 **Authority:** current repository `main` + exact CI/evidence.
 
-## Current verified baseline
+
+## Current verified snapshot — 2026-10-16 late reconciliation
+
+**This snapshot supersedes the earlier 20:38 UTC handoff snapshot immediately below and any older repo baseline later in this file.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
+
+### Exact current PR evidence
+
+- Frontend main ee12a90fdf254d201984f52eca93bb39b9486912.
+- PR #154 OPEN at 708a0f8ae77169784c59bbadef10be0eb78789a8; Flutter Quality 38971032050, Android Integration 38971032048 succeeded. Toggle-to-tuck, Visa label, stable typewriter footprint and 12/16px spacing pass are landed. Real Android device smoke still pending.
+- PR #155 OPEN at 6a55d1609e1bcc5233f7982d6bddabdee4889f9b; Flutter Quality 38969900926, Android Integration 38969900788 succeeded. Deposit route, Edit Profile, honest cache clearing, language truth, security state and FAQ corrections were implemented/tested. Full localization and authoritative backend 2FA field remain deferred.
+- PR #156 OPEN at 267dd8bcab2770e294a182dd47cefc637c575e59; Flutter Quality 38975394627, Android Integration 38975394586 succeeded. In-place All-mode and die/taxonomy behaviour are present. Its current offer card is still a horizontal 96×96 thumbnail plus adjacent text, not the intended near-square product tile with the store logo/name in a separate lower panel. Discovery DTO and Mix model have no business-logo URL yet. **Do not accept visual completion/merge #156 until fixed.**
+- PR #157 OPEN at 525b9ab0bbd1d1c3999e56fb90ce9068e2a903b0; Flutter Quality 38977174754, Android Integration 38977174991 succeeded. Selected labels and explicit Tabs control are present. Main passes the AZM logo launcher into the trailing/right slot; the composition still needs the logo/action on the left of the nav and the combined cluster visually centred.
+- Backend main 48c17ab10248e39689683772c88695a4c8b0c0e8. PR #353 OPEN at 24f3bdbcaabd1044451b368b505ae916c7332d0d; test lane 38978189219 and financial durability 38978189222 succeeded. Kotani is canonical transaction rate; no API onboarding/credentials yet.
+
+### Visa transfer feature — new active requirement
+
+The design is a separate PR, not an extension to wallet PR #154. Add a circular control at the stable seam between the two Home cards. It opens a Receive-like full-height sheet with the exact same shared card renderers/models as Home, two bottom tabs ("To Visa"/"From Visa") connected to horizontal swipe, animated direction flow, and reusable AmountKeypad. Review/confirmation and backend-authored transaction status are required.
+
+**Hard stop before money mutation:** frontend lib/widgets/home/azm_visa_card.dart expressly labels the card a SAMPLE; default DemoCardProgramme is a placeholder with session-only PIN and no funding or transfer methods. Contact/confirm Flutterwave issuer access for Ghana, supported denominations, funding and reverse-transfer capabilities and webhooks. Keep submit disabled with honest copy until real issuer API + backend ledger/idempotency/settlement contract exists. Do not debit/credit client balances or invent a card funding route.
+
+### Read-only wiring audit reported high-severity problems (requires lead verification + individual fixes)
+
+- P0 Send Money posts to unregistered /finance/internal-transfer. The UI searches arbitrary AZM ID/username; peer rail /friends/transfer/send takes friendshipId. Preserve direct AZM-ID product intent by designing a backend-authoritative, retry-safe transfer route/service; do not redirect to vendor-pool rails or invent a friendship.
+- P0 Web demo guard checks /api/health although actual health is rooted at /health, risking false demo-mode enablement.
+- P0 Worker EWA uses a double /api prefix through the central ApiClient; real requests 404.
+- P0 Auction's ad picker uses demo-only /p2p/my-ads; canonical endpoint is /ads/mine.
+- P1 double-prefix calls span Worker, swaps/time-off, chat message actions, forwarding, call history and notification preferences. Group forwarding also targets a nonexistent /api/groups, requiring the real group-chat endpoint—not merely prefix cleanup.
+- P1 marketplace stories target a demo-only path and assume groups where backend returns stories. No-op snooze, Document attachment and promo CTA are further wiring gaps.
+- Audit was read-only; no fixes exist yet. Re-verify current source lines, then use non-overlapping code PRs with request/route/response/test evidence.
+
+### Other live gates carried forward
+
+- Firebase Admin initializes on Render after PR #352, but push delivery to an actual registered device is unproven.
+- Render backend is Free/single-instance without REDIS_URL; paid always-on + paid Render Key Value and distributed-mode verification remain external onboarding gates.
+- Discovery remains disabled until business-confirmed effective GHS price rows exist and response/flag behaviour is tested.
+- No external-user onboarding or real-money testing until Kotani authority/credentials, financial recovery, card issuer contracts, deployment durability, and operational alerts are evidence-backed.
+- PR #72 is documentation-only. No merges/deployments/Render resource or setting changes are implied by this state reconciliation.
+
+## Current verified baseline (historical snapshot, retained for audit trail)
 
 - Backend main: `6802ab6` (2026-09-15) — invoice creation/payment concurrency proofs, prior financial/dine-in hardening, the route-checker mount-registry fix (`6b7a884`), the merged P0 adapter authority proof (PR #236), the admin dine-in lifecycle projection endpoint (`117cebe`), PR #241 control-plane integrity: every privileged control-plane mutation (permission replacement, department create/update, staff create, suspend/activate/deactivate, staff PATCH, duty assign/revoke) now commits atomically with its STAFF audit event in one transaction; authority-sensitive UPDATEs are TOCTOU-guarded (validated-state WHERE clause, zero rows -> 409); concurrent permission replacement is serialized by FOR UPDATE on the target profile after the new race test proved parallel replacements could commit a union of both grant sets. Exact-head CI green at `f5aabaa` (1149 tests), post-merge main-head run green at `6d8da48`; prod healthy. Schema note: control-plane tables exist only in migration `20260828040000_control_plane_staff_access` (not schema.prisma models) — `prisma db push` cannot provision them; the integrity suite applies that migration's DDL idempotently for prod-schema parity.
 
