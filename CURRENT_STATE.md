@@ -1,8 +1,21 @@
 # AZAMAN Current Engineering State
 
-**Last reconciled:** 2026-10-16 UTC
+**Last reconciled:** 2026-10-18 UTC
 **Authority:** current repository `main` + exact CI/evidence.
 
+
+## Current verified snapshot — 2026-10-18 follow-up wave reconciliation
+
+**This snapshot supersedes the 2026-10-16 late reconciliation snapshot immediately below.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
+
+### Follow-up wave — rate truth, GHS presentation, false affordances
+
+- PR #353 head `43f3202`: §1 follow-up complete and both CI lanes green (Kotani provenance gate, no USD/GHS legacy fallback, admin canonical-field 400s, empty production host allowlist requiring written Kotani confirmation).
+- PR #359 OPEN at `c6cbf2f` (backend): additive authoritative `priceGhs` on product read DTOs via the single `resolveEffectiveGhsPrices` eligibility authority; exact 2dp strings; per-identity fail-closed nulls; never a conversion. 10/10 real-Postgres proofs, neighbor suites green in isolation. CI in progress — not green until confirmed.
+- PR #156 head `9bc4eee` (frontend): strict `priceGhs` parse + GHS-preferred rendering across product card, business anchor, service stage, flip book, menu journey, vertical retail stage; USDC labels stay truthful when no confirmed GHS exists; cart rail unchanged. 7/7 new proofs + neighbor suites green. CI in progress. The Mix card-grammar visual gap REMAINS OPEN.
+- PR #360 OPEN at `340e6d5` (backend): wires the two orphaned trade-account rails (`GET /supported-methods`, `DELETE /:id` soft-archive) that the Flutter app already calls; 5 structural proofs, r274 25/25 on real Postgres. CI in progress.
+- §4 read-only audit: all other suspect FE rails verified mounted and contract-matched on backend main; #360 was the only real gap found.
+- Production remains dark: both Render services 503 "Service Suspended" (owner billing action); no production or Render work performed, per standing boundary.
 
 ## Current verified snapshot — 2026-10-16 late reconciliation
 

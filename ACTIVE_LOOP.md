@@ -17,6 +17,26 @@
 
 **Status:** ACTIVE — DO NOT CLOSE
 
+### Current continuation snapshot — 2026-10-18 05:30 UTC
+
+**This block supersedes the 2026-10-16 23:30 snapshot below.** GitHub main and exact-head CI remain implementation authority. The PRs listed here are open and unmerged; these notes do not authorise a merge.
+
+#### Rate-truth + GHS-presentation follow-up wave (2026-10-17/18)
+
+- **PR #353 — Kotani-only transaction rate authority (§1 follow-up COMPLETE):** head `43f3202`. Provenance gate on `getFreshServerRateGhsPerUsdc` (non-KOTANI_PAY label → RATE_UNAVAILABLE; manual mutation newer than observation → RATE_UNTRUSTED); legacy `liveUsdToGhs` USD/GHS fallback removed from canonical paths; provider-owned canonical fields rejected from the admin settings whitelist with a loud 400; production arming requires https + verified host allowlist (`KOTANI_VERIFIED_PRODUCTION_HOSTS`, ships EMPTY — Kotani onboarding must confirm the production hostname in writing before the operator adds it). Local battery 343/343 on disposable DB; both CI lanes green on `43f3202`.
+- **PR #359 — Marketplace product GHS price rail (§3 backend):** OPEN, head `c6cbf2f` on branch `feat/marketplace-product-ghs-price-rail`. Additive `priceGhs` on `GET /api/business/:bizId/products` + my-products + product detail: the exact 2dp GHS string of the product's eligible current BusinessPrice row, resolved through the SAME `resolveEffectiveGhsPrices` authority as the Mix feed. Never a USDC→GHS conversion; absent/unconfirmed/MIGRATION/future-dated/archived/BRANCH rows → `priceGhs: null` per-identity fail-closed. 10/10 real-PostgreSQL proofs; neighbors green in isolation (mix-p1 55/55, ghs-price-model 32/32, provisioning 3/3). CI in progress at snapshot time — do not treat as green until confirmed.
+- **PR #156 — Mix FE consumption of priceGhs (§3 frontend):** head `9bc4eee`. `BusinessProduct.priceGhs` strict-parsed (exact-2dp string only; numbers/1dp/3dp/blank → null, never derived from priceUsdc). ProductCard, BusinessCard cheapest anchor, ServiceExperienceStage (3 sites), flip book, native menu journey and vertical retail stage PREFER server-confirmed GHS; truthful USDC label stays otherwise. Cart mutation rail unchanged (USDC escrow). 7/7 new proofs; neighbor suites green (vertical stage 6/6, routes 2/2, store query 4/4, service stage 4/4, flip book 6/6, mix models 37/37). CI in progress at snapshot time. Note: the Mix card-grammar visual acceptance gap from the 2026-10-16 snapshot REMAINS OPEN and is unaffected by this additive consumption work.
+- **PR #360 — Trade-account rail wiring (§4 false-affordance fix):** OPEN, head `340e6d5`. `tradeAccountController.getSupportedMethods` and `deleteTradeAccount` existed but were never registered, so the FE's `GET /api/trade-accounts/supported-methods` and `DELETE /api/trade-accounts/:id` 404'd. Two additive route registrations (`/supported-methods` above the `/:id` catch-all); controller bodies untouched (ownership-guarded soft archive, never hard delete). 5 structural proofs; r274 tranche2 25/25 on real Postgres. CI in progress at snapshot time.
+- **§4 audit result (read-only elsewhere):** every other suspect FE rail checked out against backend main — contacts sync/recent/invite, AZM loyalty (history/summary/rates/leaderboard), AZM spend family, dine-in tabs, susu groups/vouches, liability-contract, proof-of-residency, close-friends stories (GET/POST/DELETE all mounted), trade-account list/add/approved/upload-screenshot. The two orphaned trade-account routes in #360 were the only real gaps.
+- **Production (read-only check 2026-10-18):** both Render services still return 503 "Service Suspended" (account-level suspension; owner billing action required). No deployment or production-data work has been performed. Production DB/Render settings remain strictly off-limits.
+
+#### Standing verification order for this wave
+
+1. Confirm exact-head CI green on #359 (test + financial-durability), #156 (Flutter Quality + Android Integration), #360 (test + financial-durability). CI in progress ≠ green.
+2. Owner merge review in dependency order: #353 → #359 → #360 (backend), #156 after its Mix card-grammar visual fix.
+3. Post-merge: verify main heads and redeploy only after Render suspension is lifted by the owner.
+
+
 
 
 ### Current continuation snapshot — 2026-10-16 23:30 UTC

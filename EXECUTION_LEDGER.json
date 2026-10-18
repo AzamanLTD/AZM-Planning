@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-16T23:30:00Z",
+  "updatedAt": "2026-10-18T05:30:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -998,6 +998,24 @@
       "repo": "AzamanLTD/AZM-frontend",
       "status": "open",
       "notes": "Audit-reported visible no-ops: notification snooze (onSnooze: () {}), Chat Document attachment onTap empty, configured storefront promo CTA onPressed empty. Verify reachability/capability contracts; implement supported outcome or remove/disable the promise. Dead unreferenced code cleanup is lower priority."
+    },
+    {
+      "id": "backend-product-ghs-price-rail-359",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "open",
+      "notes": "PR #359 (head c6cbf2f): additive authoritative priceGhs on product read DTOs via resolveEffectiveGhsPrices; exact 2dp strings, per-identity fail-closed nulls, never a conversion. 10/10 real-Postgres proofs + neighbors green in isolation. CI in progress at record time; review target only, do not merge without owner review and green exact-head CI."
+    },
+    {
+      "id": "frontend-priceghs-consumption-156",
+      "repo": "AzamanLTD/AZM-frontend",
+      "status": "open",
+      "notes": "PR #156 (head 9bc4eee): strict priceGhs parse (exact-2dp string only) + GHS-preferred truthful rendering on product card, business anchor, service stage, flip book, menu journey, vertical retail stage; USDC fallback stays truthful; cart rail unchanged. 7/7 new proofs, neighbor suites green. Mix card-grammar visual gap from 2026-10-16 remains open and is unaffected."
+    },
+    {
+      "id": "backend-trade-account-rail-wiring-360",
+      "repo": "AzamanLTD/AZM-backend",
+      "status": "open",
+      "notes": "PR #360 (head 340e6d5): §4 false-affordance fix — getSupportedMethods and deleteTradeAccount existed but were never routed, so FE supported-methods discovery and archive actions 404'd. Two additive registrations, /supported-methods above /:id; soft-archive semantics preserved. 5 structural proofs + r274 25/25 real Postgres. CI in progress; review target only."
     }
   ],
   "notes": [
