@@ -4,6 +4,21 @@
 **Authority:** current repository `main` + exact CI/evidence.
 
 
+## Current verified snapshot — 2026-10-18 r40 close-out (CI confirmed)
+
+**This snapshot supersedes the 2026-10-18 follow-up-wave snapshot immediately below.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
+
+### r40 wave — GHS price rail, trade-account wiring, CI hardening: CLOSED, all lanes green
+
+- **BE PR #359** `feat/marketplace-product-ghs-price-rail` head `adfe18fd978357b47c51ac40dba6a2bb785c8668`: authoritative `priceGhs` (exact 2dp string of the eligible current BusinessPrice row via `resolveEffectiveGhsPrices`; missing/future-dated/archived/suspended → null, never a conversion). CI-hardening commit `adfe18f` repaired: mock-client fail-closed guard in the resolver, `business-ad-adapter` WalletAddress FK sweep, hermetic rail-suite teardown. Green: test run 39103046162, financial-durability run 39103046145.
+- **BE PR #360** `fix/trade-account-route-wiring` head `340e6d5fd9568b02b7923520f4cf57e4cdd389a8`: the two orphaned trade-account rails (`GET /supported-methods`, `DELETE /:id` soft-archive) registered; 25/25 real-Postgres proofs. Green: run 39099984234 (test), 39099984245 (financial-durability).
+- **FE PR #156** head `9bc4eee1ae98b78031b7b6419d266d7ee53ce234`: strict `priceGhs` parse; GHS-preferred rendering across product card, menu journey, retail stage, flip book; USDC labels truthful otherwise; cart rail unchanged. Green: Flutter Quality 39099872804, Android Integration 39099872798. Mix card-grammar visual gap REMAINS OPEN.
+- **Every other open PR green at its exact head** (see r40 record, planning comment 6248649787): BE #353 `43f3202`, #354 `081aa5f`, #355 `81aef46` (test lane run 39080780987 concluded SUCCESS), #356 `45dedae`, #357 `a661559`, #358 `6b3641e`, #319 `3bb753f`; FE #154 `708a0f8`, #155 `6a55d16` (branch-only, NOT for merge), #157 `5e53f9e` (launcher RIGHT settled by owner decision; revert `8022156`), #158 `0d9ecf5`, #159 `2da9e47`, #160 `b9adbd0`, #161 `78c1315`.
+- **Nav launcher placement SETTLED — RIGHT.** The owner rejected the LEFT placement; any earlier LEFT instruction in this file or ACTIVE_LOOP/ROADMAP is void.
+- **Merge review order (owner only):** backend #353 → #355 → #356 → #357 → #358 → #359 → #360 (+#354, #319 at discretion); frontend #160 → #161 → #156 → #157 → #154 → rebase #158 onto `WalletCardDeck` → #159. #155 EXCLUDED (branch-only, NOT for merge).
+- **Physical Android device smoke: BLOCKED** (no physical device available); emulator/widget CI green but NOT device smoke.
+- **Production:** both Render services 503 "Service Suspended" (read-only HTTP evidence; owner billing action is the gate). No deployment/settings/production-data changes.
+
 ## Current verified snapshot — 2026-10-18 follow-up wave reconciliation
 
 **This snapshot supersedes the 2026-10-16 late reconciliation snapshot immediately below.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
@@ -27,7 +42,7 @@
 - PR #154 OPEN at 708a0f8ae77169784c59bbadef10be0eb78789a8; Flutter Quality 38971032050, Android Integration 38971032048 succeeded. Toggle-to-tuck, Visa label, stable typewriter footprint and 12/16px spacing pass are landed. Real Android device smoke still pending.
 - PR #155 OPEN at 6a55d1609e1bcc5233f7982d6bddabdee4889f9b; Flutter Quality 38969900926, Android Integration 38969900788 succeeded. Deposit route, Edit Profile, honest cache clearing, language truth, security state and FAQ corrections were implemented/tested. Full localization and authoritative backend 2FA field remain deferred.
 - PR #156 OPEN at 267dd8bcab2770e294a182dd47cefc637c575e59; Flutter Quality 38975394627, Android Integration 38975394586 succeeded. In-place All-mode and die/taxonomy behaviour are present. Its current offer card is still a horizontal 96×96 thumbnail plus adjacent text, not the intended near-square product tile with the store logo/name in a separate lower panel. Discovery DTO and Mix model have no business-logo URL yet. **Do not accept visual completion/merge #156 until fixed.**
-- PR #157 OPEN at 525b9ab0bbd1d1c3999e56fb90ce9068e2a903b0; Flutter Quality 38977174754, Android Integration 38977174991 succeeded. Selected labels and explicit Tabs control are present. Main passes the AZM logo launcher into the trailing/right slot; the composition still needs the logo/action on the left of the nav and the combined cluster visually centred.
+- PR #157 OPEN at 5e53f9ed3b9e1a70b2a07c58f501d8596c2c91a0 (post-revert; launcher-LEFT placement REJECTED by owner — RIGHT is the approved placement; post-revert lanes green at runs 38993688789/38993688794). Selected labels and explicit Tabs control are present; the launcher remains in the trailing/right slot by owner decision.
 - Backend main 48c17ab10248e39689683772c88695a4c8b0c0e8. PR #353 OPEN at 24f3bdbcaabd1044451b368b505ae916c7332d0d; test lane 38978189219 and financial durability 38978189222 succeeded. Kotani is canonical transaction rate; no API onboarding/credentials yet.
 
 ### Visa transfer feature — new active requirement
