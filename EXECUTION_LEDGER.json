@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-19T01:10:22Z",
+  "updatedAt": "2026-10-19T01:20:40Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -1064,15 +1064,18 @@
       "id": "frontend-priceghs-consumption-156",
       "repo": "AzamanLTD/AZM-frontend",
       "status": "open",
-      "notes": "OPEN/unmerged, head 1362d3e (supersedes stale 7d117f2). GHS-only browse-price contract on all six surfaces; 'Price unavailable' replaces USDC fallback. Final acceptance pass (1362d3e): business_card _cheapestGhs now compares NUMERICALLY (exact 2dp strings are display-only; lexicographic sort anchored wrong prices), from-anchor renders 'Price unavailable' without any confirmed GHS price (priceUsdc never substitutes); retail_editorial_card audited \u2014 ZERO call sites in lib/ or test/ (unreachable from any shipped browse route; single grep hit is its own constructor) yet rewired to the same GHS contract so it can never ship a USDC listing if mounted; Mix first-page continuation closes the scan-budget boundary: notifier auto-follows empty pages with cursors within hard kMaxFirstPageContinuations=8 (stale-guarded mid-walk), MixFeedSurface honest empty state carries a 'Show more' continuation affordance when a cursor survives the budget. Backend measured cost of the 80-round scan path (real PG, CI-parity DB): 90 stale rows -> 4 queries/29ms; 1900-row budget boundary -> 80 queries/~1000ms with the fresh item still surfacing; per-request cap is the deliberate bound, client continuation covers beyond it. Backend unchanged at #359 head 1be1bd8 (scan-cap regression + mix-p1 + rail + eligibility re-verified 75/75; both backend CI lanes green: test 39179051032, durability 39179051041). Frontend tests: provider 23/23, business-card 4/4 (numeric cheapest 9.00 vs 49.50/100.00, exact display, no-USDC fallback), surface 2/2 (auto-follow, budget-exhaustion affordance tap-through), affected suites 93/93; backend #353 unchanged at 7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6. Flutter Quality + Android Integration running on 1362d3e \u2014 verify green before merge review. Mix tile visual captures (320/360/390 light/dark) REMAIN PENDING OWNER REVIEW \u2014 visual acceptance is NOT complete. Review target only; no deployments, no production writes.",
+      "notes": "OPEN/unmerged, head 1362d3e (supersedes stale 7d117f2). GHS-only browse-price contract on all six surfaces; 'Price unavailable' replaces USDC fallback. Final acceptance pass (1362d3e): business_card _cheapestGhs now compares NUMERICALLY (exact 2dp strings are display-only; lexicographic sort anchored wrong prices), from-anchor renders 'Price unavailable' without any confirmed GHS price (priceUsdc never substitutes); retail_editorial_card audited \u2014 ZERO call sites in lib/ or test/ (unreachable from any shipped browse route; single grep hit is its own constructor) yet rewired to the same GHS contract so it can never ship a USDC listing if mounted; Mix first-page continuation closes the scan-budget boundary: notifier auto-follows empty pages with cursors within hard kMaxFirstPageContinuations=8 (stale-guarded mid-walk), MixFeedSurface honest empty state carries a 'Show more' continuation affordance when a cursor survives the budget. Backend measured cost of the 80-round scan path (real PG, CI-parity DB): 90 stale rows -> 4 queries/29ms; 1900-row budget boundary -> 80 queries/~1000ms with the fresh item still surfacing; per-request cap is the deliberate bound, client continuation covers beyond it. Backend unchanged at #359 head 1be1bd8 (scan-cap regression + mix-p1 + rail + eligibility re-verified 75/75; both backend CI lanes green: test 39179051032, durability 39179051041). Frontend tests: provider 23/23, business-card 4/4 (numeric cheapest 9.00 vs 49.50/100.00, exact display, no-USDC fallback), surface 2/2 (auto-follow, budget-exhaustion affordance tap-through), affected suites 93/93; backend #353 unchanged at 7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6. Flutter Quality (39184028451) + Android Integration (39184028499) BOTH GREEN on 1362d3e. Mix tile visual captures (320/360/390 light/dark) REMAIN PENDING OWNER REVIEW \u2014 visual acceptance is NOT complete. Review target only; no deployments, no production writes.",
       "headSha": "1362d3e",
       "ci": {
-        "flutterQuality": "in_progress (1362d3e)",
-        "androidIntegration": "in_progress (1362d3e)",
-        "priorGreen": {
-          "head": "1f81c14",
-          "flutterQuality": 39122813772,
-          "androidIntegration": 39122813786
+        "flutterQuality": {
+          "run": 39184028451,
+          "conclusion": "success",
+          "head": "1362d3e"
+        },
+        "androidIntegration": {
+          "run": 39184028499,
+          "conclusion": "success",
+          "head": "1362d3e"
         }
       }
     },
