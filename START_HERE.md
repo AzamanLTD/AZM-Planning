@@ -1,7 +1,7 @@
 # AZAMAN Engineering Brain — START HERE
 
 **Status:** ACTIVE — PRIMARY CONTINUATION ENTRYPOINT  
-**Last verified:** 2026-10-19 UTC (acceptance close-out — adaptive feed scan closes the measured latency worst case; manual-continuation stall guard + truthful loading feedback; PR metadata reconciled; newest-head CI runs listed in ACTIVE_LOOP.md)
+**Last verified:** 2026-10-19 UTC (test-lane CI failure root-caused and fixed in the scan-cap suite at head 0d5df56; FE #156 fully green at 6690b65; newest-head CI runs listed in ACTIVE_LOOP.md)
 **Repositories:** `AZM-backend`, `AZM-adminPortal`, `AZM-businessPortal`, `AZM-frontend`, `AZM-Planning`
 
 > Any agent continuing AZAMAN engineering MUST start here, then read `ROADMAP.md`, `CURRENT_STATE.md`, `ACTIVE_LOOP.md` and `EXECUTION_LEDGER.json`. Do not restart from historical session journals.

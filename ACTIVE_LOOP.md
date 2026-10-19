@@ -17,7 +17,24 @@
 
 **Status:** ACTIVE — DO NOT CLOSE
 
-### Current continuation snapshot — 2026-10-19 03:40 UTC (acceptance close-out — feed latency, cursor progress, PR metadata)
+### Current continuation snapshot — 2026-10-19 09:15 UTC (test-lane CI failure diagnosed and fixed; newest head 0d5df56 CI RUNNING)
+
+**This block supersedes the 2026-10-19 03:40 snapshot below.** GitHub main and exact-head CI remain implementation authority. The PRs listed here are open and unmerged; these notes do not authorise a merge.
+
+#### BE #359 test-lane failure — root-caused and fixed at `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f` (test-suite-only commit; the adaptive walk is untouched)
+
+- **What failed at `0d5b154` (test run 39192378361, 2026-10-19 03:15 UTC):** all three scan-cap proofs + mix-p1 `inactive section is excluded` (only in the workflow's full-battery RETRY invocation). financial-durability was GREEN there (39192378371).
+- **Root cause 1 (deterministic, my suite's bug):** the scan-cap suite seeded its "stale" window-closed rows with a static `03:00-04:00` section window on a falsified "never open during battery hours" assumption. CI ran INSIDE that hour → the stale rows were genuinely eligible → they filled the first page ahead of the fresh item. The received arrays in the CI failure are the suite's own stale rows.
+- **Fix (in `__tests__/marketplace-discovery-window-scan-cap.pg.test.js` only):** dynamic `closedWindow(nowMin)` — a window that ended ~30 minutes before the current UTC minute, wrap-safe, closed at EVERY hour of every day; `jest.setTimeout(180000)` so the 25.5k-row teardowns can never die on the 30s hook cap on a loaded runner (a killed sweep would leak bulk residue into every later suite's unscoped feed); cascade-first sweep (BusinessPrice onDelete: Cascade — products delete clears prices in one statement); monkey-patch restoration via an afterEach registry; the 3000-row proof asserts the SHIPPING hard cap (queries ≤ 80) instead of the clean-DB ≤15 figure (51 queries observed against a 21k-row residue DB locally).
+- **Root cause 2 (mix-p1 `[]`, NOT a regression):** failed only in the workflow's full-battery retry invocation on accumulated cross-suite residue; it PASSED in invocation 1 at the same code, and passes 55/55 on the 21k-residue local CI-parity DB across repeated in-band rounds with all four discovery suites (81/81 × 3). Treated as the known battery-residue flake family (same symptom failed pre-adaptive-code on 2026-10-18, run 39120763057). No mix-p1 code or test was changed.
+- **Local verification at `0d5df56` (real CI-parity Postgres with 21k stale residue rows):** scan-cap 3/3; mix-p1 55/55; rail 21/21; eligibility 2/2; all four suites in band 81/81 three consecutive rounds.
+- **CI at exact head `0d5df56`:** test run 39225590677 RUNNING, financial-durability run 39225590938 RUNNING. Flip the ledger fields on conclusion.
+- **Everything else in the 03:40 snapshot below is unchanged:** FE #156 head `6690b65` BOTH LANES GREEN (FQ 39193716143, AI 39193716122); #353 frozen at `7805c3c`; residual owner items (Mix tile visual captures PENDING OWNER REVIEW; #154 physical-device smoke BLOCKED; Render suspended, no deployments/production writes). PR #359 description updated to exact head `0d5df56` including the failure diagnosis.
+
+### Historical snapshot — 2026-10-19 03:40 UTC (acceptance close-out)
+
+*(Retained as history; superseded by the snapshot above.)*
+
 
 **This block supersedes the 2026-10-19 02:30 snapshot below.** GitHub main and exact-head CI remain implementation authority. The PRs listed here are open and unmerged; these notes do not authorise a merge. Historical heads/CI conclusions in older snapshots below are retained as history — reconcile every head against GitHub before acting.
 

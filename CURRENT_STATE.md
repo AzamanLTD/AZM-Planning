@@ -1,12 +1,25 @@
 # AZAMAN Current Engineering State
 
-**Last reconciled:** 2026-10-19 UTC (acceptance close-out)
+**Last reconciled:** 2026-10-19 UTC (test-lane failure root-caused; head 0d5df56 CI running)
 **Authority:** current repository `main` + exact CI/evidence.
 
 
+## Current verified snapshot — 2026-10-19 test-lane failure diagnosed (head 0d5df56 CI running)
+
+**This snapshot supersedes the acceptance close-out snapshot below.** Source of truth is GitHub main plus exact-head CI.
+
+- **Backend PR #359** head `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f`: the `0d5b154` test-lane failure (run 39192378361) is root-caused — the scan-cap suite's static `03:00-04:00` "never-open" window was OPEN at the CI hour (03:15 UTC), making the "stale" rows genuinely eligible; fixed INSIDE the test suite only (dynamic hour-independent windows, 180s teardown headroom, cascade-first sweep, patch restoration, battery-robust ≤80-query bound). The adaptive walk and all production code are untouched. The same lane's mix-p1 `[]` failure was a battery-retry cross-suite-residue flake (passed invocation 1; 55/55 locally on a 21k-residue DB; known family). Local: scan-cap 3/3, mix-p1 55/55, rail 21/21, eligibility 2/2, four suites in band 81/81 × 3 rounds. CI at exact head: test 39225590677 RUNNING, durability 39225590938 RUNNING. financial-durability was already GREEN at `0d5b154` (39192378371).
+- **Frontend PR #156** head `6690b65acbb9e50253f3f1061e8030ef5f2a2369`: BOTH LANES GREEN (Flutter Quality 39193716143, Android Integration 39193716122) — the frontend close-out is COMPLETE.
+- **Backend PR #353** head FROZEN at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, both lanes GREEN.
+- **Still open / not claimed:** Mix tile visual captures PENDING OWNER REVIEW (visual acceptance NOT complete); #154 physical-device smoke BLOCKED; production Render still suspended — no merges, deployments or production writes this wave.
+
+### Historical snapshot — 2026-10-19 acceptance close-out
+
+*(Retained as history; superseded above.)*
+
 ## Current verified snapshot — 2026-10-19 acceptance close-out (feed latency, cursor progress, PR metadata; newest-head CI running)
 
-**This snapshot supersedes the 2026-10-19 final-acceptance snapshot immediately below.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
+*(Superseded header, retained under the historical label above.)*
 
 - **Backend PR #359** head `0d5b1545608a13eaa48413d4c15e4825053cecd4`: adaptive scan growth closes the measured worst case — 21,000 stale window-closed rows now resolve in **1 request / 45 queries / 5.9s with the eligible item on the first page** (was 9 requests / 720 queries / ~60s, item never surfaced). Hard budgets explicit: MAX_ROUNDS=80 queries + MAX_SCAN_ROWS=25000 rows per request. Truthful budget exhaustion proven (>25k rows → empty page + non-null cursor + client continuation reaches the item). CI at exact head: financial-durability 39192378371 SUCCESS; test 39192378361 RUNNING. Prior head `1e403f8` both-lanes green (39189630963 / 39189630855) — historical.
 - **Frontend PR #156** head `6690b65acbb9e50253f3f1061e8030ef5f2a2369`: manual continuation carries the same cursor-progress validation as the first-page walk (stall → explicit Try again / Refresh feed panel, no-op while stalled, no request loop); truthful 'Still searching…' feedback during multi-request walks. Provider 29/29, surface 6/6, mix-inplace 7/7. CI at exact head: FQ 39193716143 RUNNING, AI 39193716122 RUNNING. Prior head `f608a27` both-lanes green (39189639176 / 39189639113) — historical; `7d117f2` obsolete.
