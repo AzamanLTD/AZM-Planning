@@ -1,10 +1,22 @@
 # AZAMAN Engineering Brain — START HERE
 
 **Status:** ACTIVE — PRIMARY CONTINUATION ENTRYPOINT  
-**Last verified:** 2026-09-05 UTC  
+**Last verified:** 2026-10-19 UTC FINAL CLOSE-OUT — BE #359 green at 0d5df56 (test 39225590677, durability 39225590938); FE #156 green at 6690b65 (FQ 39193716143, AI 39193716122; ledger conclusions corrected); #353 frozen at 7805c3c. Exact-head adaptive-scan benchmark recorded: 21k-stress = 1 request / 45 queries / 4.6-5.3s, item surfaces; 25.5k boundary = truthful []+cursor (53 queries / 7.1s), continuation 88ms / 5 queries. All PRs OPEN awaiting owner merge review; no deployments.
 **Repositories:** `AZM-backend`, `AZM-adminPortal`, `AZM-businessPortal`, `AZM-frontend`, `AZM-Planning`
 
 > Any agent continuing AZAMAN engineering MUST start here, then read `ROADMAP.md`, `CURRENT_STATE.md`, `ACTIVE_LOOP.md` and `EXECUTION_LEDGER.json`. Do not restart from historical session journals.
+
+
+## Cross-chat continuation (read every time)
+
+The full prior chat transcript is not guaranteed to be available in a new conversation. Treat this repository as the durable shared project brain and model memory as a convenience only.
+
+1. Read the **current continuation snapshot at the top of `ACTIVE_LOOP.md`**.
+2. Read the **current dated snapshot at the top of `CURRENT_STATE.md`**.
+3. Check `EXECUTION_LEDGER.json`, then reconcile all stated branches/PRs/SHAs and CI against GitHub. For deployments, verify live Render status/logs rather than inferring from a merge.
+4. Continue from the first open action; do not reproduce already-verified work. At every material checkpoint update the date, exact full SHA, exact CI run IDs, verified/unverified state, deferred owner decisions, and next action in the Planning brain.
+
+Use this process across all five repositories; never rely on a new chat having the complete historical transcript.
 
 ## Mission
 

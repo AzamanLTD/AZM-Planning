@@ -2,9 +2,33 @@
 
 **Priority authority:** YES  
 **Status:** ACTIVE  
-**Last reconciled:** 2026-09-03 UTC
+**Last reconciled:** 2026-10-18 UTC (remediation reconciliation)
 
 This is the **single active execution plan** for the five-repository AZAMAN platform. It incorporates the prior master roadmap and Lyra's independent assessment. Dated plans are historical evidence, not competing instructions.
+
+
+## Current execution focus — founder direction, 2026-10-18 (remediation reconciliation)
+
+This is the current task-selection layer; it does not close any financial/release gate or authorise a merge. Exact current heads/evidence are in ACTIVE_LOOP.md and CURRENT_STATE.md.
+
+### Parallel, non-overlapping workstreams
+
+1. **Settings PR #155 — branch-only, NOT for merge:** OPEN at 6a55d16, both exact-head CI lanes green. Per the PR itself it is not intended for merge; exclude it from every merge sequence. Deposit/Edit Profile/cache/biometric/language/FAQ issues have been corrected; full localisation/authoritative 2FA status remain explicit follow-ups.
+2. **Wallet PR #154:** OPEN at 708a0f8, both lanes green. Toggle-to-tuck, "Visa" selector label, stable heading slot and measured spacing now land. Still needs physical Android smoke. New Visa transfer is not part of this PR.
+3. **Mix PR #156:** OPEN at 7d117f2 (2026-10-18: GHS availability truth — "Price unavailable" replaces the USDC fallback on all browse surfaces). The near-square two-column image-led tile grid with geometry contract and screenshot coverage has LANDED, but the tile captures' VISUAL ACCEPTANCE REMAINS PENDING OWNER REVIEW — do not record as accepted. Stories rail adapter and strict logo parsing are landed; the backend `businessLogoUrl` DTO dependency is satisfied by BE PR #354 (green). CI lanes on 7d117f2 were in progress at reconciliation time (Flutter Quality 39121267400, Android Integration 39121267380) — re-verify the exact final head before merge review.
+4. **Nav PR #157:** OPEN at 5e53f9e (post-revert 8022156), both lanes green. Selected labels and Tabs affordance are present. **Placement SETTLED by owner decision: the AZM logo launcher stays on the RIGHT of the pill** — the LEFT repositioning in this line was rejected and reverted. Keep all existing 44dp/safe-area/compression/retap/badge/long-press/focus behaviour.
+5. **New Visa transfer feature:** separate work item. Circular Home deck control → Receive-like full-height page; same exact cards rendered from shared components/models; "To Visa"/"From Visa" tabs support both tap and horizontal swipe; restrained directional flow animation; reuse AmountKeypad. Review/confirmation and backend-authored transaction status required. Transfer submission stays disabled until Flutterwave confirms an AZM/Ghana issuer programme, denomination, loading and reverse transfer capabilities, and backend ledger/idempotency/settlement authority is implemented. No client-side balance mutation and no false success.
+6. **P0 app-wiring fixes in parallel, independent file sets:** (a) web root health probe vs /api/health demo fallback; (b) Worker EWA doubled API prefix; (c) auction target route /p2p/my-ads → canonical /ads/mine; (d) direct Send Money route is missing and needs a safe backend-authoritative AZM-ID/username transfer contract. Don't route arbitrary users through a friendship-ID endpoint or vendor transfer endpoint.
+7. **P1 wiring sweep:** normalize double-/api callsites across worker/chat/call-history/notification preferences; separately fix group-forwarding route mapping; repair Marketplace story path + response-shape adapter; wire or remove visible no-op notification snooze, Document attachment and promo CTA. Keep the audit itself read-only.
+8. **Backend PR #353:** OPEN at 7805c3c (2026-10-18: canonical pair hard-bound to exactly USDC→GHS — pair overrides rejected for any other value, a USDT/GHS response can never be a USDC/GHS quote, strict success:true + echoed pair + data.value contract, no legacy/fiatAmount/cryptoAmount derivation; wrong-pair and malformed-payload cases all fail with no canonical write). Financial-durability green (run 39119836561); the test lane (39119836530) was in progress on the final head at reconciliation time — re-verify before merge review. Production arming stays fail-closed until Kotani onboarding confirms the production hostname in writing (KOTANI_VERIFIED_PRODUCTION_HOSTS ships empty). Credentials/onboarding are outstanding. Independent review before merge; never roll back to a non-authoritative CoinGecko+FX financial fallback.
+9. **Release operations:** Firebase registered-device push test, paid Render+Redis distributed-mode proof, and the GHS BusinessPrice/discovery enablement gate stay active.
+
+### Agent governance
+
+- Current exact heads (2026-10-18 remediation reconciliation): frontend #154 708a0f8, #155 6a55d16 (branch-only), #156 7d117f2 (CI in progress), #157 5e53f9e, #158 0d9ecf5, #159 2da9e47, #160 b9adbd0, #161 78c1315; backend #319 3bb753f, #353 7805c3c (test lane in progress), #354 081aa5f, #355 81aef46, #356 45dedae, #357 a661559, #358 6b3641e, #359 d5f4af7 (rebased on #355, both lanes in progress), #360 340e6d5. All heads other than the three marked in-progress are exact-head CI green. #159 conflicts with #158 until rebased; #154/#158 conflict also remains open.
+- One agent per file set. Card redesign uses frontend Mix card/model/tests; backend business-logo DTO is a separate agent/file set. Navigation owns only nav band, shell wiring and nav tests. New transfer must not touch financial route/service until provider and accounting contract is approved.
+- For each task: verify current main/PRs first; test the exact head, obtain Flutter Quality + Android Integration where relevant, and report full SHA, changed files, workflows, screenshots, and unresolved facts. Passing CI alone is not visual/functional acceptance.
+- Every material checkpoint updates ACTIVE_LOOP.md, CURRENT_STATE.md and EXECUTION_LEDGER.json. For new chats use START_HERE.md and those current snapshots rather than recreating a parallel tracker.
 
 ## North-star definition of done
 

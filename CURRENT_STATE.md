@@ -1,9 +1,136 @@
 # AZAMAN Current Engineering State
 
-**Last reconciled:** 2026-10-01 UTC
+**Last reconciled:** 2026-10-19 UTC (test-lane failure root-caused; head 0d5df56 CI running)
 **Authority:** current repository `main` + exact CI/evidence.
 
-## Current verified baseline
+
+## Current verified snapshot — 2026-10-19 FINAL CLOSE-OUT (owner-verified CI; exact-head benchmark recorded)
+
+**This snapshot supersedes the 11:00 snapshot below.** Source of truth is GitHub main plus exact-head CI. All PRs OPEN and UNMERGED.
+
+- **BE #359** head `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f`: test 39225590677 + financial-durability 39225590938 GREEN (owner-verified, first attempt). **Exact-head benchmark (clean real Postgres):** 21,000-stale-row stress case = ONE request / 45 findMany queries / 4.6 s cold, 5.3 s warm, item surfaces at page position 0; 25,500-row boundary case = truthful `items: []` + non-null cursor (53 queries / 7.1 s), continuation surfaces the item in 88 ms / 5 queries. Historical pre-adaptive ~60 s / 720 queries / 9 requests figure superseded. No production code change warranted.
+- **FE #156** head `6690b65acbb9e50253f3f1061e8030ef5f2a2369`: Flutter Quality 39193716143 + Android Integration 39193716122 GREEN (owner-verified). Ledger entries for both #156 workstreams corrected to `success`; prior heads (f608a27, 7d117f2) explicitly HISTORICAL.
+- **BE #353** frozen at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, green.
+- **Residuals:** Mix tile visual captures PENDING OWNER REVIEW; #154 physical-device smoke BLOCKED; Render suspended — no merges, deployments or production writes. PRs #353/#359/#156 await owner merge review.
+
+### Superseded snapshot — 2026-10-19 11:00 UTC (both backend lanes green at 0d5df56)
+
+
+
+- **Backend PR #359** head `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f`: **BOTH LANES GREEN, first attempt** — Azaman Test Suite 39225590677 SUCCESS, financial-durability 39225590938 SUCCESS (2026-10-19). The `0d5b154` failure is closed as diagnosed (hour-dependent static window inside the scan-cap TEST suite; fixed suite-only at `0d5df56`; production code identical from `0d5b154`). mix-p1 `[]` = known battery-retry residue flake, did not recur. PR description carries the exact-head evidence.
+- **Frontend PR #156** head `6690b65`: BOTH LANES GREEN (FQ 39193716143, AI 39193716122) — frontend close-out COMPLETE.
+- **Backend PR #353** head FROZEN at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, both lanes GREEN.
+- **Still open / not claimed:** Mix tile visual captures PENDING OWNER REVIEW; #154 physical-device smoke BLOCKED; production Render still suspended — no merges, deployments or production writes this wave. All three PRs (#353, #359, #156) await owner merge review.
+
+### Superseded snapshot — 2026-10-19 test-lane failure diagnosed
+
+
+
+- **Backend PR #359** head `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f`: the `0d5b154` test-lane failure (run 39192378361) is root-caused — the scan-cap suite's static `03:00-04:00` "never-open" window was OPEN at the CI hour (03:15 UTC), making the "stale" rows genuinely eligible; fixed INSIDE the test suite only (dynamic hour-independent windows, 180s teardown headroom, cascade-first sweep, patch restoration, battery-robust ≤80-query bound). The adaptive walk and all production code are untouched. The same lane's mix-p1 `[]` failure was a battery-retry cross-suite-residue flake (passed invocation 1; 55/55 locally on a 21k-residue DB; known family). Local: scan-cap 3/3, mix-p1 55/55, rail 21/21, eligibility 2/2, four suites in band 81/81 × 3 rounds. CI at exact head: test 39225590677 RUNNING, durability 39225590938 RUNNING. financial-durability was already GREEN at `0d5b154` (39192378371).
+- **Frontend PR #156** head `6690b65acbb9e50253f3f1061e8030ef5f2a2369`: BOTH LANES GREEN (Flutter Quality 39193716143, Android Integration 39193716122) — the frontend close-out is COMPLETE.
+- **Backend PR #353** head FROZEN at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, both lanes GREEN.
+- **Still open / not claimed:** Mix tile visual captures PENDING OWNER REVIEW (visual acceptance NOT complete); #154 physical-device smoke BLOCKED; production Render still suspended — no merges, deployments or production writes this wave.
+
+### Historical snapshot — 2026-10-19 acceptance close-out
+
+*(Retained as history; superseded above.)*
+
+## Current verified snapshot — 2026-10-19 acceptance close-out (feed latency, cursor progress, PR metadata; newest-head CI running)
+
+*(Superseded header, retained under the historical label above.)*
+
+- **Backend PR #359** head `0d5b1545608a13eaa48413d4c15e4825053cecd4`: adaptive scan growth closes the measured worst case — 21,000 stale window-closed rows now resolve in **1 request / 45 queries / 5.9s with the eligible item on the first page** (was 9 requests / 720 queries / ~60s, item never surfaced). Hard budgets explicit: MAX_ROUNDS=80 queries + MAX_SCAN_ROWS=25000 rows per request. Truthful budget exhaustion proven (>25k rows → empty page + non-null cursor + client continuation reaches the item). CI at exact head: financial-durability 39192378371 SUCCESS; test 39192378361 RUNNING. Prior head `1e403f8` both-lanes green (39189630963 / 39189630855) — historical.
+- **Frontend PR #156** head `6690b65acbb9e50253f3f1061e8030ef5f2a2369`: manual continuation carries the same cursor-progress validation as the first-page walk (stall → explicit Try again / Refresh feed panel, no-op while stalled, no request loop); truthful 'Still searching…' feedback during multi-request walks. Provider 29/29, surface 6/6, mix-inplace 7/7. CI at exact head: FQ 39193716143 RUNNING, AI 39193716122 RUNNING. Prior head `f608a27` both-lanes green (39189639176 / 39189639113) — historical; `7d117f2` obsolete.
+- **Backend PR #353** head FROZEN at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, both lanes GREEN.
+- **USDC remains the only payable rail; no financial semantics changed.** All PRs open and unmerged. PR descriptions for #359 and #156 updated to their exact current heads.
+- **Still open / not claimed:** Mix tile visual captures PENDING OWNER REVIEW (visual acceptance NOT complete); physical-device smoke for #154 BLOCKED; production Render services still suspended (503) — no deployments or production writes (main branches unmoved).
+
+### Historical snapshot — 2026-10-19 final acceptance follow-up
+
+*(Retained as history; superseded above.)*
+
+## Current verified snapshot — 2026-10-19 final acceptance follow-up (newest-head CI green (all four lanes confirmed 2026-10-19))
+
+*(Superseded header, retained under the historical label above.)* Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
+
+### Money-display truth across the customer journey (final acceptance follow-up)
+
+- **Backend PR #359** head `1e403f8` (branch `feat/marketplace-product-ghs-price-rail`): the storefront ordering catalogue `GET /api/storefront/:bizId/products` now carries the authoritative `priceGhs` (shared resolver, exact 2dp, per-identity fail-closed, `priceUsdc` untouched as the payable rail amount) alongside the previously verified product rails + business-detail route. Rail suite 21/21 (5a-5d storefront route proofs). Prior head `1be1bd8` was green on both lanes; CI GREEN at exact head `1e403f8` (test 39189630963 SUCCESS, financial-durability 39189630855 SUCCESS, 2026-10-19).
+- **Frontend PR #156** head `f608a27` (branch `feat/marketplace-mix-inplace-mode`; the `7d117f2` head in older notes is historical only): storefront catalogue card GHS-only with 'Price unavailable' fallback; StorefrontOrderSheet + CartScreen payable amounts explicitly `USDC` (never bare `$`); GHS listing price shown as a separate labelled fact — no conversion, no GHS-settlement implication; StorefrontRenderer unbounded nested-list bug fixed; repeated-cursor progress guard in the Mix continuation; unpriced business-card anchor without 'from'. USDC payment/wallet/withdrawal rails unchanged. Storefront journey suite 5/5, provider 26/26, surface 3/3, card 4/4; test/storefront 70/70, test/marketplace 164/164. CI GREEN at exact head `f608a27` (FQ 39189639176 SUCCESS, AI 39189639113 SUCCESS, 2026-10-19).
+- **Backend PR #353** head FROZEN at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, both lanes GREEN (test 39119836530, financial-durability 39119836561).
+- **Measured worst-case client continuation** (real Postgres): 9 requests / 720 queries / ~60s wall against 21000 stale window-closed rows; realistic 90-row case 4 queries / ~29ms. Per-request cost bounded by MAX_ROUNDS=80.
+- **Still open / not claimed:** Mix tile visual captures PENDING OWNER REVIEW (visual acceptance NOT complete); physical-device smoke for #154 BLOCKED; production Render services still suspended (503) — no deployments or production writes have occurred (no merges to any main branch this wave; deployment history check = no main movement on any repo since the last verified baseline).
+
+### Historical snapshot — 2026-10-18 r40 close-out (CI confirmed)
+
+*(Retained as history; superseded above.)*
+
+## Current verified snapshot — 2026-10-18 r40 close-out (CI confirmed)
+
+**This snapshot supersedes the 2026-10-18 follow-up-wave snapshot immediately below.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
+
+### r40 wave — GHS price rail, trade-account wiring, CI hardening: CLOSED, all lanes green
+
+- **BE PR #359** `feat/marketplace-product-ghs-price-rail` head `adfe18fd978357b47c51ac40dba6a2bb785c8668`: authoritative `priceGhs` (exact 2dp string of the eligible current BusinessPrice row via `resolveEffectiveGhsPrices`; missing/future-dated/archived/suspended → null, never a conversion). CI-hardening commit `adfe18f` repaired: mock-client fail-closed guard in the resolver, `business-ad-adapter` WalletAddress FK sweep, hermetic rail-suite teardown. Green: test run 39103046162, financial-durability run 39103046145.
+- **BE PR #360** `fix/trade-account-route-wiring` head `340e6d5fd9568b02b7923520f4cf57e4cdd389a8`: the two orphaned trade-account rails (`GET /supported-methods`, `DELETE /:id` soft-archive) registered; 25/25 real-Postgres proofs. Green: run 39099984234 (test), 39099984245 (financial-durability).
+- **FE PR #156** head `9bc4eee1ae98b78031b7b6419d266d7ee53ce234`: strict `priceGhs` parse; GHS-preferred rendering across product card, menu journey, retail stage, flip book; USDC labels truthful otherwise; cart rail unchanged. Green: Flutter Quality 39099872804, Android Integration 39099872798. Mix card-grammar visual gap REMAINS OPEN.
+- **Every other open PR green at its exact head** (see r40 record, planning comment 6248649787): BE #353 `43f3202`, #354 `081aa5f`, #355 `81aef46` (test lane run 39080780987 concluded SUCCESS), #356 `45dedae`, #357 `a661559`, #358 `6b3641e`, #319 `3bb753f`; FE #154 `708a0f8`, #155 `6a55d16` (branch-only, NOT for merge), #157 `5e53f9e` (launcher RIGHT settled by owner decision; revert `8022156`), #158 `0d9ecf5`, #159 `2da9e47`, #160 `b9adbd0`, #161 `78c1315`.
+- **Nav launcher placement SETTLED — RIGHT.** The owner rejected the LEFT placement; any earlier LEFT instruction in this file or ACTIVE_LOOP/ROADMAP is void.
+- **Merge review order (owner only):** backend #353 → #355 → #356 → #357 → #358 → #359 → #360 (+#354, #319 at discretion); frontend #160 → #161 → #156 → #157 → #154 → rebase #158 onto `WalletCardDeck` → #159. #155 EXCLUDED (branch-only, NOT for merge).
+- **Physical Android device smoke: BLOCKED** (no physical device available); emulator/widget CI green but NOT device smoke.
+- **Production:** both Render services 503 "Service Suspended" (read-only HTTP evidence; owner billing action is the gate). No deployment/settings/production-data changes.
+
+## Current verified snapshot — 2026-10-18 follow-up wave reconciliation
+
+**This snapshot supersedes the 2026-10-16 late reconciliation snapshot immediately below.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
+
+### Follow-up wave — rate truth, GHS presentation, false affordances
+
+- PR #353 head `43f3202`: §1 follow-up complete and both CI lanes green (Kotani provenance gate, no USD/GHS legacy fallback, admin canonical-field 400s, empty production host allowlist requiring written Kotani confirmation).
+- PR #359 OPEN at `c6cbf2f` (backend): additive authoritative `priceGhs` on product read DTOs via the single `resolveEffectiveGhsPrices` eligibility authority; exact 2dp strings; per-identity fail-closed nulls; never a conversion. 10/10 real-Postgres proofs, neighbor suites green in isolation. CI in progress — not green until confirmed.
+- PR #156 head `9bc4eee` (frontend): strict `priceGhs` parse + GHS-preferred rendering across product card, business anchor, service stage, flip book, menu journey, vertical retail stage; USDC labels stay truthful when no confirmed GHS exists; cart rail unchanged. 7/7 new proofs + neighbor suites green. CI in progress. The Mix card-grammar visual gap REMAINS OPEN.
+- PR #360 OPEN at `340e6d5` (backend): wires the two orphaned trade-account rails (`GET /supported-methods`, `DELETE /:id` soft-archive) that the Flutter app already calls; 5 structural proofs, r274 25/25 on real Postgres. CI in progress.
+- §4 read-only audit: all other suspect FE rails verified mounted and contract-matched on backend main; #360 was the only real gap found.
+- Production remains dark: both Render services 503 "Service Suspended" (owner billing action); no production or Render work performed, per standing boundary.
+
+## Current verified snapshot — 2026-10-16 late reconciliation
+
+**This snapshot supersedes the earlier 20:38 UTC handoff snapshot immediately below and any older repo baseline later in this file.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
+
+### Exact current PR evidence
+
+- Frontend main ee12a90fdf254d201984f52eca93bb39b9486912.
+- PR #154 OPEN at 708a0f8ae77169784c59bbadef10be0eb78789a8; Flutter Quality 38971032050, Android Integration 38971032048 succeeded. Toggle-to-tuck, Visa label, stable typewriter footprint and 12/16px spacing pass are landed. Real Android device smoke still pending.
+- PR #155 OPEN at 6a55d1609e1bcc5233f7982d6bddabdee4889f9b; Flutter Quality 38969900926, Android Integration 38969900788 succeeded. Deposit route, Edit Profile, honest cache clearing, language truth, security state and FAQ corrections were implemented/tested. Full localization and authoritative backend 2FA field remain deferred.
+- PR #156 OPEN at 267dd8bcab2770e294a182dd47cefc637c575e59; Flutter Quality 38975394627, Android Integration 38975394586 succeeded. In-place All-mode and die/taxonomy behaviour are present. Its current offer card is still a horizontal 96×96 thumbnail plus adjacent text, not the intended near-square product tile with the store logo/name in a separate lower panel. Discovery DTO and Mix model have no business-logo URL yet. **Do not accept visual completion/merge #156 until fixed.**
+- PR #157 OPEN at 5e53f9ed3b9e1a70b2a07c58f501d8596c2c91a0 (post-revert; launcher-LEFT placement REJECTED by owner — RIGHT is the approved placement; post-revert lanes green at runs 38993688789/38993688794). Selected labels and explicit Tabs control are present; the launcher remains in the trailing/right slot by owner decision.
+- Backend main 48c17ab10248e39689683772c88695a4c8b0c0e8. PR #353 OPEN at 24f3bdbcaabd1044451b368b505ae916c7332d0d; test lane 38978189219 and financial durability 38978189222 succeeded. Kotani is canonical transaction rate; no API onboarding/credentials yet.
+
+### Visa transfer feature — new active requirement
+
+The design is a separate PR, not an extension to wallet PR #154. Add a circular control at the stable seam between the two Home cards. It opens a Receive-like full-height sheet with the exact same shared card renderers/models as Home, two bottom tabs ("To Visa"/"From Visa") connected to horizontal swipe, animated direction flow, and reusable AmountKeypad. Review/confirmation and backend-authored transaction status are required.
+
+**Hard stop before money mutation:** frontend lib/widgets/home/azm_visa_card.dart expressly labels the card a SAMPLE; default DemoCardProgramme is a placeholder with session-only PIN and no funding or transfer methods. Contact/confirm Flutterwave issuer access for Ghana, supported denominations, funding and reverse-transfer capabilities and webhooks. Keep submit disabled with honest copy until real issuer API + backend ledger/idempotency/settlement contract exists. Do not debit/credit client balances or invent a card funding route.
+
+### Read-only wiring audit reported high-severity problems (requires lead verification + individual fixes)
+
+- P0 Send Money posts to unregistered /finance/internal-transfer. The UI searches arbitrary AZM ID/username; peer rail /friends/transfer/send takes friendshipId. Preserve direct AZM-ID product intent by designing a backend-authoritative, retry-safe transfer route/service; do not redirect to vendor-pool rails or invent a friendship.
+- P0 Web demo guard checks /api/health although actual health is rooted at /health, risking false demo-mode enablement.
+- P0 Worker EWA uses a double /api prefix through the central ApiClient; real requests 404.
+- P0 Auction's ad picker uses demo-only /p2p/my-ads; canonical endpoint is /ads/mine.
+- P1 double-prefix calls span Worker, swaps/time-off, chat message actions, forwarding, call history and notification preferences. Group forwarding also targets a nonexistent /api/groups, requiring the real group-chat endpoint—not merely prefix cleanup.
+- P1 marketplace stories target a demo-only path and assume groups where backend returns stories. No-op snooze, Document attachment and promo CTA are further wiring gaps.
+- Audit was read-only; no fixes exist yet. Re-verify current source lines, then use non-overlapping code PRs with request/route/response/test evidence.
+
+### Other live gates carried forward
+
+- Firebase Admin initializes on Render after PR #352, but push delivery to an actual registered device is unproven.
+- Render backend is Free/single-instance without REDIS_URL; paid always-on + paid Render Key Value and distributed-mode verification remain external onboarding gates.
+- Discovery remains disabled until business-confirmed effective GHS price rows exist and response/flag behaviour is tested.
+- No external-user onboarding or real-money testing until Kotani authority/credentials, financial recovery, card issuer contracts, deployment durability, and operational alerts are evidence-backed.
+- PR #72 is documentation-only. No merges/deployments/Render resource or setting changes are implied by this state reconciliation.
+
+## Current verified baseline (historical snapshot, retained for audit trail)
 
 - Backend main: `6802ab6` (2026-09-15) — invoice creation/payment concurrency proofs, prior financial/dine-in hardening, the route-checker mount-registry fix (`6b7a884`), the merged P0 adapter authority proof (PR #236), the admin dine-in lifecycle projection endpoint (`117cebe`), PR #241 control-plane integrity: every privileged control-plane mutation (permission replacement, department create/update, staff create, suspend/activate/deactivate, staff PATCH, duty assign/revoke) now commits atomically with its STAFF audit event in one transaction; authority-sensitive UPDATEs are TOCTOU-guarded (validated-state WHERE clause, zero rows -> 409); concurrent permission replacement is serialized by FOR UPDATE on the target profile after the new race test proved parallel replacements could commit a union of both grant sets. Exact-head CI green at `f5aabaa` (1149 tests), post-merge main-head run green at `6d8da48`; prod healthy. Schema note: control-plane tables exist only in migration `20260828040000_control_plane_staff_access` (not schema.prisma models) — `prisma db push` cannot provision them; the integrity suite applies that migration's DDL idempotently for prod-schema parity.
 
