@@ -1,12 +1,26 @@
 # AZAMAN Current Engineering State
 
-**Last reconciled:** 2026-10-18 UTC
+**Last reconciled:** 2026-10-19 UTC (acceptance close-out)
 **Authority:** current repository `main` + exact CI/evidence.
 
 
+## Current verified snapshot — 2026-10-19 acceptance close-out (feed latency, cursor progress, PR metadata; newest-head CI running)
+
+**This snapshot supersedes the 2026-10-19 final-acceptance snapshot immediately below.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
+
+- **Backend PR #359** head `0d5b1545608a13eaa48413d4c15e4825053cecd4`: adaptive scan growth closes the measured worst case — 21,000 stale window-closed rows now resolve in **1 request / 45 queries / 5.9s with the eligible item on the first page** (was 9 requests / 720 queries / ~60s, item never surfaced). Hard budgets explicit: MAX_ROUNDS=80 queries + MAX_SCAN_ROWS=25000 rows per request. Truthful budget exhaustion proven (>25k rows → empty page + non-null cursor + client continuation reaches the item). CI at exact head: financial-durability 39192378371 SUCCESS; test 39192378361 RUNNING. Prior head `1e403f8` both-lanes green (39189630963 / 39189630855) — historical.
+- **Frontend PR #156** head `6690b65acbb9e50253f3f1061e8030ef5f2a2369`: manual continuation carries the same cursor-progress validation as the first-page walk (stall → explicit Try again / Refresh feed panel, no-op while stalled, no request loop); truthful 'Still searching…' feedback during multi-request walks. Provider 29/29, surface 6/6, mix-inplace 7/7. CI at exact head: FQ 39193716143 RUNNING, AI 39193716122 RUNNING. Prior head `f608a27` both-lanes green (39189639176 / 39189639113) — historical; `7d117f2` obsolete.
+- **Backend PR #353** head FROZEN at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, both lanes GREEN.
+- **USDC remains the only payable rail; no financial semantics changed.** All PRs open and unmerged. PR descriptions for #359 and #156 updated to their exact current heads.
+- **Still open / not claimed:** Mix tile visual captures PENDING OWNER REVIEW (visual acceptance NOT complete); physical-device smoke for #154 BLOCKED; production Render services still suspended (503) — no deployments or production writes (main branches unmoved).
+
+### Historical snapshot — 2026-10-19 final acceptance follow-up
+
+*(Retained as history; superseded above.)*
+
 ## Current verified snapshot — 2026-10-19 final acceptance follow-up (newest-head CI green (all four lanes confirmed 2026-10-19))
 
-**This snapshot supersedes the 2026-10-18 r40 snapshot immediately below.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
+*(Superseded header, retained under the historical label above.)* Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
 
 ### Money-display truth across the customer journey (final acceptance follow-up)
 

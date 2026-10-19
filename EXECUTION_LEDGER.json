@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-19T02:50:30Z",
+  "updatedAt": "2026-10-19T03:15:37Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -888,16 +888,16 @@
     {
       "id": "frontend-marketplace-mix-in-place",
       "repo": "AzamanLTD/AZM-frontend",
-      "status": "verified",
-      "notes": "OPEN/unmerged, PR #156 branch feat/marketplace-mix-inplace-mode, head f608a27 (supersedes obsolete 7d117f2 \u2014 that head is NOT current; all prior CI conclusions at it are historical only). Same branch/workstream as frontend-priceghs-consumption-156 (one PR carries both the in-place Mix mode and the GHS presentation contract). In-place Mix mode + two-column near-square tile grid (geometry contract 1.0-1.5 h/w at both cell widths, strict store-logo handling) landed; GHS availability truth enforced across browse surfaces. VISUAL ACCEPTANCE OF TILE CAPTURES REMAINS PENDING OWNER REVIEW \u2014 do not record as accepted. CI lanes (Flutter Quality 39189639176, Android Integration 39189639113) RUNNING on f608a27 \u2014 verify exact-head green before merge review.",
+      "status": "verified-but-reopened",
+      "notes": "OPEN/unmerged, PR #156 branch feat/marketplace-mix-inplace-mode, head 6690b65 (supersedes f608a27 and the obsolete 7d117f2 \u2014 those heads and their CI conclusions are historical only). Same branch/workstream as frontend-priceghs-consumption-156 (one PR carries both the in-place Mix mode and the GHS presentation contract). In-place Mix mode + two-column near-square tile grid (geometry contract 1.0-1.5 h/w at both cell widths, strict store-logo handling) landed; GHS availability truth enforced across browse surfaces. Close-out 6690b65: manual-continuation stall guard + truthful searching feedback (see the consumption entry). VISUAL ACCEPTANCE OF TILE CAPTURES (320/360/390dp light/dark) REMAINS PENDING OWNER REVIEW \u2014 do not record as accepted. CI at exact head 6690b65: FQ 39193716143 and AI 39193716122 RUNNING \u2014 verify exact-head green before merge review; prior head f608a27 was GREEN on both lanes.",
       "pr": 156,
-      "headSha": "f608a27",
+      "headSha": "6690b65",
       "ci": {
-        "flutterQualityRun": 39189639176,
-        "flutterQualityConclusion": "success",
-        "androidIntegrationRun": 39189639113,
-        "androidIntegrationConclusion": "success",
-        "note": "Historical 7d117f2 runs 39121267400/39121267382 are SUPERSEDED \u2014 ALL LANES GREEN at exact head (2026-10-19)."
+        "flutterQualityRun": 39193716143,
+        "flutterQualityConclusion": "in_progress",
+        "androidIntegrationRun": 39193716122,
+        "androidIntegrationConclusion": "in_progress",
+        "note": "Head moved f608a27 -> 6690b65 (close-out continuation hardening, 2026-10-19). Prior head f608a27 GREEN (FQ 39189639176, AI 39189639113) \u2014 historical. Both lanes RUNNING at exact head 6690b65; flip these fields on conclusion. Historical 7d117f2 runs are superseded."
       }
     },
     {
@@ -1052,29 +1052,29 @@
     {
       "id": "backend-product-ghs-price-rail-359",
       "repo": "AzamanLTD/AZM-backend",
-      "status": "verified",
-      "notes": "OPEN/unmerged, head 1e403f8 (on rebased base #355/81aef46). Authoritative priceGhs on product read DTOs (product rails + business-detail) AND, added in the final acceptance follow-up (1e403f8), the customer-facing storefront ordering catalogue GET /api/storefront/:bizId/products \u2014 same shared resolveEffectiveGhsPrices resolver and exact-2dp serialization, per-identity fail-closed to null, priceUsdc byte-identical as the payable rail amount. Scan-cap fix (1be1bd8): discovery window-filter MAX_ROUNDS 3->80 with hermetic regression suite. Rail suite now 21/21 (route proofs 4a-4d business-detail + 5a-5d storefront catalogue); scan-cap regression + mix-p1 re-verified 56/56. Measured continuation envelope (worst case, local CI-parity Postgres, 21000 stale window-closed rows ahead of one fresh item): client path = 1 initial + 8 auto-follow continuations = 9 requests / 720 server queries / ~60s wall (2.7-11.3s per request; per-request cost bounded by the MAX_ROUNDS=80 cap, ~1s at the 1920-row budget boundary on a small table; realistic 90-row case 4 queries/~29ms). Client guards: hard kMaxFirstPageContinuations=8, stale-response protection mid-walk, repeated-cursor progress guard, honest empty state with 'Show more' affordance. CI lanes (test 39189630963, durability 39189630855) RUNNING on 1e403f8 \u2014 verify exact-head green before merge review. Review target only.",
-      "headSha": "1e403f8",
+      "status": "verified-but-reopened",
+      "notes": "OPEN/unmerged, head 1e403f8 (on rebased base #355/81aef46). Authoritative priceGhs on product read DTOs (product rails + business-detail) AND, added in the final acceptance follow-up (1e403f8), the customer-facing storefront ordering catalogue GET /api/storefront/:bizId/products \u2014 same shared resolveEffectiveGhsPrices resolver and exact-2dp serialization, per-identity fail-closed to null, priceUsdc byte-identical as the payable rail amount. Scan-cap fix (1be1bd8): discovery window-filter MAX_ROUNDS 3->80 with hermetic regression suite. Rail suite now 21/21 (route proofs 4a-4d business-detail + 5a-5d storefront catalogue); scan-cap regression + mix-p1 re-verified 56/56. Measured continuation envelope (worst case, local CI-parity Postgres, 21000 stale window-closed rows ahead of one fresh item): client path = 1 initial + 8 auto-follow continuations = 9 requests / 720 server queries / ~60s wall (2.7-11.3s per request; per-request cost bounded by the MAX_ROUNDS=80 cap, ~1s at the 1920-row budget boundary on a small table; realistic 90-row case 4 queries/~29ms). Client guards: hard kMaxFirstPageContinuations=8, stale-response protection mid-walk, repeated-cursor progress guard, honest empty state with 'Show more' affordance. CI lanes (test 39189630963, durability 39189630855) RUNNING on 1e403f8 \u2014 verify exact-head green before merge review. Review target only. ACCEPTANCE CLOSE-OUT (2026-10-19, head 0d5b1545608a13eaa48413d4c15e4825053cecd4): adaptive window-filter scan \u2014 per-round fetch doubles after zero-emit rounds (cap 512 rows/query), resets to need+1 after productive rounds; cursor rests at the LAST EXAMINED row so page exactness/cursor correctness unchanged; hard budgets explicit and two-sided (MAX_ROUNDS=80 queries + MAX_SCAN_ROWS=25000 examined rows per request). Measured worst case (real CI-parity Postgres, 21000 stale window-closed rows ahead of one fresh item): 1 client request / 45 server queries / 5.9s wall, item on the first page (was 9 requests / 720 queries / ~60s, item never surfaced). Scan-cap suite extended to 3 tests: 90-row surfacing (existing), NEW 3000-row single-request surfacing in <=15 queries, NEW 25500-row truthful budget exhaustion (empty + non-null cursor at <=80 queries, client continuation finds the item next request). PR #359 description updated to exact head 0d5b154 with the storefront priceGhs contract. #353 remains FROZEN.",
+      "headSha": "0d5b154",
       "ci": {
-        "mainTestRun": 39189630963,
-        "mainTestConclusion": "success",
-        "financialDurabilityRun": 39189630855,
+        "mainTestRun": 39192378361,
+        "mainTestConclusion": "in_progress",
+        "financialDurabilityRun": 39192378371,
         "financialDurabilityConclusion": "success",
-        "note": "Prior head 1be1bd8 green (test 39179051032, durability 39179051041); current runs on 1e403f8. \u2014 ALL LANES GREEN at exact head (2026-10-19)."
+        "note": "Head moved 1e403f8 -> 0d5b154 (acceptance close-out: adaptive scan growth, 2026-10-19). Prior head 1e403f8 GREEN (test 39189630963, durability 39189630855) \u2014 historical. Current head: financial-durability GREEN, test lane RUNNING; flip this field on conclusion."
       }
     },
     {
       "id": "frontend-priceghs-consumption-156",
       "repo": "AzamanLTD/AZM-frontend",
-      "status": "verified",
-      "notes": "OPEN/unmerged, head f608a27. GHS-only browse-price contract on all six surfaces PLUS final acceptance follow-up (f608a27): storefront catalogue card renders ONLY authoritative priceGhs ('Price unavailable' when absent, strict 2dp parse \u2014 never a priceUsdc substitute); StorefrontOrderSheet labels every payable amount EXPLICITLY 'X USDC' (header, Total, Place Order button \u2014 no bare '$') with the GHS listing price as a separate 'Listed: GH\u20b5\u2026' fact (no conversion/equivalence implied); CartScreen subtotal/total/checkout/per-item amounts all explicitly USDC; StorefrontRenderer nested-list-in-sliver unbounded-viewport bug fixed (debug assertion crash, infinite-extent sliver in release) \u2014 shrinkWrap + NeverScrollable, outer scroll view owns scrolling; repeated-cursor progress guard in the Mix first-page continuation (a cursor already consumed stops the automatic walk \u2014 no spin without progress); business-card unpriced anchor reads 'Price unavailable' WITHOUT the 'from' prefix. USDC payment/wallet/withdrawal rails and all financial semantics unchanged. Tests: storefront journey suite 5/5 (confirmed GHS exact, missing GHS, sheet USDC denomination, sheet without GHS, listing-to-order journey through the cart), provider 26/26 (repeated-cursor guard, consecutive empty pages past budget then item, true exhaustion terminal), surface 3/3 (auto-follow, budget-exhaustion affordance tap-through, honest terminal empty state), business card 4/4 (numeric cheapest, exact display, no-USDC fallback, mixed catalogue); affected battery 102/102, test/storefront 70/70, test/marketplace 164/164. CI lanes (FQ 39189639176, AI 39189639113) RUNNING on f608a27 \u2014 verify exact-head green before merge review. Visual acceptance of Mix tile captures REMAINS PENDING OWNER REVIEW.",
-      "headSha": "f608a27",
+      "status": "verified-but-reopened",
+      "notes": "OPEN/unmerged, head f608a27. GHS-only browse-price contract on all six surfaces PLUS final acceptance follow-up (f608a27): storefront catalogue card renders ONLY authoritative priceGhs ('Price unavailable' when absent, strict 2dp parse \u2014 never a priceUsdc substitute); StorefrontOrderSheet labels every payable amount EXPLICITLY 'X USDC' (header, Total, Place Order button \u2014 no bare '$') with the GHS listing price as a separate 'Listed: GH\u20b5\u2026' fact (no conversion/equivalence implied); CartScreen subtotal/total/checkout/per-item amounts all explicitly USDC; StorefrontRenderer nested-list-in-sliver unbounded-viewport bug fixed (debug assertion crash, infinite-extent sliver in release) \u2014 shrinkWrap + NeverScrollable, outer scroll view owns scrolling; repeated-cursor progress guard in the Mix first-page continuation (a cursor already consumed stops the automatic walk \u2014 no spin without progress); business-card unpriced anchor reads 'Price unavailable' WITHOUT the 'from' prefix. USDC payment/wallet/withdrawal rails and all financial semantics unchanged. Tests: storefront journey suite 5/5 (confirmed GHS exact, missing GHS, sheet USDC denomination, sheet without GHS, listing-to-order journey through the cart), provider 26/26 (repeated-cursor guard, consecutive empty pages past budget then item, true exhaustion terminal), surface 3/3 (auto-follow, budget-exhaustion affordance tap-through, honest terminal empty state), business card 4/4 (numeric cheapest, exact display, no-USDC fallback, mixed catalogue); affected battery 102/102, test/storefront 70/70, test/marketplace 164/164. CI lanes (FQ 39189639176, AI 39189639113) RUNNING on f608a27 \u2014 verify exact-head green before merge review. Visual acceptance of Mix tile captures REMAINS PENDING OWNER REVIEW. ACCEPTANCE CLOSE-OUT (2026-10-19, head 6690b65acbb9e50253f3f1061e8030ef5f2a2369): manual continuation (loadMore) now carries the SAME cursor-progress validation as the first-page walk \u2014 consumed cursors remembered per selection; a returned cursor equal to the submitted cursor or already consumed is a STALL (continuationStalled flag; Show more replaced by an explicit stalled panel with bounded Try again / Refresh feed affordances; loadMore + scroll trigger no-op while stalled \u2014 no request loop). Empty pages with NEW cursors still auto-follow within the bounded limit. NEW truthful loading feedback: searchingWide emitted during multi-request walks, loading skeleton carries a visible 'Still searching \u2014 looking further for you\u2026' line above the grid. Provider suite 29/29 (NEW: manual stall on repeated submitted cursor, A->B->A loop stall across multiple attempts with exactly one request per retry once the cycle is consumed, bounded retry/refresh, searchingWide emission). Surface suite 6/6 (NEW: stalled panel replaces Show more, searching feedback line, compact stalled tail on a non-empty feed). PR #156 description updated to exact head 6690b65.",
+      "headSha": "6690b65",
       "ci": {
-        "flutterQualityRun": 39189639176,
-        "flutterQualityConclusion": "success",
-        "androidIntegrationRun": 39189639113,
-        "androidIntegrationConclusion": "success",
-        "note": "Prior head 1362d3e green (FQ 39184028451, AI 39184028499); current runs on f608a27. \u2014 ALL LANES GREEN at exact head (2026-10-19)."
+        "flutterQualityRun": 39193716143,
+        "flutterQualityConclusion": "in_progress",
+        "androidIntegrationRun": 39193716122,
+        "androidIntegrationConclusion": "in_progress",
+        "note": "Head moved f608a27 -> 6690b65 (acceptance close-out: manual-continuation stall guard, 2026-10-19). Prior head f608a27 GREEN (FQ 39189639176, AI 39189639113) \u2014 historical. Both lanes RUNNING at exact head 6690b65; flip these fields on conclusion."
       }
     },
     {
