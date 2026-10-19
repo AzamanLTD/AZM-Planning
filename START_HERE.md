@@ -1,7 +1,7 @@
 # AZAMAN Engineering Brain — START HERE
 
 **Status:** ACTIVE — PRIMARY CONTINUATION ENTRYPOINT  
-**Last verified:** 2026-10-18 UTC (remediation reconciliation)  
+**Last verified:** 2026-10-19 UTC (final acceptance follow-up — money-display truth across the storefront journey; newest-head CI runs listed in ACTIVE_LOOP.md)  
 **Repositories:** `AZM-backend`, `AZM-adminPortal`, `AZM-businessPortal`, `AZM-frontend`, `AZM-Planning`
 
 > Any agent continuing AZAMAN engineering MUST start here, then read `ROADMAP.md`, `CURRENT_STATE.md`, `ACTIVE_LOOP.md` and `EXECUTION_LEDGER.json`. Do not restart from historical session journals.

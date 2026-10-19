@@ -4,6 +4,22 @@
 **Authority:** current repository `main` + exact CI/evidence.
 
 
+## Current verified snapshot — 2026-10-19 final acceptance follow-up (newest-head CI running)
+
+**This snapshot supersedes the 2026-10-18 r40 snapshot immediately below.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.
+
+### Money-display truth across the customer journey (final acceptance follow-up)
+
+- **Backend PR #359** head `1e403f8` (branch `feat/marketplace-product-ghs-price-rail`): the storefront ordering catalogue `GET /api/storefront/:bizId/products` now carries the authoritative `priceGhs` (shared resolver, exact 2dp, per-identity fail-closed, `priceUsdc` untouched as the payable rail amount) alongside the previously verified product rails + business-detail route. Rail suite 21/21 (5a-5d storefront route proofs). Prior head `1be1bd8` was green on both lanes; newest-head CI RUNNING (test 39189630963, financial-durability 39189630855) — do not treat as green until concluded.
+- **Frontend PR #156** head `f608a27` (branch `feat/marketplace-mix-inplace-mode`; the `7d117f2` head in older notes is historical only): storefront catalogue card GHS-only with 'Price unavailable' fallback; StorefrontOrderSheet + CartScreen payable amounts explicitly `USDC` (never bare `$`); GHS listing price shown as a separate labelled fact — no conversion, no GHS-settlement implication; StorefrontRenderer unbounded nested-list bug fixed; repeated-cursor progress guard in the Mix continuation; unpriced business-card anchor without 'from'. USDC payment/wallet/withdrawal rails unchanged. Storefront journey suite 5/5, provider 26/26, surface 3/3, card 4/4; test/storefront 70/70, test/marketplace 164/164. Newest-head CI RUNNING (FQ 39189639176, AI 39189639113).
+- **Backend PR #353** head FROZEN at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, both lanes GREEN (test 39119836530, financial-durability 39119836561).
+- **Measured worst-case client continuation** (real Postgres): 9 requests / 720 queries / ~60s wall against 21000 stale window-closed rows; realistic 90-row case 4 queries / ~29ms. Per-request cost bounded by MAX_ROUNDS=80.
+- **Still open / not claimed:** Mix tile visual captures PENDING OWNER REVIEW (visual acceptance NOT complete); physical-device smoke for #154 BLOCKED; production Render services still suspended (503) — no deployments or production writes have occurred (no merges to any main branch this wave; deployment history check = no main movement on any repo since the last verified baseline).
+
+### Historical snapshot — 2026-10-18 r40 close-out (CI confirmed)
+
+*(Retained as history; superseded above.)*
+
 ## Current verified snapshot — 2026-10-18 r40 close-out (CI confirmed)
 
 **This snapshot supersedes the 2026-10-18 follow-up-wave snapshot immediately below.** Source of truth is GitHub main plus exact-head CI; deployed state must be independently verified.

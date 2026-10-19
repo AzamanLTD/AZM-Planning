@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-19T01:20:40Z",
+  "updatedAt": "2026-10-19T02:23:28Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -889,14 +889,15 @@
       "id": "frontend-marketplace-mix-in-place",
       "repo": "AzamanLTD/AZM-frontend",
       "status": "open",
-      "notes": "OPEN/unmerged, head 7d117f2. In-place Mix mode green; the two-column near-square image-led Mix tile grid (geometry contract 1.0-1.5 h/w measured at both cell widths, strict store-logo handling, story route adapter, honest removal of the fake snooze action) and screenshot coverage landed. GHS availability truth (2026-10-18): browse surfaces render 'Price unavailable' when priceGhs is missing \u2014 no USDC fallback. VISUAL ACCEPTANCE OF TILE CAPTURES REMAINS PENDING OWNER REVIEW \u2014 do not record as accepted. CI lanes running at push time; verify exact-head runs before merge review.",
+      "notes": "OPEN/unmerged, PR #156 branch feat/marketplace-mix-inplace-mode, head f608a27 (supersedes obsolete 7d117f2 \u2014 that head is NOT current; all prior CI conclusions at it are historical only). Same branch/workstream as frontend-priceghs-consumption-156 (one PR carries both the in-place Mix mode and the GHS presentation contract). In-place Mix mode + two-column near-square tile grid (geometry contract 1.0-1.5 h/w at both cell widths, strict store-logo handling) landed; GHS availability truth enforced across browse surfaces. VISUAL ACCEPTANCE OF TILE CAPTURES REMAINS PENDING OWNER REVIEW \u2014 do not record as accepted. CI lanes (Flutter Quality 39189639176, Android Integration 39189639113) RUNNING on f608a27 \u2014 verify exact-head green before merge review.",
       "pr": 156,
-      "headSha": "7d117f237aebf212b48b1e6ffdbde4deccd0fcff",
+      "headSha": "f608a27",
       "ci": {
-        "flutterQualityRun": 39121267400,
+        "flutterQualityRun": 39189639176,
         "flutterQualityConclusion": "in_progress",
-        "androidIntegrationRun": 39121267380,
-        "androidIntegrationConclusion": "in_progress"
+        "androidIntegrationRun": 39189639113,
+        "androidIntegrationConclusion": "in_progress",
+        "note": "Historical 7d117f2 runs 39121267400/39121267382 are SUPERSEDED \u2014 that head no longer exists on the branch. Current runs on f608a27."
       }
     },
     {
@@ -908,15 +909,16 @@
     {
       "id": "backend-kotani-canonical-rate-authority",
       "repo": "AzamanLTD/AZM-backend",
-      "status": "open",
-      "notes": "OPEN/unmerged, head 7805c3c. Kotani-only canonical USDC/GHS transaction-rate source, hard-bound to exactly USDC->GHS: the KOTANI_RATE_FROM/TO pair overrides are rejected for any value except the canonical pair, a USDT/GHS response can never be accepted as a USDC/GHS quote, and the documented success:true + echoed pair + data.value contract is enforced strictly with no legacy-field or fiatAmount/cryptoAmount derivation. Wrong configured pair, wrong echoed pair, missing data.value and malformed payload all fail with no canonical write and no new quote eligibility. Provenance gate, exact host allowlist (production host requires written Kotani confirmation), no liveUsdToGhs fallback and admin canonical-field rejection retained. Test lane in progress on the final head at ledger-update time \u2014 confirm before merge review.",
+      "status": "verified",
+      "notes": "OPEN/unmerged, head 7805c3c. Kotani-only canonical USDC/GHS transaction-rate source, hard-bound to exactly USDC->GHS: the KOTANI_RATE_FROM/TO pair overrides are rejected for any value except the canonical pair, a USDT/GHS response can never be accepted as a USDC/GHS quote, and the documented success:true + echoed pair + data.value contract is enforced strictly with no legacy-field or fiatAmount/cryptoAmount derivation. Wrong configured pair, wrong echoed pair, missing data.value and malformed payload all fail with no canonical write and no new quote eligibility. Provenance gate, exact host allowlist (production host requires written Kotani confirmation), no liveUsdToGhs fallback and admin canonical-field rejection retained. Test lane 39119836530 SUCCESS and financial-durability lane 39119836561 SUCCESS at exact head 7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6 \u2014 currency-pair and rate-field correction covered by the kotani-only-rate-authority suite and green on both lanes. OPEN/unmerged review target; owner merge review only. Production arming still gated on the empty KOTANI_VERIFIED_PRODUCTION_HOSTS allowlist.",
       "pr": 353,
       "headSha": "7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6",
       "ci": {
         "mainTestRun": 39119836530,
-        "mainTestConclusion": "in_progress",
+        "mainTestConclusion": "success",
         "financialDurabilityRun": 39119836561,
-        "financialDurabilityConclusion": "success"
+        "financialDurabilityConclusion": "success",
+        "note": "Both lanes GREEN at exact head 7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6 (2026-10-18). Head frozen per owner instruction \u2014 do not rebase or push to this branch."
       }
     },
     {
@@ -1051,32 +1053,28 @@
       "id": "backend-product-ghs-price-rail-359",
       "repo": "AzamanLTD/AZM-backend",
       "status": "open",
-      "notes": "OPEN/unmerged, head 1be1bd8 (on rebased base #355/81aef46). Authoritative priceGhs on product read DTOs via the shared resolveEffectiveGhsPrices resolver, now also covering the customer-facing /api/marketplace/business/:bizId business-detail DTO. 7 route-level regressions for the priceGhs contract; suite cleanup via #355's sweepTestUsers. CI on d5f4af7 exposed a REAL product defect in the shared discovery feed (not test interference): runQuery's window-filter refill loop capped its scan at MAX_ROUNDS=3 (~75 rows), so stale window-closed leftover products in the shared disposable battery DB sorting ahead of a fresh eligible item exhausted the budget and the feed returned items:[] \u2014 the exact mix-p1 'Received array: []' failures (battery 2's failed-suites-first retry ran the suite first against battery-1 leftovers and failed only the test whose item sorted behind them). Fixed additively in 1be1bd8: MAX_ROUNDS 3->80 (~2000 rows/page, per-request cost cap retained), plus hermetic regression suite marketplace-discovery-window-scan-cap.pg.test.js proving a fresh eligible item surfaces behind 90 stale window-closed rows. Local: mix-p1 55/55 x3 bands (73/73 with rail+regression), marketplace/GHS neighborhood 110/110, consumers 58/58. CI GREEN on 1be1bd8: Azaman Test Suite run 39179051032 success, financial-durability run 39179051041 success \u2014 the full battery including the previously failing marketplace-discovery-mix-p1 and the new scan-cap regression suite passed. Review target only, do not merge without owner review.",
-      "headSha": "1be1bd8",
+      "notes": "OPEN/unmerged, head 1e403f8 (on rebased base #355/81aef46). Authoritative priceGhs on product read DTOs (product rails + business-detail) AND, added in the final acceptance follow-up (1e403f8), the customer-facing storefront ordering catalogue GET /api/storefront/:bizId/products \u2014 same shared resolveEffectiveGhsPrices resolver and exact-2dp serialization, per-identity fail-closed to null, priceUsdc byte-identical as the payable rail amount. Scan-cap fix (1be1bd8): discovery window-filter MAX_ROUNDS 3->80 with hermetic regression suite. Rail suite now 21/21 (route proofs 4a-4d business-detail + 5a-5d storefront catalogue); scan-cap regression + mix-p1 re-verified 56/56. Measured continuation envelope (worst case, local CI-parity Postgres, 21000 stale window-closed rows ahead of one fresh item): client path = 1 initial + 8 auto-follow continuations = 9 requests / 720 server queries / ~60s wall (2.7-11.3s per request; per-request cost bounded by the MAX_ROUNDS=80 cap, ~1s at the 1920-row budget boundary on a small table; realistic 90-row case 4 queries/~29ms). Client guards: hard kMaxFirstPageContinuations=8, stale-response protection mid-walk, repeated-cursor progress guard, honest empty state with 'Show more' affordance. CI lanes (test 39189630963, durability 39189630855) RUNNING on 1e403f8 \u2014 verify exact-head green before merge review. Review target only.",
+      "headSha": "1e403f8",
       "ci": {
-        "mainTestRun": 39179051032,
-        "mainTestConclusion": "success",
-        "financialDurabilityRun": 39179051041,
-        "financialDurabilityConclusion": "success"
+        "mainTestRun": 39189630963,
+        "mainTestConclusion": "in_progress",
+        "financialDurabilityRun": 39189630855,
+        "financialDurabilityConclusion": "in_progress",
+        "note": "Prior head 1be1bd8 green (test 39179051032, durability 39179051041); current runs on 1e403f8."
       }
     },
     {
       "id": "frontend-priceghs-consumption-156",
       "repo": "AzamanLTD/AZM-frontend",
       "status": "open",
-      "notes": "OPEN/unmerged, head 1362d3e (supersedes stale 7d117f2). GHS-only browse-price contract on all six surfaces; 'Price unavailable' replaces USDC fallback. Final acceptance pass (1362d3e): business_card _cheapestGhs now compares NUMERICALLY (exact 2dp strings are display-only; lexicographic sort anchored wrong prices), from-anchor renders 'Price unavailable' without any confirmed GHS price (priceUsdc never substitutes); retail_editorial_card audited \u2014 ZERO call sites in lib/ or test/ (unreachable from any shipped browse route; single grep hit is its own constructor) yet rewired to the same GHS contract so it can never ship a USDC listing if mounted; Mix first-page continuation closes the scan-budget boundary: notifier auto-follows empty pages with cursors within hard kMaxFirstPageContinuations=8 (stale-guarded mid-walk), MixFeedSurface honest empty state carries a 'Show more' continuation affordance when a cursor survives the budget. Backend measured cost of the 80-round scan path (real PG, CI-parity DB): 90 stale rows -> 4 queries/29ms; 1900-row budget boundary -> 80 queries/~1000ms with the fresh item still surfacing; per-request cap is the deliberate bound, client continuation covers beyond it. Backend unchanged at #359 head 1be1bd8 (scan-cap regression + mix-p1 + rail + eligibility re-verified 75/75; both backend CI lanes green: test 39179051032, durability 39179051041). Frontend tests: provider 23/23, business-card 4/4 (numeric cheapest 9.00 vs 49.50/100.00, exact display, no-USDC fallback), surface 2/2 (auto-follow, budget-exhaustion affordance tap-through), affected suites 93/93; backend #353 unchanged at 7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6. Flutter Quality (39184028451) + Android Integration (39184028499) BOTH GREEN on 1362d3e. Mix tile visual captures (320/360/390 light/dark) REMAIN PENDING OWNER REVIEW \u2014 visual acceptance is NOT complete. Review target only; no deployments, no production writes.",
-      "headSha": "1362d3e",
+      "notes": "OPEN/unmerged, head f608a27. GHS-only browse-price contract on all six surfaces PLUS final acceptance follow-up (f608a27): storefront catalogue card renders ONLY authoritative priceGhs ('Price unavailable' when absent, strict 2dp parse \u2014 never a priceUsdc substitute); StorefrontOrderSheet labels every payable amount EXPLICITLY 'X USDC' (header, Total, Place Order button \u2014 no bare '$') with the GHS listing price as a separate 'Listed: GH\u20b5\u2026' fact (no conversion/equivalence implied); CartScreen subtotal/total/checkout/per-item amounts all explicitly USDC; StorefrontRenderer nested-list-in-sliver unbounded-viewport bug fixed (debug assertion crash, infinite-extent sliver in release) \u2014 shrinkWrap + NeverScrollable, outer scroll view owns scrolling; repeated-cursor progress guard in the Mix first-page continuation (a cursor already consumed stops the automatic walk \u2014 no spin without progress); business-card unpriced anchor reads 'Price unavailable' WITHOUT the 'from' prefix. USDC payment/wallet/withdrawal rails and all financial semantics unchanged. Tests: storefront journey suite 5/5 (confirmed GHS exact, missing GHS, sheet USDC denomination, sheet without GHS, listing-to-order journey through the cart), provider 26/26 (repeated-cursor guard, consecutive empty pages past budget then item, true exhaustion terminal), surface 3/3 (auto-follow, budget-exhaustion affordance tap-through, honest terminal empty state), business card 4/4 (numeric cheapest, exact display, no-USDC fallback, mixed catalogue); affected battery 102/102, test/storefront 70/70, test/marketplace 164/164. CI lanes (FQ 39189639176, AI 39189639113) RUNNING on f608a27 \u2014 verify exact-head green before merge review. Visual acceptance of Mix tile captures REMAINS PENDING OWNER REVIEW.",
+      "headSha": "f608a27",
       "ci": {
-        "flutterQuality": {
-          "run": 39184028451,
-          "conclusion": "success",
-          "head": "1362d3e"
-        },
-        "androidIntegration": {
-          "run": 39184028499,
-          "conclusion": "success",
-          "head": "1362d3e"
-        }
+        "flutterQualityRun": 39189639176,
+        "flutterQualityConclusion": "in_progress",
+        "androidIntegrationRun": 39189639113,
+        "androidIntegrationConclusion": "in_progress",
+        "note": "Prior head 1362d3e green (FQ 39184028451, AI 39184028499); current runs on f608a27."
       }
     },
     {

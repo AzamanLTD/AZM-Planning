@@ -17,6 +17,23 @@
 
 **Status:** ACTIVE — DO NOT CLOSE
 
+### Current continuation snapshot — 2026-10-19 02:30 UTC (final acceptance follow-up)
+
+**This block supersedes the 2026-10-18 11:00 snapshot below.** GitHub main and exact-head CI remain implementation authority. The PRs listed here are open and unmerged; these notes do not authorise a merge. Historical heads/CI conclusions in older snapshots below are retained as history — reconcile every head against GitHub before acting.
+
+#### Final acceptance follow-up wave (2026-10-19) — implementation complete, newest-head CI RUNNING
+
+- **BE PR #359 (GHS price rail + storefront catalogue):** head `1e403f85…` (exact `1e403f8` — full SHA below in ledger). Prior head `1be1bd8` was green on both lanes (test 39179051032, durability 39179051041). The scan-cap fix (MAX_ROUNDS 3→80 + hermetic regression) is in `1be1bd8`; the final acceptance follow-up added the storefront ordering catalogue `GET /api/storefront/:bizId/products` carrying authoritative `priceGhs` (same shared resolver, exact 2dp, per-identity fail-closed, `priceUsdc` byte-identical as the payable rail amount) with route regressions 5a-5d. Rail suite 21/21; scan-cap + mix-p1 re-verified 56/56. CI RUNNING on `1e403f8`: test 39189630963, financial-durability 39189630855 — do not treat as green until concluded.
+- **FE PR #156 (GHS presentation + storefront/order truth):** head `f608a27`. Prior head `1362d3e` was green (FQ 39184028451, AI 39184028499); the obsolete `7d117f2` head recorded in earlier snapshots is historical only. The follow-up: storefront catalogue card GHS-only ('Price unavailable' when absent, never `priceUsdc`); StorefrontOrderSheet payable amounts explicitly `USDC` (header/Total/Place Order — no bare `$`) with the GHS listing price as a separate 'Listed: GH₵…' fact; CartScreen subtotal/total/checkout/per-item all explicitly USDC; StorefrontRenderer nested-list-in-sliver unbounded-viewport bug fixed (debug crash / infinite-extent release sliver); repeated-cursor progress guard in the Mix first-page continuation; business-card unpriced anchor without the 'from' prefix. USDC payment/wallet/withdrawal rails and financial semantics unchanged. Storefront journey suite 5/5, provider 26/26, surface 3/3, card 4/4, affected battery 102/102, test/storefront 70/70, test/marketplace 164/164. CI RUNNING on `f608a27`: Flutter Quality 39189639176, Android Integration 39189639113.
+- **BE PR #353 (Kotani rate authority):** head FROZEN at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6` per owner instruction — both lanes GREEN there (test 39119836530, financial-durability 39119836561). No further pushes to this branch.
+- **Measured worst-case client continuation (real Postgres, CI-parity DB):** 21000 stale window-closed rows ahead of one fresh item → the client envelope (1 initial + 8 auto-follow continuations) makes 9 requests / 720 server queries / ~60s wall (2.7-11.3s per request). Per-request cost stays bounded by the MAX_ROUNDS=80 server cap (~1s at the 1920-row budget boundary on a small table; realistic 90-row battery case: 4 queries / ~29ms). Guards: hard continuation limit, stale-response protection, repeated-cursor progress guard, honest empty state with 'Show more' affordance. No infinite loop paths.
+- **Residual owner items (unchanged):** Mix tile visual captures (320/360/390 light/dark) REMAIN PENDING OWNER REVIEW — visual acceptance is NOT complete. Physical-device smoke for #154 remains BLOCKED (no device in environment). Production Render services remain suspended (503) — no deployments, environment, settings or production-data changes made; production DB/Render remain off-limits.
+- **Next actions:** (1) verify exact-head CI green on `1e403f8` (both backend lanes) and `f608a27` (both frontend lanes); (2) owner merge review in the established order (backend #353 → #355-#358 → #359 → #360; frontend #160 → #161 → #156 → #157 → #154 → #158 rebase → #159; #155 excluded); (3) post-merge, verify main heads and redeploy only after the owner lifts the Render suspension.
+
+### Historical snapshot — 2026-10-18 11:00 UTC (r40 close-out)
+
+*(Retained as history; superseded by the snapshot above.)*
+
 ### Current continuation snapshot — 2026-10-18 11:00 UTC (r40 close-out)
 
 **This block supersedes the 2026-10-18 05:30 snapshot below.** GitHub main and exact-head CI remain implementation authority. The PRs listed here are open and unmerged; these notes do not authorise a merge.
