@@ -17,7 +17,27 @@
 
 **Status:** ACTIVE — DO NOT CLOSE
 
-### Current continuation snapshot — 2026-10-19 FINAL CLOSE-OUT (owner-verified CI + exact-head benchmark complete)
+### Current continuation snapshot — 2026-10-19 CONTROLLED MERGE RECOVERY (strict one-PR-at-a-time protocol, owner-directed)
+
+**This block supersedes the FINAL CLOSE-OUT snapshot below.** Live GitHub state is implementation authority. Do not merge any feature PR; no force-pushes; no history rewrites; no deployments; no production changes.
+
+#### What happened
+An assistant-led batch merged feature PRs into both mains (backend #355/#356/#354/#357/#358; frontend #154/#159/#157) and was deemed unsafe. Rollback PRs restore each main tree to its pre-batch snapshot via NORMAL FORWARD COMMITS.
+
+#### Phase 1 state
+
+- **FRONTEND rollback PR #162 — MERGED, MAIN GREEN (one merge, one full green validation cycle).** Head 4f9e12d: tree byte-identical to pre-batch snapshot ee12a90 (tree SHA e9c73a12 both). Required checks green at exact head before merge (quality + android). Squash-merged with clean owner identity (ShA-MS), no agent Co-authored-by trailers. **New frontend main: `8fcebe21058dcffe35655a99596a3896f5008a41`** — Flutter Quality run 39252059632 SUCCESS + Android Integration run 39251881642 SUCCESS at this SHA. Note: flutter-ci triggers on PRs only, so the main-cycle quality run was dispatched manually (workflow_dispatch).
+- **BACKEND rollback PR #361 — BLOCKED (required check failed; NOT merged, NOT bypassed).** Head `288843984666346d8fdfe52f5f118aff092d59a8` (base 9b301fd): financial-durability GREEN (run 39246041043); test lane FAILED (run 39246041036): invocation 1 = 2 mix-p1 failures (known cross-suite battery-residue flake family); retry invocation = all 3561 tests passed but 2 suites failed in afterAll teardown (business-follower-adapter, business-ad-adapter — `prisma.user.deleteMany` FK violation `WalletAddress_userId_fkey`). Battery interference, not rollback-content regression (restored tree = the exact 48c17ab snapshot, previously green as #353/#359 CI base). Awaiting owner decision (recommended: one lane re-run).
+- **Backend main remains `9b301fd`** (post-batch, rollback NOT yet applied). Frontend main `8fcebe21` = pre-batch tree restored.
+
+#### Phase 2 (queued, do NOT start until owner green-lights and Phase 1 completes)
+
+- Backend: replacement PR for former #355 (test-infrastructure, FK-safe scoped cleanup) rebased on green main, ONE PR at a time.
+- Frontend: #158 correction (AzmCardProgramme capability seam + three home_pouch test implementations, unused import removal, rebase on post-recovery main; demo programme must remain transfer-incapable; both lanes green before offering for merge).
+
+### Superseded snapshot — 2026-10-19 FINAL CLOSE-OUT
+
+
 
 **This block supersedes the 11:00 snapshot below.** GitHub main and exact-head CI remain implementation authority. All PRs listed here are OPEN and UNMERGED — nothing in these notes authorises a merge.
 

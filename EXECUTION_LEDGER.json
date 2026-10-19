@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-19T10:58:55Z",
+  "updatedAt": "2026-10-19T12:37:01Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -11,6 +11,14 @@
     "prBudget": "<=500 changed lines and at least one test"
   },
   "workItems": [
+    {
+      "id": "merge-recovery-2026-10-19",
+      "repo": "both",
+      "status": "in-progress",
+      "notes": "CONTROLLED MERGE RECOVERY (owner-directed strict one-PR-at-a-time protocol, 2026-10-19). Context: an assistant-led batch merged feature PRs into both mains (backend #355/#356/#354/#357/#358; frontend #154/#159/#157) and was deemed unsafe; rollback PRs restore each main tree to its pre-batch snapshot via normal forward commits (no history rewrite, no deployments, no production changes). PHASE 1 STATE: FRONTEND rollback PR #162 (head 4f9e12d, tree byte-identical to pre-batch snapshot ee12a90) was green on both required checks at its exact head (quality, android) and was SQUASH-MERGED with a clean owner-identity title/message (no agent Co-authored-by trailers) \u2014 new frontend main SHA 8fcebe21058dcffe35655a99596a3896f5008a41, tree e9c73a12 (exact pre-batch tree). Main validation cycle COMPLETE: Flutter Quality run 39252059632 SUCCESS + Android Integration run 39251881642 SUCCESS at the new main SHA (flutter-ci requires manual dispatch on main pushes \u2014 it triggers on PRs only). BACKEND rollback PR #361 (head 2888439, base 9b301fd) is BLOCKED per protocol: financial-durability GREEN (run 39246041043) but the required test lane FAILED (run 39246041036) \u2014 invocation 1: 2 failures in marketplace-discovery-mix-p1.pg.test.js (city-filter missing item; cursor-walk ordering with foreign residue UUIDs \u2014 the known cross-suite battery-residue flake family); retry invocation 2: all 3561 tests passed but 2 suites failed in afterAll cleanupAll (business-follower-adapter.test.js, business-ad-adapter.test.js) on prisma.user.deleteMany FK violation WalletAddress_userId_fkey \u2014 battery residue again, not rollback-content regression (the restored tree is the exact 48c17ab snapshot previously proven green as the #353/#359 CI base). NOT merged; NOT bypassed; awaiting owner decision (recommended: re-run the test lane once). No rewrites, no deploys, no production writes; one merge, one green main validation cycle only.",
+      "frontendMain": "8fcebe21058dcffe35655a99596a3896f5008a41",
+      "backendMain": "9b301fd7f085cb681267bdb453cbbd848be67a2e"
+    },
     {
       "id": "backend-provider-attempt-reference-integrity",
       "repo": "AzamanLTD/AZM-backend",
