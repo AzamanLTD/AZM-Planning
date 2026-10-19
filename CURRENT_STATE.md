@@ -4,9 +4,18 @@
 **Authority:** current repository `main` + exact CI/evidence.
 
 
-## Current verified snapshot — 2026-10-19 BOTH BACKEND LANES GREEN at 0d5df56 (BE #359 fully verified)
+## Current verified snapshot — 2026-10-19 FINAL CLOSE-OUT (owner-verified CI; exact-head benchmark recorded)
 
-**This snapshot supersedes the test-lane-failure snapshot below.** Source of truth is GitHub main plus exact-head CI.
+**This snapshot supersedes the 11:00 snapshot below.** Source of truth is GitHub main plus exact-head CI. All PRs OPEN and UNMERGED.
+
+- **BE #359** head `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f`: test 39225590677 + financial-durability 39225590938 GREEN (owner-verified, first attempt). **Exact-head benchmark (clean real Postgres):** 21,000-stale-row stress case = ONE request / 45 findMany queries / 4.6 s cold, 5.3 s warm, item surfaces at page position 0; 25,500-row boundary case = truthful `items: []` + non-null cursor (53 queries / 7.1 s), continuation surfaces the item in 88 ms / 5 queries. Historical pre-adaptive ~60 s / 720 queries / 9 requests figure superseded. No production code change warranted.
+- **FE #156** head `6690b65acbb9e50253f3f1061e8030ef5f2a2369`: Flutter Quality 39193716143 + Android Integration 39193716122 GREEN (owner-verified). Ledger entries for both #156 workstreams corrected to `success`; prior heads (f608a27, 7d117f2) explicitly HISTORICAL.
+- **BE #353** frozen at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, green.
+- **Residuals:** Mix tile visual captures PENDING OWNER REVIEW; #154 physical-device smoke BLOCKED; Render suspended — no merges, deployments or production writes. PRs #353/#359/#156 await owner merge review.
+
+### Superseded snapshot — 2026-10-19 11:00 UTC (both backend lanes green at 0d5df56)
+
+
 
 - **Backend PR #359** head `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f`: **BOTH LANES GREEN, first attempt** — Azaman Test Suite 39225590677 SUCCESS, financial-durability 39225590938 SUCCESS (2026-10-19). The `0d5b154` failure is closed as diagnosed (hour-dependent static window inside the scan-cap TEST suite; fixed suite-only at `0d5df56`; production code identical from `0d5b154`). mix-p1 `[]` = known battery-retry residue flake, did not recur. PR description carries the exact-head evidence.
 - **Frontend PR #156** head `6690b65`: BOTH LANES GREEN (FQ 39193716143, AI 39193716122) — frontend close-out COMPLETE.

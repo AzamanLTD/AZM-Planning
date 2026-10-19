@@ -17,9 +17,31 @@
 
 **Status:** ACTIVE — DO NOT CLOSE
 
-### Current continuation snapshot — 2026-10-19 11:00 UTC (BOTH BACKEND LANES GREEN at head 0d5df56 — BE #359 fully verified)
+### Current continuation snapshot — 2026-10-19 FINAL CLOSE-OUT (owner-verified CI + exact-head benchmark complete)
 
-**This block supersedes the 09:15 snapshot below.** GitHub main and exact-head CI remain implementation authority. The PRs listed here are open and unmerged; these notes do not authorise a merge.
+**This block supersedes the 11:00 snapshot below.** GitHub main and exact-head CI remain implementation authority. All PRs listed here are OPEN and UNMERGED — nothing in these notes authorises a merge.
+
+#### Owner-verified CI (2026-10-19) — recorded into the ledger
+
+- **BE #359** head `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f`: test run `39225590677` and financial-durability run `39225590938` GREEN (both first attempt).
+- **FE #156** head `6690b65acbb9e50253f3f1061e8030ef5f2a2369`: Flutter Quality run `39193716143` and Android Integration run `39193716122` GREEN. The ledger's two #156 workstream entries (`frontend-marketplace-mix-in-place`, `frontend-priceghs-consumption-156`) previously carried `in_progress` conclusions — both now flipped to `success` with the run IDs; the prior heads `f608a27` (FQ 39189639176 / AI 39189639113, green) and `7d117f2` are explicitly marked HISTORICAL.
+- **BE #353** remains FROZEN at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, green.
+
+#### Exact-head adaptive-scan benchmark (owner-requested, 2026-10-19, clean real CI-parity Postgres, BE head `0d5df56`)
+
+- **CASE A — 21,000 stale window-closed rows ahead of one fresh eligible item:** ONE request, **45 `businessProduct.findMany` queries**, wall **4,606 ms (cold process) / 5,309 ms (warm)**, fresh item surfaced at **page position 0**, `nextCursor: null` (true end of feed). The pre-adaptive measurement (9 requests / 720 queries / ~60s, item never surfacing) is HISTORICAL and was not reused as current.
+- **CASE B — 25,500 stale rows (just past `MAX_SCAN_ROWS = 25,000`):** first page truthfully returned `items: []` with a NON-NULL cursor (**53 queries**, **7,091 ms**, within the 80-query cap), and the client continuation following that cursor surfaced the fresh item in **88 ms / 5 queries** at page position 0.
+- Verdict: both cases satisfy the shipping invariants; **no production code change warranted** (production code identical from `0d5b154`).
+
+#### Residual owner items — UNCHANGED
+
+- Mix tile visual captures (320/360/390dp light/dark): **PENDING OWNER REVIEW** — not to be recorded as accepted.
+- #154 physical-device smoke: **BLOCKED** (no physical device in sandbox).
+- Production Render remains suspended; **no merges, no deployments, no production writes this wave**. PRs #353, #359, #156 await owner merge review.
+
+### Superseded snapshot — 2026-10-19 11:00 UTC (BOTH BACKEND LANES GREEN at head 0d5df56 — BE #359 fully verified)
+
+ GitHub main and exact-head CI remain implementation authority. The PRs listed here are open and unmerged; these notes do not authorise a merge.
 
 #### BE #359 — VERIFIED GREEN at exact head `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f`
 

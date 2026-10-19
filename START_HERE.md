@@ -1,7 +1,7 @@
 # AZAMAN Engineering Brain — START HERE
 
 **Status:** ACTIVE — PRIMARY CONTINUATION ENTRYPOINT  
-**Last verified:** 2026-10-19 UTC — BE #359 FULLY VERIFIED: both backend lanes GREEN at head 0d5df56 (test 39225590677, durability 39225590938, first attempt). FE #156 green at 6690b65. #353 frozen at 7805c3c. All PRs await owner merge review; no deployments.
+**Last verified:** 2026-10-19 UTC FINAL CLOSE-OUT — BE #359 green at 0d5df56 (test 39225590677, durability 39225590938); FE #156 green at 6690b65 (FQ 39193716143, AI 39193716122; ledger conclusions corrected); #353 frozen at 7805c3c. Exact-head adaptive-scan benchmark recorded: 21k-stress = 1 request / 45 queries / 4.6-5.3s, item surfaces; 25.5k boundary = truthful []+cursor (53 queries / 7.1s), continuation 88ms / 5 queries. All PRs OPEN awaiting owner merge review; no deployments.
 **Repositories:** `AZM-backend`, `AZM-adminPortal`, `AZM-businessPortal`, `AZM-frontend`, `AZM-Planning`
 
 > Any agent continuing AZAMAN engineering MUST start here, then read `ROADMAP.md`, `CURRENT_STATE.md`, `ACTIVE_LOOP.md` and `EXECUTION_LEDGER.json`. Do not restart from historical session journals.
