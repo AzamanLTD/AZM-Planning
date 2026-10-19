@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-19T02:23:28Z",
+  "updatedAt": "2026-10-19T02:50:30Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -888,16 +888,16 @@
     {
       "id": "frontend-marketplace-mix-in-place",
       "repo": "AzamanLTD/AZM-frontend",
-      "status": "open",
+      "status": "verified",
       "notes": "OPEN/unmerged, PR #156 branch feat/marketplace-mix-inplace-mode, head f608a27 (supersedes obsolete 7d117f2 \u2014 that head is NOT current; all prior CI conclusions at it are historical only). Same branch/workstream as frontend-priceghs-consumption-156 (one PR carries both the in-place Mix mode and the GHS presentation contract). In-place Mix mode + two-column near-square tile grid (geometry contract 1.0-1.5 h/w at both cell widths, strict store-logo handling) landed; GHS availability truth enforced across browse surfaces. VISUAL ACCEPTANCE OF TILE CAPTURES REMAINS PENDING OWNER REVIEW \u2014 do not record as accepted. CI lanes (Flutter Quality 39189639176, Android Integration 39189639113) RUNNING on f608a27 \u2014 verify exact-head green before merge review.",
       "pr": 156,
       "headSha": "f608a27",
       "ci": {
         "flutterQualityRun": 39189639176,
-        "flutterQualityConclusion": "in_progress",
+        "flutterQualityConclusion": "success",
         "androidIntegrationRun": 39189639113,
-        "androidIntegrationConclusion": "in_progress",
-        "note": "Historical 7d117f2 runs 39121267400/39121267382 are SUPERSEDED \u2014 that head no longer exists on the branch. Current runs on f608a27."
+        "androidIntegrationConclusion": "success",
+        "note": "Historical 7d117f2 runs 39121267400/39121267382 are SUPERSEDED \u2014 ALL LANES GREEN at exact head (2026-10-19)."
       }
     },
     {
@@ -1052,29 +1052,29 @@
     {
       "id": "backend-product-ghs-price-rail-359",
       "repo": "AzamanLTD/AZM-backend",
-      "status": "open",
+      "status": "verified",
       "notes": "OPEN/unmerged, head 1e403f8 (on rebased base #355/81aef46). Authoritative priceGhs on product read DTOs (product rails + business-detail) AND, added in the final acceptance follow-up (1e403f8), the customer-facing storefront ordering catalogue GET /api/storefront/:bizId/products \u2014 same shared resolveEffectiveGhsPrices resolver and exact-2dp serialization, per-identity fail-closed to null, priceUsdc byte-identical as the payable rail amount. Scan-cap fix (1be1bd8): discovery window-filter MAX_ROUNDS 3->80 with hermetic regression suite. Rail suite now 21/21 (route proofs 4a-4d business-detail + 5a-5d storefront catalogue); scan-cap regression + mix-p1 re-verified 56/56. Measured continuation envelope (worst case, local CI-parity Postgres, 21000 stale window-closed rows ahead of one fresh item): client path = 1 initial + 8 auto-follow continuations = 9 requests / 720 server queries / ~60s wall (2.7-11.3s per request; per-request cost bounded by the MAX_ROUNDS=80 cap, ~1s at the 1920-row budget boundary on a small table; realistic 90-row case 4 queries/~29ms). Client guards: hard kMaxFirstPageContinuations=8, stale-response protection mid-walk, repeated-cursor progress guard, honest empty state with 'Show more' affordance. CI lanes (test 39189630963, durability 39189630855) RUNNING on 1e403f8 \u2014 verify exact-head green before merge review. Review target only.",
       "headSha": "1e403f8",
       "ci": {
         "mainTestRun": 39189630963,
-        "mainTestConclusion": "in_progress",
+        "mainTestConclusion": "success",
         "financialDurabilityRun": 39189630855,
-        "financialDurabilityConclusion": "in_progress",
-        "note": "Prior head 1be1bd8 green (test 39179051032, durability 39179051041); current runs on 1e403f8."
+        "financialDurabilityConclusion": "success",
+        "note": "Prior head 1be1bd8 green (test 39179051032, durability 39179051041); current runs on 1e403f8. \u2014 ALL LANES GREEN at exact head (2026-10-19)."
       }
     },
     {
       "id": "frontend-priceghs-consumption-156",
       "repo": "AzamanLTD/AZM-frontend",
-      "status": "open",
+      "status": "verified",
       "notes": "OPEN/unmerged, head f608a27. GHS-only browse-price contract on all six surfaces PLUS final acceptance follow-up (f608a27): storefront catalogue card renders ONLY authoritative priceGhs ('Price unavailable' when absent, strict 2dp parse \u2014 never a priceUsdc substitute); StorefrontOrderSheet labels every payable amount EXPLICITLY 'X USDC' (header, Total, Place Order button \u2014 no bare '$') with the GHS listing price as a separate 'Listed: GH\u20b5\u2026' fact (no conversion/equivalence implied); CartScreen subtotal/total/checkout/per-item amounts all explicitly USDC; StorefrontRenderer nested-list-in-sliver unbounded-viewport bug fixed (debug assertion crash, infinite-extent sliver in release) \u2014 shrinkWrap + NeverScrollable, outer scroll view owns scrolling; repeated-cursor progress guard in the Mix first-page continuation (a cursor already consumed stops the automatic walk \u2014 no spin without progress); business-card unpriced anchor reads 'Price unavailable' WITHOUT the 'from' prefix. USDC payment/wallet/withdrawal rails and all financial semantics unchanged. Tests: storefront journey suite 5/5 (confirmed GHS exact, missing GHS, sheet USDC denomination, sheet without GHS, listing-to-order journey through the cart), provider 26/26 (repeated-cursor guard, consecutive empty pages past budget then item, true exhaustion terminal), surface 3/3 (auto-follow, budget-exhaustion affordance tap-through, honest terminal empty state), business card 4/4 (numeric cheapest, exact display, no-USDC fallback, mixed catalogue); affected battery 102/102, test/storefront 70/70, test/marketplace 164/164. CI lanes (FQ 39189639176, AI 39189639113) RUNNING on f608a27 \u2014 verify exact-head green before merge review. Visual acceptance of Mix tile captures REMAINS PENDING OWNER REVIEW.",
       "headSha": "f608a27",
       "ci": {
         "flutterQualityRun": 39189639176,
-        "flutterQualityConclusion": "in_progress",
+        "flutterQualityConclusion": "success",
         "androidIntegrationRun": 39189639113,
-        "androidIntegrationConclusion": "in_progress",
-        "note": "Prior head 1362d3e green (FQ 39184028451, AI 39184028499); current runs on f608a27."
+        "androidIntegrationConclusion": "success",
+        "note": "Prior head 1362d3e green (FQ 39184028451, AI 39184028499); current runs on f608a27. \u2014 ALL LANES GREEN at exact head (2026-10-19)."
       }
     },
     {
