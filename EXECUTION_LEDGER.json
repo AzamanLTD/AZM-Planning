@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-19T00:03:53Z",
+  "updatedAt": "2026-10-19T00:53:38Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -1051,14 +1051,13 @@
       "id": "backend-product-ghs-price-rail-359",
       "repo": "AzamanLTD/AZM-backend",
       "status": "open",
-      "notes": "OPEN/unmerged, head 1be1bd8 (on rebased base #355/81aef46). Authoritative priceGhs on product read DTOs via the shared resolveEffectiveGhsPrices resolver, now also covering the customer-facing /api/marketplace/business/:bizId business-detail DTO. 7 route-level regressions for the priceGhs contract; suite cleanup via #355's sweepTestUsers. CI on d5f4af7 exposed a REAL product defect in the shared discovery feed (not test interference): runQuery's window-filter refill loop capped its scan at MAX_ROUNDS=3 (~75 rows), so stale window-closed leftover products in the shared disposable battery DB sorting ahead of a fresh eligible item exhausted the budget and the feed returned items:[] \u2014 the exact mix-p1 'Received array: []' failures (battery 2's failed-suites-first retry ran the suite first against battery-1 leftovers and failed only the test whose item sorted behind them). Fixed additively in 1be1bd8: MAX_ROUNDS 3->80 (~2000 rows/page, per-request cost cap retained), plus hermetic regression suite marketplace-discovery-window-scan-cap.pg.test.js proving a fresh eligible item surfaces behind 90 stale window-closed rows. Local: mix-p1 55/55 x3 bands (73/73 with rail+regression), marketplace/GHS neighborhood 110/110, consumers 58/58. CI lanes re-running on 1be1bd8 \u2014 verify both green before merge review. Review target only.",
+      "notes": "OPEN/unmerged, head 1be1bd8 (on rebased base #355/81aef46). Authoritative priceGhs on product read DTOs via the shared resolveEffectiveGhsPrices resolver, now also covering the customer-facing /api/marketplace/business/:bizId business-detail DTO. 7 route-level regressions for the priceGhs contract; suite cleanup via #355's sweepTestUsers. CI on d5f4af7 exposed a REAL product defect in the shared discovery feed (not test interference): runQuery's window-filter refill loop capped its scan at MAX_ROUNDS=3 (~75 rows), so stale window-closed leftover products in the shared disposable battery DB sorting ahead of a fresh eligible item exhausted the budget and the feed returned items:[] \u2014 the exact mix-p1 'Received array: []' failures (battery 2's failed-suites-first retry ran the suite first against battery-1 leftovers and failed only the test whose item sorted behind them). Fixed additively in 1be1bd8: MAX_ROUNDS 3->80 (~2000 rows/page, per-request cost cap retained), plus hermetic regression suite marketplace-discovery-window-scan-cap.pg.test.js proving a fresh eligible item surfaces behind 90 stale window-closed rows. Local: mix-p1 55/55 x3 bands (73/73 with rail+regression), marketplace/GHS neighborhood 110/110, consumers 58/58. CI GREEN on 1be1bd8: Azaman Test Suite run 39179051032 success, financial-durability run 39179051041 success \u2014 the full battery including the previously failing marketplace-discovery-mix-p1 and the new scan-cap regression suite passed. Review target only, do not merge without owner review.",
       "headSha": "1be1bd8",
       "ci": {
-        "mainTestRun": null,
-        "mainTestConclusion": "in_progress",
-        "financialDurabilityRun": null,
-        "financialDurabilityConclusion": "in_progress",
-        "note": "runs on 1be1bd8 pending; prior runs 39120763057/39120763043 (test failure root-caused, durability green)"
+        "mainTestRun": 39179051032,
+        "mainTestConclusion": "success",
+        "financialDurabilityRun": 39179051041,
+        "financialDurabilityConclusion": "success"
       }
     },
     {
