@@ -17,9 +17,29 @@
 
 **Status:** ACTIVE — DO NOT CLOSE
 
-### Current continuation snapshot — 2026-10-19 09:15 UTC (test-lane CI failure diagnosed and fixed; newest head 0d5df56 CI RUNNING)
+### Current continuation snapshot — 2026-10-19 11:00 UTC (BOTH BACKEND LANES GREEN at head 0d5df56 — BE #359 fully verified)
 
-**This block supersedes the 2026-10-19 03:40 snapshot below.** GitHub main and exact-head CI remain implementation authority. The PRs listed here are open and unmerged; these notes do not authorise a merge.
+**This block supersedes the 09:15 snapshot below.** GitHub main and exact-head CI remain implementation authority. The PRs listed here are open and unmerged; these notes do not authorise a merge.
+
+#### BE #359 — VERIFIED GREEN at exact head `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f`
+
+- **Azaman Test Suite run 39225590677: SUCCESS (first attempt).** financial-durability run 39225590938: SUCCESS (first attempt). The full battery — including the workflow's retry-once step — needed no retries; the hour-independent scan-cap suite and all 374 suites passed.
+- The `0d5b154` test-lane failure is closed as diagnosed: the scan-cap suite's static `03:00-04:00` "never-open" window was OPEN at the 03:15 UTC CI hour (stale rows genuinely eligible, filled the page ahead of the fresh item); fixed INSIDE the test suite only at `0d5df56` — dynamic `closedWindow(nowMin)`, 180s teardown headroom, cascade-first sweep, patch restoration, battery-robust ≤80-query bound. The adaptive walk and all production code are untouched from `0d5b154`.
+- The same lane's mix-p1 `[]` failure remains classified as the known battery-retry cross-suite-residue flake (passed invocation 1; 55/55 locally on the 21k-residue DB across repeated in-band rounds; same symptom pre-dated the adaptive change on 2026-10-18). It did not recur at `0d5df56`.
+- PR #359 description updated with the green first-attempt evidence at the exact head.
+
+#### FE #156 — ALREADY VERIFIED GREEN at head `6690b65` (Flutter Quality 39193716143, Android Integration 39193716122). Frontend close-out COMPLETE.
+
+#### Residual owner items (UNCHANGED — not claimable by agents)
+
+- Mix tile visual captures: **PENDING OWNER REVIEW** (visual acceptance NOT complete).
+- #154 physical-device smoke: **BLOCKED** (no physical device in sandbox).
+- #353 frozen at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, both lanes green.
+- Production Render remains suspended; **no merges, no deployments, no production writes this wave.**
+
+### Superseded snapshot — 2026-10-19 09:15 UTC (test-lane CI failure diagnosed and fixed; head 0d5df56 CI running)
+
+ GitHub main and exact-head CI remain implementation authority. The PRs listed here are open and unmerged; these notes do not authorise a merge.
 
 #### BE #359 test-lane failure — root-caused and fixed at `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f` (test-suite-only commit; the adaptive walk is untouched)
 

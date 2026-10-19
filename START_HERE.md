@@ -1,7 +1,7 @@
 # AZAMAN Engineering Brain — START HERE
 
 **Status:** ACTIVE — PRIMARY CONTINUATION ENTRYPOINT  
-**Last verified:** 2026-10-19 UTC (test-lane CI failure root-caused and fixed in the scan-cap suite at head 0d5df56; FE #156 fully green at 6690b65; newest-head CI runs listed in ACTIVE_LOOP.md)
+**Last verified:** 2026-10-19 UTC — BE #359 FULLY VERIFIED: both backend lanes GREEN at head 0d5df56 (test 39225590677, durability 39225590938, first attempt). FE #156 green at 6690b65. #353 frozen at 7805c3c. All PRs await owner merge review; no deployments.
 **Repositories:** `AZM-backend`, `AZM-adminPortal`, `AZM-businessPortal`, `AZM-frontend`, `AZM-Planning`
 
 > Any agent continuing AZAMAN engineering MUST start here, then read `ROADMAP.md`, `CURRENT_STATE.md`, `ACTIVE_LOOP.md` and `EXECUTION_LEDGER.json`. Do not restart from historical session journals.

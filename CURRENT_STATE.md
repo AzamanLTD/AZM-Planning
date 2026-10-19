@@ -4,9 +4,18 @@
 **Authority:** current repository `main` + exact CI/evidence.
 
 
-## Current verified snapshot — 2026-10-19 test-lane failure diagnosed (head 0d5df56 CI running)
+## Current verified snapshot — 2026-10-19 BOTH BACKEND LANES GREEN at 0d5df56 (BE #359 fully verified)
 
-**This snapshot supersedes the acceptance close-out snapshot below.** Source of truth is GitHub main plus exact-head CI.
+**This snapshot supersedes the test-lane-failure snapshot below.** Source of truth is GitHub main plus exact-head CI.
+
+- **Backend PR #359** head `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f`: **BOTH LANES GREEN, first attempt** — Azaman Test Suite 39225590677 SUCCESS, financial-durability 39225590938 SUCCESS (2026-10-19). The `0d5b154` failure is closed as diagnosed (hour-dependent static window inside the scan-cap TEST suite; fixed suite-only at `0d5df56`; production code identical from `0d5b154`). mix-p1 `[]` = known battery-retry residue flake, did not recur. PR description carries the exact-head evidence.
+- **Frontend PR #156** head `6690b65`: BOTH LANES GREEN (FQ 39193716143, AI 39193716122) — frontend close-out COMPLETE.
+- **Backend PR #353** head FROZEN at `7805c3cbee5c9d8fd01cc19689e21b2cb63d1de6`, both lanes GREEN.
+- **Still open / not claimed:** Mix tile visual captures PENDING OWNER REVIEW; #154 physical-device smoke BLOCKED; production Render still suspended — no merges, deployments or production writes this wave. All three PRs (#353, #359, #156) await owner merge review.
+
+### Superseded snapshot — 2026-10-19 test-lane failure diagnosed
+
+
 
 - **Backend PR #359** head `0d5df5680acbffc2f0d3c01c112a5377e3b3f67f`: the `0d5b154` test-lane failure (run 39192378361) is root-caused — the scan-cap suite's static `03:00-04:00` "never-open" window was OPEN at the CI hour (03:15 UTC), making the "stale" rows genuinely eligible; fixed INSIDE the test suite only (dynamic hour-independent windows, 180s teardown headroom, cascade-first sweep, patch restoration, battery-robust ≤80-query bound). The adaptive walk and all production code are untouched. The same lane's mix-p1 `[]` failure was a battery-retry cross-suite-residue flake (passed invocation 1; 55/55 locally on a 21k-residue DB; known family). Local: scan-cap 3/3, mix-p1 55/55, rail 21/21, eligibility 2/2, four suites in band 81/81 × 3 rounds. CI at exact head: test 39225590677 RUNNING, durability 39225590938 RUNNING. financial-durability was already GREEN at `0d5b154` (39192378371).
 - **Frontend PR #156** head `6690b65acbb9e50253f3f1061e8030ef5f2a2369`: BOTH LANES GREEN (Flutter Quality 39193716143, Android Integration 39193716122) — the frontend close-out is COMPLETE.

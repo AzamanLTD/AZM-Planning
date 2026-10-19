@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-19T08:51:56Z",
+  "updatedAt": "2026-10-19T10:50:02Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -1052,15 +1052,15 @@
     {
       "id": "backend-product-ghs-price-rail-359",
       "repo": "AzamanLTD/AZM-backend",
-      "status": "verified-but-reopened",
+      "status": "verified",
       "notes": "OPEN/unmerged, head 1e403f8 (on rebased base #355/81aef46). Authoritative priceGhs on product read DTOs (product rails + business-detail) AND, added in the final acceptance follow-up (1e403f8), the customer-facing storefront ordering catalogue GET /api/storefront/:bizId/products \u2014 same shared resolveEffectiveGhsPrices resolver and exact-2dp serialization, per-identity fail-closed to null, priceUsdc byte-identical as the payable rail amount. Scan-cap fix (1be1bd8): discovery window-filter MAX_ROUNDS 3->80 with hermetic regression suite. Rail suite now 21/21 (route proofs 4a-4d business-detail + 5a-5d storefront catalogue); scan-cap regression + mix-p1 re-verified 56/56. Measured continuation envelope (worst case, local CI-parity Postgres, 21000 stale window-closed rows ahead of one fresh item): client path = 1 initial + 8 auto-follow continuations = 9 requests / 720 server queries / ~60s wall (2.7-11.3s per request; per-request cost bounded by the MAX_ROUNDS=80 cap, ~1s at the 1920-row budget boundary on a small table; realistic 90-row case 4 queries/~29ms). Client guards: hard kMaxFirstPageContinuations=8, stale-response protection mid-walk, repeated-cursor progress guard, honest empty state with 'Show more' affordance. CI lanes (test 39189630963, durability 39189630855) RUNNING on 1e403f8 \u2014 verify exact-head green before merge review. Review target only. ACCEPTANCE CLOSE-OUT (2026-10-19, head 0d5b1545608a13eaa48413d4c15e4825053cecd4): adaptive window-filter scan \u2014 per-round fetch doubles after zero-emit rounds (cap 512 rows/query), resets to need+1 after productive rounds; cursor rests at the LAST EXAMINED row so page exactness/cursor correctness unchanged; hard budgets explicit and two-sided (MAX_ROUNDS=80 queries + MAX_SCAN_ROWS=25000 examined rows per request). Measured worst case (real CI-parity Postgres, 21000 stale window-closed rows ahead of one fresh item): 1 client request / 45 server queries / 5.9s wall, item on the first page (was 9 requests / 720 queries / ~60s, item never surfaced). Scan-cap suite extended to 3 tests: 90-row surfacing (existing), NEW 3000-row single-request surfacing in <=15 queries, NEW 25500-row truthful budget exhaustion (empty + non-null cursor at <=80 queries, client continuation finds the item next request). PR #359 description updated to exact head 0d5b154 with the storefront priceGhs contract. #353 remains FROZEN. CI-FAILURE DIAGNOSIS + FIX (2026-10-19, head 0d5df56, test-suite-only commit \u2014 production adaptive walk untouched): (a) scan-cap suite's 'stale' rows used a static 03:00-04:00 window on a falsified 'never open during battery hours' assumption; CI ran at 03:15 UTC inside that hour, stale rows became eligible and filled the first page (deterministic, proven by the received arrays in run 39192378361). Fix: dynamic closedWindow(nowMin) (ends ~30 min before the current UTC minute, wrap-safe \u2014 closed at every hour), jest.setTimeout(180000) so 25.5k-row teardowns cannot die on the 30s hook cap and leak residue into other suites, cascade-first sweep (BusinessPrice onDelete: Cascade), monkey-patch restoration via afterEach registry, and the 3000-row proof asserts the shipping hard cap (queries <= 80) rather than the clean-DB <=15 (51 queries observed against a 21k-row residue DB). (b) The same lane's mix-p1 '[]' failure appeared ONLY in the workflow's full-battery retry invocation (cross-suite residue; passed invocation 1 at the same code; 55/55 on the 21k-residue local DB across repeated in-band rounds with all four discovery suites \u2014 treated as the known battery-residue flake family, not a regression). Local verification at 0d5df56: scan-cap 3/3, mix-p1 55/55, rail 21/21, eligibility 2/2, four suites in band 81/81 x 3 rounds. PR #359 description updated to exact head 0d5df56.",
-      "headSha": "0d5df56",
+      "headSha": "0d5df5680acbffc2f0d3c01c112a5377e3b3f67f",
       "ci": {
         "mainTestRun": 39225590677,
-        "mainTestConclusion": "in_progress",
+        "mainTestConclusion": "success",
         "financialDurabilityRun": 39225590938,
-        "financialDurabilityConclusion": "in_progress",
-        "note": "Head moved 0d5b154 -> 0d5df56 (scan-cap suite hour-independence fix, 2026-10-19). Test lane at 0d5b154 FAILED (run 39192378361): the suite's static 03:00-04:00 'never-open' window was OPEN at the CI run hour (03:15 UTC) \u2014 stale rows genuinely eligible, filled the page ahead of the fresh item; durability was GREEN there (39192378371). mix-p1 '[]' in the same lane failed only in the workflow's full-battery retry on cross-suite residue (passed invocation 1; passes 55/55 on a 21k-residue DB locally). Both lanes RUNNING at exact head 0d5df56 (test 39225590677, durability 39225590938); flip on conclusion."
+        "financialDurabilityConclusion": "success",
+        "note": "GREEN at exact head 0d5df56 (both lanes, first attempt, 2026-10-19). Head 0d5b154: durability GREEN (39192378371), test lane failed (39192378361) on the scan-cap suite's hour-dependent static window \u2014 fixed inside the test suite only at 0d5df56; production code identical from 0d5b154."
       }
     },
     {
