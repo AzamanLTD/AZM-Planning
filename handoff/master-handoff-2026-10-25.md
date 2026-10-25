@@ -11,10 +11,10 @@ _Last refreshed: 2026-10-25 ~15:45 UTC (second refresh — post-head-updates)_
 
 | Workstream | PR | Branch / head | Status |
 |---|---|---|---|
-| A — Home persistent translucent header + pull-down notification centre | #191 | `feat/home-persistent-header` **`8326701`** | PR open, head updated 2026-10-25 PM (grouped-list fix, see below); android green, quality rerun pending (CI cancellation wave, see below) |
+| A — Home persistent translucent header + pull-down notification centre | #191 | `feat/home-persistent-header` **`8326701`** | PR open, head updated 2026-10-25 PM (grouped-list fix, see below); android green on `8326701`; quality awaits #199 merge (golden drift, resolved by #199) |
 | B — Shared launcher surface: Send rise + X + pull-dismiss | #192 | `feat/send-surface-grammar` `33c78e4` | PR open, both CI lanes green |
 | C — Withdraw Add-Cash grammar + swipeable payout sections | #193 | `feat/withdraw-surface-grammar` `51d42d3` → **`de2a8b1`** | PR open; head updated 2026-10-25 with the **owner wallet-selector correction** (see below); both lanes green on `de2a8b1` (quality 121154042864, android 121154042823) |
-| D — Binance-style Convert presentation, execution gated | #194 | `feat/convert-presentation` **`146166e`** | PR open, head updated 2026-10-25 PM (Image A review + honest Max fill, see below); both lanes cancelled mid-run (see below) |
+| D — Binance-style Convert presentation, execution gated | #194 | `feat/convert-presentation` **`146166e`** | PR open, head updated 2026-10-25 PM (Image A review + honest Max fill, see below); android green on `146166e`; quality awaits #199 merge (golden drift, resolved by #199) |
 | E — Balance card E1 grammar + E2 320dp overflow + E3 back-face rhythm + E4 confetti | #195 | `feat/balance-card-polish` `4991ea5` | PR open, both CI lanes green |
 | F — Story rail in-place expansion + viewer caption reveal | #196 | `feat/marketplace-story-expansion` `13cfac0` | PR open, both CI lanes green |
 | G — Business list declutter + avatar badge/bookmark/story ring | #197 | `feat/business-list-identity` `c73bd7b` | PR open, both CI lanes green |
@@ -86,11 +86,23 @@ Three runs across two PRs and both workflows were CANCELLED mid-execution within
 - PR194 android run 40205389748 — cancelled at 15:37:07 mid "Build Android debug APK",
   30 min in.
 No concurrency conflict exists (groups are per-workflow-per-PR-ref; no superseding runs
-in either group). This pattern matches either an org Actions-minutes/billing wall
-(in-flight jobs get cancelled) or a manual cancel by an admin. **Not re-attempting
-further reruns** until the owner confirms which — each attempt burns runner minutes.
-Android lane had passed on `8326701` before the wave, and every run before 11:45 UTC
-was green on both lanes, so the code is not the suspect.
+in either group). This pattern matched an org Actions-minutes/billing wall (in-flight
+jobs get cancelled) — **the owner resolved the underlying cause in the afternoon**
+("I know what happened, I have worked on it now").
+
+**RESOLVED 2026-10-25 ~16:50 UTC.** Once runs could complete again, both quality
+lanes failed on a SECOND, distinct issue: the ubuntu runner image rolled its glyph
+rasterisation between 11:37 and 16:02 UTC — the native_amount `gallery_*` goldens
+(untouched by either PR; green at 11:37 in run 40189169844) failed at 0.03-0.05% /
+85-86px in the typed "20" text. Proof it was environmental: an `update_goldens`
+dispatch on main `190f722` (run 40210222370) regenerated every non-gallery golden
+**byte-identical**; only the 8 gallery captures changed. Those 8 regenerated goldens
+went up as **PR #199 (head `5f2afc4`, branch `chore/native-amount-gallery-golden-rebaseline`)
+— BOTH LANES GREEN** (full suite incl. all 40 native_amount captures). Once the owner
+merges #199, #191 and #194 re-fire against the new merge ref and should go fully green
+(no overlap, no rebase needed); their android lanes are already green on `8326701`
+and `146166e` respectively. Evidence comments: 6400108278 (#199), 6400108402 (#191),
+6400108542 (#194).
 
 ## Confirmations
 
