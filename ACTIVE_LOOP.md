@@ -17,6 +17,18 @@
 
 **Status:** ACTIVE — DO NOT CLOSE
 
+### P0 current architecture decision — 2026-10-26
+
+Before new money code, follow [docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md](docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md) and [ROADMAP.md Wave 12](ROADMAP.md). This is a new money-contract priority; it does not imply the remaining stale baseline sections in this file have been globally reconciled.
+
+- The backend already has an authoritative asset-aware ledger/explicit conversion boundary: extend it, do not recreate it.
+- Product denomination is fixed and separate from source asset, display valuation, quote and settlement. Domestic obligations default to GHS only behind real GHS funding/settlement proof.
+- Susu currency does not change dynamically with a member-mix threshold; provider ambiguity does not automatically imply default; no unapproved fronting or partial payout.
+- Audit #367/#368/#369 and frontend #203 at their exact current heads before further currency work. The broad FX gate in #368 needs route-by-route policy review.
+- Immediate next action is Phase 0 read-only route/field/provider/ledger and legacy-contract inventory; no merges, production changes or live-money activation are authorized by the architecture document.
+
+
+
 ### Verified current GitHub state — 2026-09-19 UTC
 
 - Backend main: `baaa4e2359d404fe2bc0b81638c2314b279cf976` (2026-09-19) — §P.4, §P.5-A, §P.5-B, §P.5-C and §P.5-D are merged. P5-C route-aware quote authority is closed at squash `19671d7`; P5-D evidence-backed GHS liquidity authority is closed at squash `baaa4e2` from exact head `22ebebd`. P5-D has 55 dedicated real-PostgreSQL proofs and a 227-suite / 1,719-test clean battery; exact-head CI #1060 succeeded. P5-D preserves 271C external-rate freshness, uses exact-pesewa GHS accounting, keeps `SystemFiatPool` as compatibility projection, follows recorded withdrawal regime, and sends the originally reserved GHS amount despite later rate drift. Main is at the verified squash merge SHA. The available workflow lookup does not independently expose a post-merge push-triggered run for the squash commit, so none is inferred. Next boundary: §P.5-E Model B settlement / cost-basis realization.

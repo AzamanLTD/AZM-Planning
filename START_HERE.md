@@ -1,7 +1,7 @@
 # AZAMAN Engineering Brain — START HERE
 
 **Status:** ACTIVE — PRIMARY CONTINUATION ENTRYPOINT  
-**Last verified:** 2026-09-05 UTC  
+**Last verified:** 2026-09-05 UTC (legacy cross-repo baseline; multi-asset money architecture scope reviewed 2026-10-26)  
 **Repositories:** `AZM-backend`, `AZM-adminPortal`, `AZM-businessPortal`, `AZM-frontend`, `AZM-Planning`
 
 > Any agent continuing AZAMAN engineering MUST start here, then read `ROADMAP.md`, `CURRENT_STATE.md`, `ACTIVE_LOOP.md` and `EXECUTION_LEDGER.json`. Do not restart from historical session journals.
@@ -9,6 +9,10 @@
 ## Mission
 
 Bring AZAMAN to production-ready correctness by establishing who owns truth, who may mutate it, how state transitions, how concurrency behaves, and how every client converges after failure/realtime loss.
+
+## New P0 — multi-asset money and settlement architecture (2026-10-26)
+
+Before implementing or enabling native-GHS wallet, Susu currency, savings/vault denomination, conversion, cross-border recipient settlement, or FX-gate changes, read [docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md](docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md) and ROADMAP Wave 12. The decision separates customer asset, product obligation, display valuation, executable quote, funding plan and proven settlement. Extend the existing ledger/quote/idempotency authorities; do not create a parallel money engine. The architecture is documentation and implementation direction, not permission to activate a live-money path.
 
 ## Current priority
 

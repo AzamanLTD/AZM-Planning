@@ -1,7 +1,42 @@
 # AZAMAN Current Engineering State
 
-**Last reconciled:** 2026-10-01 UTC
+**Last reconciled:** 2026-10-26 UTC for the multi-asset money architecture scope only; the remaining entries below retain their prior evidence dates.
 **Authority:** current repository `main` + exact CI/evidence.
+
+## 2026-10-26 — Multi-asset money and settlement architecture recorded (PLANNED, not implemented)
+
+Canonical plan: [docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md](docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md). Active roadmap: [ROADMAP.md Wave 12](ROADMAP.md).
+
+### Source-verified baseline and critical distinctions
+
+- Backend main inspected at 0edefa1dbe056343080f2d762d89a1b0936c109c includes the authoritative transaction-scoped ledger and explicit asset-conversion identity boundary. Extend it; do not create a second ledger.
+- The existing ledger/P5 foundations and GHS liquidity/off-ramp authority do not, by themselves, prove that a spendable native-GHS customer wallet is fully wired and reconciled.
+- Mainline Susu and vault schemas/services still use USDC-named amount fields. That is evidence of current implementation semantics, not a reason to make future domestic products USDC-denominated.
+- Backend PRs #367, #368 and #369 were open/unmerged at review. #367's native-GHS customer balance/valuation contract does not authorize live activation; #368's universal USDC/GHS rate gate conflicts with the route-specific target policy and needs a full route inventory/review; #369's single-winner Susu payout protections must be preserved while denomination is audited.
+- Frontend PR #203 was open/unmerged at review. Round-2 head 13f4f8ea8b05e6dfd0bea5da4c10dd9efce545ca passed Flutter Quality and Android Integration. Keep unknown/malformed valuation fail-closed behavior, but do not consider frontend mapping a substitute for backend obligation/settlement correctness.
+- Regulatory/provider research checked 2026-10-26: BoG/SEC's 2026-02-20 joint notice restricts mass marketing of virtual-asset products absent express authorization; public provider documentation is not proof of AZAMAN's contracted route. See the architecture spec for official links and mandatory counsel/provider gates.
+
+### Settled target decisions
+
+- Domestic product obligations default to GHS; exact product denomination is selected/versioned before activation and does not shift with member currency mix.
+- Asset held, product obligation, display valuation, executable quote, funding plan, customer liability and settlement evidence remain separate.
+- The planner selects from exact spendable asset buckets, uses GHS first for a GHS obligation under the default policy, and offers an explicit quote-backed USDC conversion for a shortfall.
+- Recipient intent explicitly distinguishes sending an asset amount from delivering a target-currency amount.
+- Cross-currency values use a shared ≈/estimate pattern; estimates never authorize transactions and unavailable rates never produce fabricated GH₵0.00.
+- Platform conversion revenue is disclosed/quoted and settlement-timed; no hidden ongoing skim from customer assets.
+- FX gates are route-specific. Pure asset-native transfers do not automatically depend on an unrelated GHS display rate.
+- Susu defaults to no unapproved platform advance/partial payout; ambiguous provider outcomes are not treated as a member default.
+- Legacy USDC contracts/rows are not silently relabelled or backfilled.
+
+### Next exact actions
+
+1. Execute Phase 0 read-only route/field/provider/ledger audit in the architecture spec.
+2. Re-read exact current backend main and open PR heads before code changes; reconcile P5-E/Model B status with source, not older Planning snapshots.
+3. Determine which native-GHS customer paths actually exist and prove funding → spend → withdrawal/reversal → reconciliation.
+4. Decide the #368 route-gate correction from a complete route inventory before merge.
+5. Do not enable any new GHS-denominated live-money product until its obligation, asset backing and settlement route pass the full gates in Wave 12.
+
+No application implementation, merge, deployment, production data change or live-money activation is implied by this planning entry.
 
 ## Current verified baseline
 
