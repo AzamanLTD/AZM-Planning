@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-01T00:00:00Z",
+  "updatedAt": "2026-10-26T21:05:47.729Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -842,6 +842,15 @@
         "postMergeMain": "0fb8d24791088490df0ef5b1088e44cfe557c5a9"
       },
       "nextStep": "Implement frontend economic-operation lifecycle deep-dive step 2: failure classification, then step 3 cross-repo fingerprint equivalence. Preserve the single durable identity boundary."
+    },
+    {
+      "id": "multi-asset-money-and-settlement-architecture",
+      "repo": "AzamanLTD/AZM-Planning",
+      "status": "planned",
+      "objective": "Establish one product and technical contract for multi-asset balances, GHS-denominated domestic obligations, USDC funding/conversion, executable quotes, recipient settlement, fees/revenue and reconciliation across Susu, savings/vault, transfers and local commerce.",
+      "sourceOfTruthDoc": "docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md",
+      "notes": "Planning/architecture only as of 2026-10-26. Read-only source review confirms the existing backend ledger has exact Decimal, asset identity and explicit ASSET_CONVERSION primitives; do not rebuild the ledger. Domestic product obligation denomination, actual native-GHS customer wallet/settlement availability, legacy USDC product contracts, provider corridor capability, and legal/compliance scope must be proved before activation. Backend PRs #367/#368/#369 and frontend PR #203 were open/unmerged at review; exact current heads/CI must be refreshed before implementation. No production changes or live-money activation.",
+      "nextStep": "Phase 0: inventory all financial routes, schema fields, product contract versions, quote/ledger/provider paths and reconciliation; verify native-GHS customer funding independently of existing GHS liquidity/off-ramp; obtain provider and legal confirmation; then freeze typed contracts before implementation."
     }
   ],
   "notes": [
