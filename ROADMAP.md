@@ -2,7 +2,7 @@
 
 **Priority authority:** YES  
 **Status:** ACTIVE  
-**Last reconciled:** 2026-09-03 UTC
+**Last full roadmap reconciliation:** 2026-09-03 UTC; **multi-asset money architecture scope added:** 2026-10-26 UTC. The rest of the roadmap has not been globally re-audited by this change.
 
 This is the **single active execution plan** for the five-repository AZAMAN platform. It incorporates the prior master roadmap and Lyra's independent assessment. Dated plans are historical evidence, not competing instructions.
 
@@ -306,3 +306,52 @@ This wave captures product requirements that must constrain future implementatio
 
 **Exit:** these requirements are either implemented behind canonical authority boundaries or explicitly marked unresolved with evidence in `CURRENT_STATE.md`.
 
+
+
+---
+
+# WAVE 12 — MULTI-ASSET MONEY, PRODUCT DENOMINATION AND SETTLEMENT (2026-10-26)
+
+**Priority:** P0 financial correctness  
+**Canonical architecture:** [docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md](docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md)  
+**Status:** PLANNED — design decision recorded; no application behavior or live-money route is activated by this documentation.
+
+AZAMAN must distinguish currency/asset held, product obligation denomination, display valuation, executable quote, funding plan, customer liability and evidenced settlement. Domestic obligations default to GHS; the source asset never silently changes the contract. Use the existing authoritative ledger, explicit ASSET_CONVERSION boundary, durable operation/idempotency machinery and route-bound quote authorities.
+
+## Decisions that constrain every feature
+
+- [ ] New domestic Susu, savings/vault contracts and local merchant prices default to GHS denomination only when real GHS funding/settlement is backed and reconciled. Explicit USDC-denominated products remain possible with clearly estimated GHS display values.
+- [ ] Susu denomination is explicitly selected and contract-versioned before activation, then immutable. Reject dynamic 50/50 or 60% currency-majority switching; any composition-based suggestion uses only declared/consented preferences and never changes a running contract.
+- [ ] Use one Funding Planner over actual spendable asset buckets. GHS first by policy; when short, offer a quote-backed USDC conversion. Display valuations never authorize debits.
+- [ ] Distinguish “send this asset amount” from “recipient receives this currency amount.” Recipient settlement preference may preselect UI but cannot silently alter sender intent.
+- [ ] Use reusable ≈ / estimate treatment across wallet, Susu, savings, vault, transfer and checkout; show unavailable rather than a fabricated zero. Quote estimates include known costs and are not represented as guarantees.
+- [ ] Conversion fees and AZAMAN margin are visible before consent and recognized at supported settlement, not continuously skimmed from customer pools or inferred from revaluation.
+- [ ] Prefer quote-backed on-demand asset sourcing for new conversions. Customer-owned USDC, platform-owned inventory, provider-held assets, clearing and customer liabilities must remain explicitly distinct and reconciled.
+- [ ] FX execution gates are route-specific. A conversion/GHS-valued obligation requires valid executable quote authority; a pure same-asset transfer does not automatically depend on a stale unrelated USDC/GHS display rate.
+- [ ] Susu payout requires fully funded contract math, a single-winner payout identity and recoverable provider ambiguity. Default to no platform advance and no partial payout; any exception requires a separately funded and approved risk product.
+- [ ] Do not reinterpret existing USDC-labelled rows as GHS. Audit contract versions and migrate only through a controlled, consent-aware, ledger-reconciled plan.
+
+## Ordered implementation waves
+
+1. **Phase 0 — Read-only audit:** inventory all financial routes, product amount fields, provider rails, quote authority, ledger legs, operations, state machines and reconciliation; verify the current native-GHS customer path versus existing GHS liquidity/off-ramp authority; audit legacy Susu/vault contract strata; get current provider/legal confirmation.
+2. **Phase 1 — Contract freeze:** versioned typed currency/asset/amount/quote/settlement API contracts and cross-repo tests. Reuse existing models where possible; no invented endpoints or duplicate quote/ledger.
+3. **Phase 2 — Asset/settlement backbone:** prove real GHS customer-liability funding, spend, withdrawal/reversal and reconciliation; complete the existing asset-conversion/inventory economics boundary; align route-specific FX gates.
+4. **Phase 3 — Funding Planner and quote execution:** reserve source funds, require quote-bound consent, execute with durable operation identity, recover ambiguous provider outcomes and enforce standing-instruction caps.
+5. **Phase 4 — Susu:** immutable denomination/contract version, correct contribution and payout unit, mixed-asset funding, default/late-provider semantics, one-winner full-pot settlement.
+6. **Phase 5 — Savings/vault:** separate progress-only targets from funded/locked money; denomination-aware deposit, auto-rule, break, maturity and release.
+7. **Phase 6 — Marketplace/restaurant/dine-in:** domestic GHS order and merchant-receivable contract with a real matching settlement route, payment/refund/reconciliation proofs.
+8. **Phase 7 — Peer/remittance:** explicit source-asset versus recipient-currency intent, preference semantics, sender-disclosed conversion costs and future corridor abstraction.
+9. **Phase 8 — Client/portal convergence:** shared money models, shared estimate display, funding-source selection, quote confirmation, pending continuation/recovery, accessibility and exact API compatibility.
+10. **Phase 9 — Controls/release:** multi-asset reconciliation, anomaly alerts, provider runbooks, treasury limits, legal/compliance sign-off, migration/rollback rehearsal and independent red-team review.
+
+## Required gates
+
+- [ ] Backend route/field/asset matrix is verified against current main before implementation.
+- [ ] #367 native-GHS balance/valuation contract is not treated as proof of live GHS customer funding.
+- [ ] #368 universal FX gate is reviewed against the route-specific policy before it becomes final.
+- [ ] Existing #369 Susu payout safety is preserved, but its currency contract is separately audited against the product denomination decision.
+- [ ] Frontend #203 unknown/malformed-value behavior is preserved; client code never computes authoritative transaction pricing.
+- [ ] Critical ledger/concurrency/replay tests use disposable real PostgreSQL, not production Neon; exact-head CI and final source/diff audit are required.
+- [ ] No production activation, rollout or financial data repair proceeds without its separate explicit authorization.
+
+**Exit:** every supported product states the exact obligation currency, eligible funding assets, quote/fee authority, ledger postings, provider finality, failure/reversal behavior and reconciliation proof. Green CI alone is insufficient.
