@@ -20,6 +20,23 @@
 | Realtime | Backend Socket.IO | all clients | event ordering/filtering/reconnect |
 | Experience Blueprint | Backend | Business config + Flutter renderer | schema/version/fallback/published consistency |
 
+## Multi-asset money and settlement contract (P0)
+
+Canonical specification: [docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md](docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md).
+
+| Contract | Producer / authority | Consumers | Required verification |
+|---|---|---|---|
+| Asset identity and exact buckets | Backend ledger/balance services | Flutter, Admin, relevant Business finance views | Canonical network/token identity; exact available/reserved/locked/pending buckets; no mixed-unit totals |
+| Product denomination/contract | Backend Susu, savings/vault and commerce domain | Flutter, Business, Admin | Immutable version/hash, accepted denomination, fee and payout terms |
+| Display valuation | Backend valuation read model | Flutter/portals | Native amount vs estimate; rate basis/time; unavailable is not zero; never used to authorize |
+| Executable conversion quote | Existing backend route-bound quote/provider authority | Funding Planner + customer client | Source/target exact amounts, asset/currency, route, fees/margin, expiry, recipient binding, one-use acceptance |
+| Funding plan / operation | Backend financial operation/orchestration authority | Flutter and domain services | Spendable asset plan, reservation, idempotency, pending/ambiguous recovery, no partial economic residue |
+| Ledger conversion | Existing transaction-scoped ledgerService ASSET_CONVERSION | All money domains | Source and destination legs, per-asset balancing, conversion provenance, exact replay |
+| Settlement outcome | Backend domain/provider/custody state machine | Flutter, Business, Admin, notifications | Correct finality evidence, refund/reversal and reconciliation; no UI/notification success inference |
+| Recipient settlement intent | Backend transfer API + recipient preference | Flutter sender/recipient views | “Send asset amount” vs “recipient receives currency amount”; preference never silently mutates accepted intent |
+
+Rules: local domestic obligations/prices default to GHS only when the corresponding real GHS settlement path exists; user asset holdings remain distinct from product obligations; all cross-currency execution uses a valid quote and explicit consent; same-asset transfer can remain FX-independent; every client is a consumer of canonical backend state.
+
 ## Dine-in — first deep contract audit
 
 Trace the exact request/response/event chain for:
