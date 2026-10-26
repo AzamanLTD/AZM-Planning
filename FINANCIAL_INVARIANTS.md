@@ -4,6 +4,22 @@
 
 No client, portal or generic CRUD path is allowed to become an independent financial engine. The backend financial service is authoritative.
 
+## Multi-asset and product-obligation invariants (P0)
+
+Canonical contract: [docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md](docs/MULTI_ASSET_MONEY_AND_SETTLEMENT_ARCHITECTURE_2026-10-26.md).
+
+- Product obligation denomination is explicit, versioned and fixed; domestic obligations default to GHS when the true GHS settlement path is supported. The funding asset never silently changes the promise.
+- Currency code and asset identity are separate. USDC network/issuer/contract identity is part of the asset, and GHS/USDC quantities cannot be summed as though they share a unit.
+- The wallet may show a combined estimated valuation, but every authorization uses exact asset-specific spendable buckets. Unknown valuation is not zero; a display rate is never an executable quote.
+- Cross-asset exchange requires the existing explicit ASSET_CONVERSION ledger identity with exact, per-asset-balanced legs and durable provenance. Do not build a second ledger.
+- Cross-currency obligations require a valid, bound, unexpired executable quote, explicit cost disclosure and accepted terms. Saved/demo/stale display rates cannot authorize conversion.
+- A pure same-asset operation need not depend on an unrelated FX rate unless its specific risk/limit contract genuinely needs that valuation. FX gates are route-specific and must be documented against all mounted routes.
+- Fees and AZAMAN margin are disclosed before consent and recognized from the committed settlement under accounting policy; never skim continuously from customer funds or recognize unrealized revaluation as revenue.
+- New GHS-denominated obligations must not be enabled until actual native-GHS funding/liability/withdrawal/reversal and reconciliation are proven. Provider float, UI estimates and scaffolding do not constitute customer GHS assets.
+- Susu denomination is fixed before activation; mixed funding must settle into that denomination. A provider-ambiguous contribution is not automatically a member default, and no cycle payout may be duplicated or under-backed.
+- Savings goals are not cash; vault/savings locked amounts require actual funds and the correct product currency. Legacy USDC fields/records cannot be silently reinterpreted as GHS.
+- Existing ledger, durable operation, route-bound quote, custody and reconciliation authorities must be extended, not duplicated.
+
 ## Required invariants
 
 ### Balance
