@@ -1,7 +1,13 @@
 # AZAMAN Current Engineering State
 
-**Last reconciled:** 2026-10-01 UTC
+**Last reconciled:** 2026-10-27 UTC
 **Authority:** current repository `main` + exact CI/evidence.
+
+## Native-GHS valuation + settlement wave (2026-10-27, verified)
+
+- **PR #369 correction (head `9909fe2`):** the balance headline is the authoritative native-GHS balance ONLY; the USDC equivalent sits beneath as the estimate (`GHS / rate`); a missing FX rate no longer nullifies the GHS headline. Owner regression pinned (100 GHS + 500 USDC @ 10 → 100 GHS headline, 10 USDC estimate). 91/91 valuation suites; CI green both lanes.
+- **PR #381, native-GHS settlement collections leg (head `8dcfaae`, stacked on #369's branch, open unmerged):** flag `GlobalSettings.nativeGhsSettlementEnabled` default OFF wired into all 3 CI install chains. ON = exact-pesewas credit to `nativeGhsBalance`, USDC untouched, §P.4 GHS posting, Model B + clearing:conversion skipped, config contradiction fails closed. Once-only CAS reversal (raw jsonb stamp), reconciliation sweep flags stranded rows as exceptions without mutating money. 7/7 new suite + 232/232 affected battery; CI green both lanes at `8dcfaae`.
+- **Open owner decision:** GHS-native withdrawal-leg semantics (skip quote/FX entirely? pool settlement rate?). Blocks flag activation. Nothing merged, nothing activated.
 
 ## Current verified baseline
 
