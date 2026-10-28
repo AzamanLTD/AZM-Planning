@@ -1,7 +1,24 @@
 # AZAMAN Current Engineering State
 
-**Last reconciled:** 2026-10-01 UTC
+**Last reconciled:** 2026-10-27 UTC
 **Authority:** current repository `main` + exact CI/evidence.
+
+## Native-GHS valuation + settlement wave (2026-10-27, verified)
+
+- **PR #369 correction (head `9909fe2`):** the balance headline is the authoritative native-GHS balance ONLY; the USDC equivalent sits beneath as the estimate (`GHS / rate`); a missing FX rate no longer nullifies the GHS headline. Owner regression pinned (100 GHS + 500 USDC @ 10 → 100 GHS headline, 10 USDC estimate). 91/91 valuation suites; CI green both lanes.
+- **PR #381, native-GHS settlement collections leg (head `8dcfaae`, stacked on #369's branch, open unmerged):** flag `GlobalSettings.nativeGhsSettlementEnabled` default OFF wired into all 3 CI install chains. ON = exact-pesewas credit to `nativeGhsBalance`, USDC untouched, §P.4 GHS posting, Model B + clearing:conversion skipped, config contradiction fails closed. Once-only CAS reversal (raw jsonb stamp), reconciliation sweep flags stranded rows as exceptions without mutating money. 7/7 new suite + 232/232 affected battery; CI green both lanes at `8dcfaae`.
+- **Open owner decision:** GHS-native withdrawal-leg semantics (skip quote/FX entirely? pool settlement rate?). Blocks flag activation. Nothing merged, nothing activated.
+- **PR #382, withdrawal-leg design contract (2026-10-28, head `0c128aa`, stacked on #381, open unmerged):** design-only — no production code. Recommends Option A (GHS in, GHS out: exact-pesewa debit with r25 single-winner CAS, dispatch of the exact reserved GHS, distinct `ledger:wallet:withdrawal-ghs:{id}` namespace, reversal/reconciliation mirroring the collections leg; Option B quoted-conversion argued and rejected). Four open questions for the owner: additive `amountGhs` column vs metadata projection; require `fiatLiquidityAuthorityEnabled` for the payout float (recommended) vs pool-less dispatch; separate flags per leg (recommended); v1 fee model (MOMO gas fee is 0).
+
+## Launch intro — vector entrance (2026-10-28, implemented, unmerged)
+
+- **PR #208 (AZM-frontend, branch `feature/azaman-intro-animation`, head `7bcde8c`, open unmerged):** the owner-approved intro reference (656x848 @30fps, 3.73s) rebuilt as vector artwork instead of video — resolution-independent, theme-aware, no decoder warm-up on cold start. `lib/experience/launch/azaman_intro.dart` + four SVG assets (`assets/experience/azaman_intro/`).
+- **Brand decision:** the chevron mark stands in as the **"A"** of AZAMAN (owner, 2026-10-28), followed by "zaman". The reference video's end card used a different typeface; the SVGs are the source of truth.
+- **Timeline (measured from the reference):** in 0–500ms (mark 1.15x → 1.0), breathe to 950ms, shrink to 37% by 1370ms, flash 1370–1600ms, lockup reveal 1470–2320ms with a 9% overshoot, hold. `revealMs = 2320`.
+- **Material:** dark = neutral silver `#43474B→#FFFFFF` with `#9FC3DF` sheen and `#115AEE` specular peak; light = steel capped at `#C4CFD5` for contrast on `#F4F5F6`. **No halo behind the tile** — the light lives on the square's own rim (owner instruction).
+- **Verification:** `flutter analyze` clean; `flutter test` 3/3; rendered through the real Flutter pipeline at 393x852@3x, which caught two defects static checks missed — the tile's minimum-size clamp broke the reference proportion on phones (fixed to 36.9% of width) and the specular sweep was white in both themes (light now sweeps steel).
+- **Splash wiring:** `SplashScreen` renders the intro and holds its exit on `Future.wait([brandingFloor, introRevealed])`, so the app never cuts away mid-reveal.
+- **Pending owner decisions:** (1) light theme — keep the glass tile or drop it in the icon phase; (2) whether the "A" grows ~7% optically beyond cap-height match. Comparison stills rendered for both.
 
 ## Current verified baseline
 
