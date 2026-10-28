@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-27T21:10:00Z",
+  "updatedAt": "2026-10-28T11:25:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -907,6 +907,22 @@
       "notes": "Overlay installer wired into all 3 CI chains. Once-only reversal via raw jsonb CAS stamp (Prisma JSON equals:null misses absent keys). Reconciliation sweep flags stranded GHS_NATIVE rows, never mutates money. Settled rows record settlementCurrency + settlementExternalRef identity markers.",
       "openQuestions": [
         "GHS-native withdrawal leg: skip quote/FX entirely? what rate governs pool settlement? Blocks flag activation."
+      ]
+    },
+    {
+      "id": "native-ghs-withdrawal-leg-design",
+      "repo": "AZM-backend",
+      "status": "open-unmerged (design only, owner review pending)",
+      "pr": "382 (head 0c128aa, base feature/native-ghs-settlement, stacked on #381)",
+      "mergeSha": null,
+      "objective": "Design contract for the GHS-native withdrawal leg: Option A recommended (no conversion, exact GHS dispatch, distinct ledger namespace)",
+      "ci": "docs-only commit; no production code to test",
+      "notes": "docs/native-ghs-withdrawal-leg.md. Four owner questions recorded: amountGhs column vs projection; float governance; flags per leg; v1 fees.",
+      "openQuestions": [
+        "amountGhs column vs metadata projection",
+        "require fiatLiquidityAuthorityEnabled?",
+        "one flag or two",
+        "v1 GHS fee model"
       ]
     }
   ],
