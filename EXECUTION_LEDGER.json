@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "AZAMAN",
-  "updatedAt": "2026-10-28T11:25:00Z",
+  "updatedAt": "2026-10-28T18:12:00Z",
   "rules": {
     "sourceOfImplementationTruth": "GitHub main plus exact CI evidence",
     "planningRole": "navigation and continuation state",
@@ -923,6 +923,20 @@
         "require fiatLiquidityAuthorityEnabled?",
         "one flag or two",
         "v1 GHS fee model"
+      ]
+    },
+    {
+      "id": "azaman-launch-intro-vector",
+      "repo": "AZM-frontend",
+      "status": "open-unmerged (owner aesthetic review)",
+      "pr": "208 (head 7bcde8c, branch feature/azaman-intro-animation, base main)",
+      "mergeSha": null,
+      "objective": "Land the launch entrance as theme-aware vector artwork (mark-as-A lockup) instead of video",
+      "ci": "flutter analyze clean; flutter test test/experience/azaman_intro_test.dart 3/3; real-pipeline renders verified at 393x852@3x",
+      "notes": "Timeline measured from the reference (revealMs 2320). No halo behind the tile; edge light on the square. Real-render check fixed tile proportion on phones and the white-on-light specular sweep.",
+      "openQuestions": [
+        "light theme: keep the glass tile in the icon phase or drop it",
+        "does the A grow ~7% optically beyond cap-height match"
       ]
     }
   ],
