@@ -65,14 +65,17 @@ backup drill actually executed. Merging #384 first converts it to skipped steps.
 
 ## Firebase replacement proof of concept
 
-Branch `exp/firebase-admin-replacement`, head `f7f96c4`, base main `0edefa1d`.
+Branch `exp/firebase-admin-replacement`, head `cbbe0c1`, base main `0edefa1d`.
 Three files, isolated, not wired into `ssoController` or `firebaseService`.
-**68/68 tests pass on that exact SHA.**
+**84/84 tests pass locally on that exact SHA.** No CI test evidence exists for it:
+dispatched run 41245775998 on `cbbe0c1` failed at step 6 `Audit production
+dependencies` and skipped step 30 `Run tests`.
 
 - ID token verification: mandatory `auth_time`, `alg`/`kid`/`aud`/`iss`/`sub` checks, expiry at zero skew for firebase-admin parity.
-- JWKS: strict per-key validation (non-empty `kid`, RSA, usable modulus and exponent, `use: sig`, `alg: RS256`, 2048-bit minimum), whole-set rejection on any malformed entry, `JWKS_AMBIGUOUS_KEY` on duplicate `kid`, Cache-Control honouring, bounded fetch, single-flight dedupe, one refetch on unknown `kid`.
+- JWKS: per-key validation (non-empty `kid`, RSA, usable modulus and exponent, `alg: RS256`, 2048-bit minimum), whole-set rejection on any malformed entry, `JWKS_AMBIGUOUS_KEY` on duplicate `kid`, Cache-Control honouring, bounded fetch, single-flight dedupe, one refetch on unknown `kid`. `use` and `key_ops` follow RFC 7517: both optional, `use` must be `sig` and `key_ops` must contain `verify` when present, so a key omitting them is accepted while a contradictory declaration still fails the set.
 - FCM: `FCM_UNREGISTERED` requires the exact `type.googleapis.com/google.firebase.fcm.v1.FcmError` type; a bare 404 or a mismatched `@type` is device-state neutral.
-- Transport: `AbortController`-based, applied to both the OAuth exchange and the v1 send, proven to terminate a stalled request with a typed error carrying no credentials, one send attempt only.
+- Transport: `AbortController`-based, applied to both the OAuth exchange and the v1 send, including a stalled response-body read, proven to terminate with a typed error carrying no credentials and exactly one send attempt.
+- Delivery semantics: a token-exchange timeout is `FCM_TIMEOUT` (`retryPolicy: safe`, `deliveryUnknown: false`); a send timeout or lost response is `FCM_SEND_OUTCOME_UNKNOWN` (`retryPolicy: reconcile-first`, `deliveryUnknown: true`, `retryable: false`) because FCM may have accepted the push. No automatic retries.
 - OAuth token exchanges deduplicated across concurrent sends.
 
 The PoC does **not** clear the audit and must not be counted as if it did.
@@ -86,6 +89,22 @@ The PoC does **not** clear the audit and must not be counted as if it did.
 
 Recommendation, offered not decided: none. Each option changes the meaning of the gate, so this is an owner call. What is factual is that no dependency change reaches zero without an override that has measured worse every time.
 
+## Full-suite reconciliation (base vs PoC head)
+
+Same command, same environment, compared through Jest's structured JSON output
+rather than suite names. Base `0edefa1d`: 1,450 passed / 76 failed / 2,136 skipped.
+PoC head `cbbe0c1`: 1,534 passed / 76 failed / 2,136 skipped. The 84 extra passes
+are exactly the PoC's own tests.
+
+The failing test sets are **identical**, test by test, name for name: 76 tests in
+5 suites (`admin-business-delete` 8, `business-ad-adapter` 6,
+`business-follower-adapter` 6, `marketplace-v2` 54,
+`r15i-kyc-encryption-fail-closed` 2), plus `prod-recovery-guard.pg.test.js`
+failing to run on both. Newly failing on the PoC head: none.
+
+Environment, identical on both: no Postgres on `localhost:5432`, no Redis on
+`127.0.0.1:6379`, Prisma client generated in both worktrees.
+
 ## Verified alongside
 
 PIN rotation contract at `c2950cd1`: new PIN exactly four digits, `currentPin`
@@ -95,6 +114,12 @@ returning `PIN_ROTATION_CONFLICT` 409, and typed refusals
 Conflict handling is not weakened. Client-side handling of the 409s remains
 missing in `security_settings.dart`; no Dart SDK is available here, so no
 unverified Dart was pushed.
+
+`verifyIdToken` has exactly one production callsite on `main`:
+`controllers/ssoController.js:123`, `getAuth().verifyIdToken(idToken)`, one
+argument. No `checkRevoked` flag and no `revokeRefreshTokens` call exists
+anywhere in the repository, so revocation checking is not part of the current
+behaviour and must not be attributed to it.
 
 ## Not done
 
