@@ -165,3 +165,23 @@ behaviour and must not be attributed to it.
 
 - No rebase, retarget, merge, close, deploy or release. No PR bases changed.
 - No suppression, no `--force`, no audit-level change, no production wiring.
+
+## Update 2026-11-04: the fallback fix is now an open PR
+
+PR #393 (`fix/remove-sso-unsigned-fallback`, head `97189fe8`, base main
+`0edefa1d`) removes the unsigned fallback entirely: constant, manual payload
+decode, unsigned aud/exp checks and the dev-fallback responses are gone.
+`getApps().length === 0` now returns 503 in every environment with no flag able
+to change it, and `getAuth().verifyIdToken(idToken)` is the only path to a
+`decodedToken`. Two files changed, 14 route-level tests added; 6 of the 14 fail
+against main's controller, so the matrix discriminates.
+
+This is deliberately separate from #384 and from `exp/firebase-admin-replacement`
+(`844d417`). It needs no dependency decision.
+
+Also corrected: the auth rate limiter does NOT stay disabled until restart. The
+`_redisErroring` flag resets on ioredis `ready`. More importantly, production
+currently runs Redis OFF (`docs/REDIS_OPERATING_MODES.md`: `REDIS_URL`
+deliberately unset after Upstash quota exhaustion), so `_failOpen` never engages
+and the auth tier already uses express-rate-limit's in-memory store at 5/min per
+IP. The fail-open path is latent, not active.
