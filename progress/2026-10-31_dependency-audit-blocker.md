@@ -65,29 +65,69 @@ backup drill actually executed. Merging #384 first converts it to skipped steps.
 
 ## Firebase replacement proof of concept
 
-Branch `exp/firebase-admin-replacement`, head `cbbe0c1`, base main `0edefa1d`.
-Three files, isolated, not wired into `ssoController` or `firebaseService`.
-**84/84 tests pass locally on that exact SHA.** No CI test evidence exists for it:
-dispatched run 41245775998 on `cbbe0c1` failed at step 6 `Audit production
-dependencies` and skipped step 30 `Run tests`.
+Branch `exp/firebase-admin-replacement`, head `c92fb28` (2026-11-04), base main
+`0edefa1d`. Six files, all new, isolated, not wired into `ssoController` or
+`firebaseService`. `git diff origin/main` on `controllers`, `utils`, `routes`,
+`package.json` and `.github` is empty.
 
-- ID token verification: mandatory `auth_time`, `alg`/`kid`/`aud`/`iss`/`sub` checks, expiry at zero skew for firebase-admin parity.
-- JWKS: per-key validation (non-empty `kid`, RSA, usable modulus and exponent, `alg: RS256`, 2048-bit minimum), whole-set rejection on any malformed entry, `JWKS_AMBIGUOUS_KEY` on duplicate `kid`, Cache-Control honouring, bounded fetch, single-flight dedupe, one refetch on unknown `kid`. `use` and `key_ops` follow RFC 7517: both optional, `use` must be `sig` and `key_ops` must contain `verify` when present, so a key omitting them is accepted while a contradictory declaration still fails the set.
-- FCM: `FCM_UNREGISTERED` requires the exact `type.googleapis.com/google.firebase.fcm.v1.FcmError` type; a bare 404 or a mismatched `@type` is device-state neutral.
-- Transport: `AbortController`-based, applied to both the OAuth exchange and the v1 send, including a stalled response-body read, proven to terminate with a typed error carrying no credentials and exactly one send attempt.
-- Delivery semantics: a token-exchange timeout is `FCM_TIMEOUT` (`retryPolicy: safe`, `deliveryUnknown: false`); a send timeout or lost response is `FCM_SEND_OUTCOME_UNKNOWN` (`retryPolicy: reconcile-first`, `deliveryUnknown: true`, `retryable: false`) because FCM may have accepted the push. No automatic retries.
-- OAuth token exchanges deduplicated across concurrent sends.
+**123/123 tests pass locally on that exact SHA** (117 verifier/FCM + 6 SSO
+characterisation). No CI test evidence exists and none is obtainable: the audit
+step runs before every test step, so any dispatched run skips `Run tests`.
 
-The PoC does **not** clear the audit and must not be counted as if it did.
+- ID token verification: `alg`/`kid`/`aud`/`iss`/`sub`/`exp` checks, expiry at zero skew for firebase-admin parity, plus mandatory `auth_time` and `iat` (stricter than the SDK, safe for SDK-issued tokens).
+- JWKS: per-key validation, whole-set rejection on any malformed entry, duplicate `kid` refusal, Cache-Control honouring, bounded fetch, single-flight dedupe. `use`, `key_ops` and `alg` all follow RFC 7517 optionality.
+- FCM: exact FCM error `@type` required for `FCM_UNREGISTERED`; phase-aware timeouts; send-side ambiguity surfaced as `FCM_SEND_OUTCOME_UNKNOWN` (`deliveryUnknown: true`, no automatic retry).
+- Credential resolver mirrors production priority (primary var raw-JSON-or-base64, secondary base64 var, module-relative local file), constant parse errors that cannot echo a key, fail-safe boot.
+- Flutter click action seeded by default; `uid` alias of `sub` preserved.
+
+### Security defects found by review (all fixed on the branch)
+
+- **Unknown `kid` cost one Google JWKS request per attempt** (unsigned token with a random `kid` was enough). 1:1 egress amplification, and a Google rate-limit would break every real login. Now throttled to one forced refresh per 10s; rotation still works after the interval.
+- **No token size bound** before base64 decode and `JSON.parse`. Now 16 KiB.
+- **Attacker-controlled `header.alg` echoed into the error message** (size and control characters). Now sanitised and truncated.
+- **Local credential path was CWD-relative** while production resolves from the module directory. Now module-relative, `ENOENT` treated as no credential.
+
+## CRITICAL: production SSO dev fallback accepts unsigned tokens
+
+This is **live on main `0edefa1d`** (`controllers/ssoController.js` is byte-identical
+between main and #384 head `73109be`), independent of this audit and of the PoC.
+
+`SSO_DEV_FALLBACK=1` decodes a JWT **without verifying its signature**. Proven with
+the real handler (only its collaborators stubbed): an `alg: none` token with
+`aud: azaman-app` and no `exp` claim produced **HTTP 201, user creation and a session
+token pair**.
+
+Reachable only when all hold: `getApps().length === 0`, `NODE_ENV !== 'production'`,
+`SSO_DEV_FALLBACK === '1'`, an expected audience configured, and `aud` matching. The
+audience guard is not a secret: the Firebase project id ships inside every client
+build, so in such an environment the only thing an attacker needs is a public string.
+
+Production is currently safe for exactly one reason: `NODE_ENV=production`
+short-circuits to 503.
+
+Why the replacement changes the calculus: the branch is gated on `getApps().length`,
+and `require('firebase-admin/app')` is unguarded. Removing the SDK makes that require
+throw into the catch and return 401 — accidentally safe. Any edit that makes the
+require optional ("no SDK, use the fallback") converts that accident into a live
+bypass in every non-production environment.
+
+Proposed remediation, not applied: delete the fallback branch, replace it with a
+single readiness check that returns 503 in **all** environments, and verify through
+the injected verifier. If local development needs a path, it belongs in a signed
+fixture or the emulator, never as a decode in the login handler. The two
+characterisation tests are written so the fix is a one-line inversion.
 
 ## Options for the owner
 
-1. **Allowlist** the three advisories with a documented rationale that the code path is an unused optional dependency. Requires a stated reviewer and expiry.
-2. **Gate at `--audit-level=high`** (currently 0 high). Explicitly a policy change, must be recorded as such.
-3. **Complete and wire the Firebase replacement**, then remove `firebase-admin`. Highest effort; SSO revocation check and six `firebaseService` call sites are untouched.
-4. **Wait upstream** for firebase-admin to move its optional Firestore range onto the 6.x `google-gax` line.
+No option is recommended here: each changes what the gate means, so this is an owner call.
 
-Recommendation, offered not decided: none. Each option changes the meaning of the gate, so this is an owner call. What is factual is that no dependency change reaches zero without an override that has measured worse every time.
+**A. Keep Firebase Admin and accept the four moderates.** The vulnerable code is never executed (no `getFirestore`/`firestore()` call exists anywhere), so there is no reachable exploit path today and none of the four is high or critical. Audit still counts it because it reads the lockfile. Cost: the gate stays red, so the Test Suite keeps skipping its real stages and #384 stays blocked.
+
+**B. Replace Firebase Admin.** Changes `controllers/ssoController.js` (verify call plus deleting the fallback) and `utils/firebaseService.js` (messaging, credential loading, fail-safe init). Preserves signature, `kid`, `iss`, `aud`, `exp`, `sub` verification and the `uid` contract. Becomes stricter on `auth_time` and `iat`. Improves security **only if the fallback is removed in the same change**. Requires route-level tests, production-caller tests and a green Test Suite. Rollback is a two-file revert plus reinstalling the SDK; the PoC adds no schema or state.
+
+Also unchanged and worth stating: **allowlist**, **`--audit-level=high`** and **wait upstream** remain possible but each is a policy change that must be recorded as such.
+
+The factual finding is that no dependency change reaches zero without an override that has measured worse every time.
 
 ## Full-suite reconciliation (base vs PoC head)
 
