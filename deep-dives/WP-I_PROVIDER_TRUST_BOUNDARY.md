@@ -116,6 +116,8 @@ No official MTN inbound-callback contract is recorded for this integration in th
 
 ### 4.1 Threat model, by adversary
 
+**Credential scope (provider-documented).** Payment API credentials are tied to the wallet linked to their API Service: "Credentials generated for one wallet cannot access or process transactions for another wallet" (`docs.moolre.com`, *Wallet-specific payment API credentials*). Two consequences run through this model. It is a genuine blast-radius limit — a compromised credential cannot read another wallet's transactions. It is also an operational requirement — a reconciler serving more than one wallet needs a separate API Service and credential per wallet, and the credentials it holds must belong to the wallet that actually holds the funds being proven.
+
 | Adversary | Current candidate | Required target |
 | --- | --- | --- |
 | Forged external callback, no secret | Blocked (401) | Blocked |
@@ -212,6 +214,7 @@ Added after reviewing the official Moolre documentation set in full. Part II **s
 |---|---|---|---|
 | Collection initiated by Azaman through Moolre, with an Azaman `externalref` | **Yes** — `idtype=1` by our externalref, or `idtype=2` by Moolre transaction id. Proves *only* that collection; not unsolicited or unrelated credits | Payment Status API (`/open/transact/status`, `type=1`) | `X-API-PUBKEY` (public) |
 | Bank transfer into a Moolre virtual account | **No** — `type=1` keys on a collection `externalref` we generated; a deposit carries the **account's creation reference**, not a collection reference. Public key is sufficient for the correct witness | List Bank Account Transactions — `/open/transact/status` with `type=2`, keyed by the account's **creation** externalref + `accountnumber`, returning a transaction array | `X-API-PUBKEY` (public) |
+| Payment ID transactions (permanent Payment ID account) | **No** | List Payment ID Transactions — `/open/transact/status` with `type=2`, `externalref` **as supplied when the Payment ID was created**, plus `accountnumber`; returns a transaction array | `X-API-PUBKEY` (public) |
 | Mobile-money transfer into the wallet, not initiated through our collection API | **No** | List Transactions (wallet statement) — `/open/account/status` with `type=2`, `accountnumber`, date range, optional status filter; match on `transactionid` / `thirdpartyref` / `amount` / `value` / `ts` | **`X-API-KEY` (private)** |
 | Wallet-to-wallet (internal transfer) received | **No** — internal transfer is outbound from the sending wallet; the credit appears on the receiving wallet's statement | List Transactions (wallet statement) | **`X-API-KEY` (private)** |
 | Settlement / disbursement | Not an inflow | Transfer Status API (outbound lifecycle only) | `X-API-PUBKEY` (public) |
@@ -219,10 +222,13 @@ Added after reviewing the official Moolre documentation set in full. Part II **s
 
 **Consequences for the current model.** `confirmTreasuryOpening` accepts *any* INBOUND event with a settled status string, provider `MOOLRE`/`MTN_MOMO`/`AZM_WEBHOOK` and a matching amount (`src/services/fiatLiquidityService.js:127-128`, `:1028+`). It does not distinguish a collection we initiated from a bank deposit — a distinction the provider's APIs make absolutely. The treasury-opening path therefore needs an explicit **funding type** on the receipt before any witness can be selected, and the witness differs per type.
 
-**What each witness can and cannot reach.** These are three distinct capabilities, and conflating them is how a wrong key gets chosen for a lookup:
+**Payment ID funding is a supported provider capability that Azaman does not currently use.** The backend defines `createPaymentId` (`services/moolreCollectionService.js:293`, posting `/open/account/create` with `type: 2`, `phone`, `name`, `currency`, `accountnumber`, optional `externalref`), and it has **zero call sites** anywhere in the candidate — verified by repository-wide search, not assumed. The List Payment ID Transactions witness is therefore documented for completeness and marked **out of current Azaman scope** until source and operations confirm a live Payment ID funding route. If one is introduced, it needs its own funding type and its own dedicated-mapping entry; it must not inherit the collection or bank-account witness semantics.
+
+**What each witness can and cannot reach.** These are four distinct capabilities, and conflating them is how a wrong key gets chosen for a lookup:
 
 - **`type=1` (collection):** proves the outcome of a mobile-money collection *Azaman itself initiated and can name*. The lookup key is our own `externalref` (`idtype=1`) or the Moolre transaction id (`idtype=2`). It says nothing about unsolicited credits, bank deposits, or any transaction we did not start, and must never be presented as a general proof of wallet inflow.
 - **`type=2` (bank virtual account):** reaches credits into a bank virtual account using that account's **creation** external reference plus its `accountnumber`, returning a transaction array that must then be matched to the opening. This is an ordinary **public-key** call; a virtual-account deposit does **not** require the private wallet-statement path.
+- **`type=2` (Payment ID):** reaches transactions on a permanent Payment ID account, keyed by the `externalref` supplied when that Payment ID was created plus the Moolre `accountnumber`. Also an ordinary **public-key** call. It is *not* the same lookup as the bank virtual-account row even though both are `type=2` on the same URL — the two are distinguished by which identity the caller supplies, and the response shape is a transaction array in both cases.
 - **Wallet statement (`/open/account/status` `type=2`):** the only route to credits that have no pre-existing collection or virtual-account identity — unsolicited mobile-money credits, wallet-to-wallet receipts, anything else landing in the wallet. This is the **private-key** path.
 
 **Where the public API is genuinely insufficient.** Only the third category requires the private key. If Azaman will not place the private key in the reconciler, that category stays **unavailable** for treasury funding until a provider statement, reconciliation export or written confirmation is obtained. Bank virtual-account deposits remain available through `type=2` with the public key, subject to the matching rules above.
@@ -235,10 +241,10 @@ The documented webhook payload carries both `amount` and `value`, defining `valu
 
 **Rule for treasury evidence:** reconcile to the **net credited value that the wallet actually received**, proven from the provider response for that specific transaction — never to the payer's gross, and never to an amount our own normaliser asserted. Gross and net legitimately differ; which side bears the fee appears to depend on pricing band ("Special payment pricing" sections), which the public documentation does not resolve into a single rule. Until it is resolved, a path whose gross-vs-net relationship is unproven stays **unavailable**.
 
-**Currency:** neither the callback nor the status/statement responses carry a currency field; the webhook exposes `accountnumber` (destination wallet) and the statement exposes `balance` unlabelled. Currency is established at **account creation** (Bank Collections API `type=9` takes `currency: GHS | NGN`). Therefore:
+**Currency:** neither the callback nor the status/statement responses carry a currency field; the webhook exposes `accountnumber` (destination wallet) and the statement exposes `balance` unlabelled. Currency is established at **account creation**. Historically that was the Bank Collections API (`type=9`, taking `currency: GHS | NGN`); since the **13 October 2026** changelog, "Create Account has been removed from the public API reference" and wallets are created **in the Moolre portal**, with API account creation retained for Sandbox testing only (`docs.moolre.com/changelog`, *Create wallets in the Moolre portal*). Azaman must therefore not assume the `type=9` public creation input is the source of truth for live wallets. Therefore:
 - the account-number → currency mapping must be a **stored, controlled table** owned by the treasury side, populated from account creation records, not inferred per transaction;
 - the mapping is **owned by the treasury side and must be protected from the main runtime credential** — a compromised application must not be able to add an account or relabel its currency;
-- each mapping entry must be **grounded in the virtual-account creation record** (the `type=9` creation response), not in a value asserted at callback time;
+- each mapping entry must be **grounded in the authoritative wallet/account creation record** — the portal-created wallet record, or an API creation response where Moolre confirms that access remains supported for this integration — and never in a value asserted at callback time or inferred from a transaction;
 - the reconciler must refuse to emit a GHS witness for an account absent from that mapping;
 - `FiatLiquidityReceipt.amountGhs` presupposes GHS; nothing in the provider response independently proves it.
 
@@ -249,6 +255,7 @@ The documented webhook payload carries both `amount` and `value`, defining `valu
 | `X-API-USER` | account identifier | reconciler and app |
 | `X-API-PUBKEY` | **Public** API Key — not a secret | either |
 | `X-API-KEY` | **Private** API Key — genuinely secret | **reconciler only** |
+| scope | **Wallet-scoped**: credentials belong to one wallet's API Service and "cannot access or process transactions for another wallet" | one credential set **per wallet** |
 
 The key hierarchy is narrower than a first reading suggests, and it is **not** the security boundary:
 
@@ -261,7 +268,8 @@ The separate reconciliation service is required for reasons that survive the pub
 - it is the only component permitted to write reconciliation witnesses;
 - it holds the private key only when the statement path is in scope, and never in the API process;
 - it cannot mutate treasury openings or economic balances, and the runtime cannot write a witness or promote a receipt to `AVAILABLE`;
-- it fetches evidence from Moolre itself and binds it to an opening the server already created.
+- it fetches evidence from Moolre itself and binds it to an opening the server already created;
+- it presents credentials belonging to the **exact wallet that holds the funds**, because provider credentials are wallet-scoped — a reconciler pointed at wallet A cannot prove a credit into wallet B, and a multi-wallet Azaman deployment needs a separate API Service and credential set per wallet.
 
 **Bank-account `type=2` being a public-key path does not weaken any of this.** It lowers the credential cost of that one funding type; it does not make application-authored rows trustworthy, and it does not permit the application to emit or promote a witness.
 
@@ -317,8 +325,11 @@ Each negative case must prove: no receipt reaches `AVAILABLE`, `FiatLiquiditySta
 5. Statement and transaction-list coverage as an audit witness: pagination, `limit` semantics, maximum date range, retention horizon, and whether a completed list for a window is provably complete rather than merely what was returned.
 6. Whether Moolre provides settlement statements, reconciliation exports or a written statement of account suitable for audit.
 7. Whether the published callback IP list is stable, and the expected behaviour behind a CDN or proxy.
-8. The **account-level permission scope** of each credential: the documentation names `X-API-PUBKEY` (Public) and `X-API-KEY` (Private) but does not publish a complete endpoint-by-endpoint permission matrix, nor whether either key can be issued with narrower scopes.
+8. Whether Payment IDs are in scope for Azaman funding, and how `/open/transact/status` `type=2` disambiguates a bank virtual-account lookup from a Payment ID lookup when both are addressed by an `externalref` — the documentation does not state the discriminator.
+9. Whether API wallet/account creation remains supported for this integration or is portal-only for Live, given the 13 October 2026 changelog; and what authoritative artefact (portal export or API response) may ground the account→currency mapping.
+10. How per-wallet API Services map onto Azaman's multi-wallet operations: whether one credential set can be issued with access to several wallets, or whether reconciliation must be provisioned once per wallet.
+11. The **account-level permission scope** of each credential: the documentation names `X-API-PUBKEY` (Public) and `X-API-KEY` (Private) but does not publish a complete endpoint-by-endpoint permission matrix, nor whether either key can be issued with narrower scopes.
 
 ## 14. Verdict (updated)
 
-Treasury funding remains **NOT READY**. Two defects stand: (a) a runtime database credential can fabricate the evidence `confirmTreasuryOpening` consumes — proven on `6a6f233`; (b) the evidence amount is the payer's gross figure rather than the net credited value, so even honest evidence can overstate the treasury by the fee. Neither the callback body secret nor IP allowlisting closes (a). For (a), only evidence fetched independently by a component the application can neither instruct nor impersonate closes it; the private key is required only for the statement category, while collection and bank deposits need no secret at all and still require the separate writer.
+Treasury funding remains **NOT READY**. Two defects stand: (a) a runtime database credential can fabricate the evidence `confirmTreasuryOpening` consumes — proven on `6a6f233`; (b) the evidence amount is the payer's gross figure rather than the net credited value, so even honest evidence can overstate the treasury by the fee. Neither the callback body secret nor IP allowlisting closes (a). For (a), only evidence fetched independently by a component the application can neither instruct nor impersonate closes it, presenting credentials for the exact wallet that holds the funds; the private key is required only for the statement category, while collection and bank deposits need no secret at all and still require the separate writer.
