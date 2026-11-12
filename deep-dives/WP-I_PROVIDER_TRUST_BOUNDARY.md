@@ -210,8 +210,8 @@ Added after reviewing the official Moolre documentation set in full. Part II **s
 
 | Funding method | Can `/open/transact/status` type=1 prove it? | Correct independent witness | Credential used |
 |---|---|---|---|
-| Collection initiated by Azaman through Moolre, with an Azaman `externalref` | **Yes** — `idtype=1` by our externalref, or `idtype=2` by Moolre id | Payment Status API (`type=1`) | `X-API-PUBKEY` (public) |
-| Bank transfer into a Moolre virtual account | **No.** No externalref we control is attached to an unsolicited credit | List Bank Account Transactions — `/open/transact/status` with `type=2`, keyed by the account's **creation** externalref + `accountnumber`, returning a transaction array | `X-API-PUBKEY` (public) |
+| Collection initiated by Azaman through Moolre, with an Azaman `externalref` | **Yes** — `idtype=1` by our externalref, or `idtype=2` by Moolre transaction id. Proves *only* that collection; not unsolicited or unrelated credits | Payment Status API (`/open/transact/status`, `type=1`) | `X-API-PUBKEY` (public) |
+| Bank transfer into a Moolre virtual account | **No** — `type=1` keys on a collection `externalref` we generated; a deposit carries the **account's creation reference**, not a collection reference. Public key is sufficient for the correct witness | List Bank Account Transactions — `/open/transact/status` with `type=2`, keyed by the account's **creation** externalref + `accountnumber`, returning a transaction array | `X-API-PUBKEY` (public) |
 | Mobile-money transfer into the wallet, not initiated through our collection API | **No** | List Transactions (wallet statement) — `/open/account/status` with `type=2`, `accountnumber`, date range, optional status filter; match on `transactionid` / `thirdpartyref` / `amount` / `value` / `ts` | **`X-API-KEY` (private)** |
 | Wallet-to-wallet (internal transfer) received | **No** — internal transfer is outbound from the sending wallet; the credit appears on the receiving wallet's statement | List Transactions (wallet statement) | **`X-API-KEY` (private)** |
 | Settlement / disbursement | Not an inflow | Transfer Status API (outbound lifecycle only) | `X-API-PUBKEY` (public) |
@@ -219,7 +219,13 @@ Added after reviewing the official Moolre documentation set in full. Part II **s
 
 **Consequences for the current model.** `confirmTreasuryOpening` accepts *any* INBOUND event with a settled status string, provider `MOOLRE`/`MTN_MOMO`/`AZM_WEBHOOK` and a matching amount (`src/services/fiatLiquidityService.js:127-128`, `:1028+`). It does not distinguish a collection we initiated from a bank deposit — a distinction the provider's APIs make absolutely. The treasury-opening path therefore needs an explicit **funding type** on the receipt before any witness can be selected, and the witness differs per type.
 
-**Where the public API is insufficient.** For any inflow that is not a collection we initiated, the public key endpoints either cannot address the transaction (no externalref) or require the private-key statement scan. If Azaman does not hold the private key in the reconciler, those inflow types must remain **unavailable** for treasury funding until a provider statement, reconciliation export or written confirmation is obtained.
+**What each witness can and cannot reach.** These are three distinct capabilities, and conflating them is how a wrong key gets chosen for a lookup:
+
+- **`type=1` (collection):** proves the outcome of a mobile-money collection *Azaman itself initiated and can name*. The lookup key is our own `externalref` (`idtype=1`) or the Moolre transaction id (`idtype=2`). It says nothing about unsolicited credits, bank deposits, or any transaction we did not start, and must never be presented as a general proof of wallet inflow.
+- **`type=2` (bank virtual account):** reaches credits into a bank virtual account using that account's **creation** external reference plus its `accountnumber`, returning a transaction array that must then be matched to the opening. This is an ordinary **public-key** call; a virtual-account deposit does **not** require the private wallet-statement path.
+- **Wallet statement (`/open/account/status` `type=2`):** the only route to credits that have no pre-existing collection or virtual-account identity — unsolicited mobile-money credits, wallet-to-wallet receipts, anything else landing in the wallet. This is the **private-key** path.
+
+**Where the public API is genuinely insufficient.** Only the third category requires the private key. If Azaman will not place the private key in the reconciler, that category stays **unavailable** for treasury funding until a provider statement, reconciliation export or written confirmation is obtained. Bank virtual-account deposits remain available through `type=2` with the public key, subject to the matching rules above.
 
 ## 9. Gross amount, net credited value and currency
 
@@ -231,6 +237,8 @@ The documented webhook payload carries both `amount` and `value`, defining `valu
 
 **Currency:** neither the callback nor the status/statement responses carry a currency field; the webhook exposes `accountnumber` (destination wallet) and the statement exposes `balance` unlabelled. Currency is established at **account creation** (Bank Collections API `type=9` takes `currency: GHS | NGN`). Therefore:
 - the account-number → currency mapping must be a **stored, controlled table** owned by the treasury side, populated from account creation records, not inferred per transaction;
+- the mapping is **owned by the treasury side and must be protected from the main runtime credential** — a compromised application must not be able to add an account or relabel its currency;
+- each mapping entry must be **grounded in the virtual-account creation record** (the `type=9` creation response), not in a value asserted at callback time;
 - the reconciler must refuse to emit a GHS witness for an account absent from that mapping;
 - `FiatLiquidityReceipt.amountGhs` presupposes GHS; nothing in the provider response independently proves it.
 
@@ -242,12 +250,25 @@ The documented webhook payload carries both `amount` and `value`, defining `valu
 | `X-API-PUBKEY` | **Public** API Key — not a secret | either |
 | `X-API-KEY` | **Private** API Key — genuinely secret | **reconciler only** |
 
-The asymmetry matters: the witness that can prove arbitrary credits (the statement) requires the **private** key, so the reconciler — not the application — must hold it. That is the concrete reason the reconciliation identity cannot be a second credential inside the same Node process.
+The key hierarchy is narrower than a first reading suggests, and it is **not** the security boundary:
+
+- Moolre **names `X-API-PUBKEY` the Public API Key**. Withholding a public key protects nothing. The collection lookup and the bank virtual-account lookup are both public-key calls, and neither is made trusted by keeping that key away from the application.
+- `X-API-KEY` is the **Private API Key**. It is required for the general wallet statement and account-status endpoints — the path that reaches arbitrary wallet credits. That is the one credential the main API process must not hold, and only *where that path is in use*.
+- Observable ledger state (collections, bank virtual-account credits) may therefore be reconciled by a component holding nothing secret. **A separate reconciliation writer and evidence authority is still required in that case**, because the boundary being defended is *who may author evidence*, not *who holds a key*.
+
+The separate reconciliation service is required for reasons that survive the public-key observation:
+
+- it is the only component permitted to write reconciliation witnesses;
+- it holds the private key only when the statement path is in scope, and never in the API process;
+- it cannot mutate treasury openings or economic balances, and the runtime cannot write a witness or promote a receipt to `AVAILABLE`;
+- it fetches evidence from Moolre itself and binds it to an opening the server already created.
+
+**Bank-account `type=2` being a public-key path does not weaken any of this.** It lowers the credential cost of that one funding type; it does not make application-authored rows trustworthy, and it does not permit the application to emit or promote a witness.
 
 Required properties of the reconciliation boundary:
 
 1. A separate process/service with its own deployment and egress identity, not a request handler inside the API.
-2. It holds the private key; the API process does not.
+2. It holds the private key **only where the statement path is in scope**; the API process never holds it. For collection and bank virtual-account lookups no secret is involved, and the boundary still applies.
 3. It connects to PostgreSQL under its **own** database identity, with `INSERT` only on the witness table and `SELECT` only on the pre-existing treasury openings it must match.
 4. It queries the provider over HTTPS itself — never in response to a user-supplied reference or amount.
 5. The lookup key is a **pre-existing server-created treasury opening** (its dedupKey plus stored account and reference), not anything the application or a user supplies at query time.
@@ -255,8 +276,10 @@ Required properties of the reconciliation boundary:
 7. It stores the **immutable provider response**: raw body, retrieval timestamp, response digest, endpoint and request parameters.
 8. No application-supplied claim may select, parameterise or manufacture the provider result.
 9. Receipt binding stays single-use, with contradiction quarantine for byte-different but economically identical observations.
+10. Its **database identity cannot mutate treasury openings or economic balances** — it may not change `FiatLiquidityReceipt.status`, `fiatLiquidityState`, ledger rows or `availableGhs`, and only the promotion path (not the runtime) may move a receipt to `AVAILABLE`.
+11. It **rejects any instruction carrying an amount or reference** supplied by the application or a user; the only accepted input is the identifier of an opening that already exists.
 
-**How a compromised application process is kept out:** it can run *any SQL the runtime role may run* and call *any endpoint the app exposes*, but it cannot (a) read the private key, (b) write the witness table, (c) ask the reconciler to fetch a reference it chose, or (d) fabricate the provider's HTTPS response and its digest. The reconciler must therefore accept **no inbound instruction carrying an amount or reference**; its only trigger is "reconcile opening X", where X must already exist in the database with a stored account and reference. Anything else reintroduces the forgery primitive this document exists to remove.
+**How a compromised application process is kept out:** it can run *any SQL the runtime role may run* and call *any endpoint the app exposes*, but it cannot (a) write or alter a witness, (b) instruct the reconciler to look up an identifier it chose, or (c) fabricate the provider's HTTPS response and its digest — and, where the statement path is in scope, (d) read the private key. Note that (a)–(c) hold even for the public-key funding types: the defence is the absence of write and instruction authority, not the secrecy of a key. The reconciler must therefore accept **no inbound instruction carrying an amount or reference**; its only trigger is "reconcile opening X", where X must already exist in the database with a stored account and reference. Anything else reintroduces the forgery primitive this document exists to remove.
 
 ## 11. Callback verification for the actual Moolre contract
 
@@ -291,11 +314,11 @@ Each negative case must prove: no receipt reaches `AVAILABLE`, `FiatLiquiditySta
 2. Whether bank credits to a virtual account fire a callback at all — no documented callback was found.
 3. `txtype` semantics (examples show `1` and `2`, no definition found); whether `1` reliably denotes a credit.
 4. Which party bears fees per pricing band, and therefore when `value < amount`.
-5. Whether the statement API can be filtered reliably enough to serve as a durable witness, and its pagination and retention limits.
+5. Statement and transaction-list coverage as an audit witness: pagination, `limit` semantics, maximum date range, retention horizon, and whether a completed list for a window is provably complete rather than merely what was returned.
 6. Whether Moolre provides settlement statements, reconciliation exports or a written statement of account suitable for audit.
 7. Whether the published callback IP list is stable, and the expected behaviour behind a CDN or proxy.
-8. Confirmation that `X-API-PUBKEY` may be treated as non-secret and `X-API-KEY` must remain private, and what each may access.
+8. The **account-level permission scope** of each credential: the documentation names `X-API-PUBKEY` (Public) and `X-API-KEY` (Private) but does not publish a complete endpoint-by-endpoint permission matrix, nor whether either key can be issued with narrower scopes.
 
 ## 14. Verdict (updated)
 
-Treasury funding remains **NOT READY**. Two defects stand: (a) a runtime database credential can fabricate the evidence `confirmTreasuryOpening` consumes — proven on `6a6f233`; (b) the evidence amount is the payer's gross figure rather than the net credited value, so even honest evidence can overstate the treasury by the fee. Neither the callback body secret nor IP allowlisting closes (a). Only an independently fetched provider witness, holding the private key outside the application, closes it — and only for the funding types whose inflows that witness can address.
+Treasury funding remains **NOT READY**. Two defects stand: (a) a runtime database credential can fabricate the evidence `confirmTreasuryOpening` consumes — proven on `6a6f233`; (b) the evidence amount is the payer's gross figure rather than the net credited value, so even honest evidence can overstate the treasury by the fee. Neither the callback body secret nor IP allowlisting closes (a). For (a), only evidence fetched independently by a component the application can neither instruct nor impersonate closes it; the private key is required only for the statement category, while collection and bank deposits need no secret at all and still require the separate writer.
