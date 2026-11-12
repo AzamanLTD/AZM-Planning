@@ -1,6 +1,6 @@
 # WP-I — Provider trust boundary and treasury evidence
 
-**Status:** investigation complete, implementation NOT started. Release blocker for treasury funding.
+**Status:** investigation complete, implementation NOT started. Release blocker for treasury funding. Part II (§7-§14) corrects three provider-contract overstatements in Part I and adds funding-type applicability, gross/net/currency semantics, the credential model and callback verification for the real Moolre contract.
 **Author role:** independent review (read-only). No backend source was modified.
 **Reviewed candidate:** `AzamanLTD/AZM-backend` PR #399, head `6a6f23304c7a2fdfe8e3e0a60b61dda97e07ebd3`, base `main` `0edefa1dbe`.
 **CI on that exact SHA:** Azaman Test Suite `43116890057` success (445 suites / 4683 tests, first attempt, no retry); financial-durability `43116890047` success (62 suites / 702 tests).
@@ -96,7 +96,7 @@ The documentation set describes transfer lifecycle through the **Transfer Status
 - **List Payment ID Transactions** (<https://docs.moolre.com/api/payments/payment-id/transactions>), **Accounts transactions** (<https://docs.moolre.com/api/accounts/transactions>), **Account status/settlement** (<https://docs.moolre.com/api/accounts/update>, `/api/accounts/status`).
 - Provider guidance, "Verify the final state" (<https://docs.moolre.com/webhooks>): "For high-value actions or an unexpected payload, verify the state with the relevant status endpoint before completing the customer-facing workflow." Also "Reconcile uncertain outcomes": keep the operation pending on timeout, confirm via status or callback.
 
-**The provider's own documentation prescribes the architecture recommended in §4.** That is the strongest available contract evidence for this design.
+**Corrected (Part II §7):** the provider *recommends* verifying state with a status endpoint for high-value or unexpected payloads. It does not prescribe, mandate or describe a separate reconciliation process, a second credential or an independent database identity. The separate-process treasury architecture is **our security requirement**, built on the verification capability the provider does expose.
 
 ### 3.4 MTN MoMo
 
@@ -189,3 +189,113 @@ When implemented, the suite **must** be appended to the explicit `SUITES` array 
 ## 7. Read-only attestation
 
 No backend implementation, no provider calls, no credential or secret changes, no role provisioning, no Render changes, no Redis changes, no activation, merge or deployment. The executed evidence was produced on a disposable local PostgreSQL database with a synthetic least-privilege role; no production or shared environment was touched, and no connection details are recorded here.
+
+---
+
+# PART II — Provider-method applicability, gross/net and process isolation
+
+Added after reviewing the official Moolre documentation set in full. Part II **supersedes** the corresponding provider claims in §3.3 where they differ.
+
+## 7. Corrections to Part I
+
+| Part I claim | Correction |
+|---|---|
+| "The provider's own documentation prescribes the architecture recommended in §4." | The provider *recommends* status-endpoint verification for high-value or unexpected payloads. It does not prescribe a separate process, a second credential or an independent database identity. That architecture is **our** requirement, enabled by a capability the provider exposes. |
+| `X-API-PUBKEY` treated as though it were a secret | Moolre describes it as the **Public API Key**. It is not a hidden credential and must not be presented as one. Genuinely private material is `X-API-KEY` (Private API Key), used by the statement and account-status APIs only. |
+| One "Payment Status API" treated as the witness for treasury inflows | `/open/transact/status` with `type=1` proves **only a collection Azaman itself initiated and holds the externalref for**. It cannot prove a bank deposit, an unsolicited mobile-money transfer or a wallet-to-wallet credit. See §8. |
+
+## 8. Funding-type applicability — what each witness can actually prove
+
+`FiatLiquidityReceipt` stores `provider`, `providerRef` (nullable), `dedupKey` (economic identity), `amountGhs` (2dp) and `status`. It stores **no account number, no external reference and no currency** (`prisma/schema.prisma`, model `FiatLiquidityReceipt`). Whatever the reconciler queries, it must first be given a server-created identity and a stored account mapping.
+
+| Funding method | Can `/open/transact/status` type=1 prove it? | Correct independent witness | Credential used |
+|---|---|---|---|
+| Collection initiated by Azaman through Moolre, with an Azaman `externalref` | **Yes** — `idtype=1` by our externalref, or `idtype=2` by Moolre id | Payment Status API (`type=1`) | `X-API-PUBKEY` (public) |
+| Bank transfer into a Moolre virtual account | **No.** No externalref we control is attached to an unsolicited credit | List Bank Account Transactions — `/open/transact/status` with `type=2`, keyed by the account's **creation** externalref + `accountnumber`, returning a transaction array | `X-API-PUBKEY` (public) |
+| Mobile-money transfer into the wallet, not initiated through our collection API | **No** | List Transactions (wallet statement) — `/open/account/status` with `type=2`, `accountnumber`, date range, optional status filter; match on `transactionid` / `thirdpartyref` / `amount` / `value` / `ts` | **`X-API-KEY` (private)** |
+| Wallet-to-wallet (internal transfer) received | **No** — internal transfer is outbound from the sending wallet; the credit appears on the receiving wallet's statement | List Transactions (wallet statement) | **`X-API-KEY` (private)** |
+| Settlement / disbursement | Not an inflow | Transfer Status API (outbound lifecycle only) | `X-API-PUBKEY` (public) |
+| Any other credit to the wallet | **No** | Wallet statement, matched conservatively | **`X-API-KEY` (private)** |
+
+**Consequences for the current model.** `confirmTreasuryOpening` accepts *any* INBOUND event with a settled status string, provider `MOOLRE`/`MTN_MOMO`/`AZM_WEBHOOK` and a matching amount (`src/services/fiatLiquidityService.js:127-128`, `:1028+`). It does not distinguish a collection we initiated from a bank deposit — a distinction the provider's APIs make absolutely. The treasury-opening path therefore needs an explicit **funding type** on the receipt before any witness can be selected, and the witness differs per type.
+
+**Where the public API is insufficient.** For any inflow that is not a collection we initiated, the public key endpoints either cannot address the transaction (no externalref) or require the private-key statement scan. If Azaman does not hold the private key in the reconciler, those inflow types must remain **unavailable** for treasury funding until a provider statement, reconciliation export or written confirmation is obtained.
+
+## 9. Gross amount, net credited value and currency
+
+The documented webhook payload carries both `amount` and `value`, defining `value` as "Transaction value after applicable fees" (`docs.moolre.com/api/payments/webhook`, field table). The statement APIs return the same pair per transaction.
+
+**Defect in current code (exact candidate):** `controllers/moolreQuoteDepositController.js:361` parses `data.amount` — the payer's gross figure — as the settled amount. Where a fee is deducted from the credit, our evidence is overstated by that fee, and `confirmTreasuryOpening`'s exact-equality check then compares gross-to-gross, making the overstatement internally consistent and therefore invisible.
+
+**Rule for treasury evidence:** reconcile to the **net credited value that the wallet actually received**, proven from the provider response for that specific transaction — never to the payer's gross, and never to an amount our own normaliser asserted. Gross and net legitimately differ; which side bears the fee appears to depend on pricing band ("Special payment pricing" sections), which the public documentation does not resolve into a single rule. Until it is resolved, a path whose gross-vs-net relationship is unproven stays **unavailable**.
+
+**Currency:** neither the callback nor the status/statement responses carry a currency field; the webhook exposes `accountnumber` (destination wallet) and the statement exposes `balance` unlabelled. Currency is established at **account creation** (Bank Collections API `type=9` takes `currency: GHS | NGN`). Therefore:
+- the account-number → currency mapping must be a **stored, controlled table** owned by the treasury side, populated from account creation records, not inferred per transaction;
+- the reconciler must refuse to emit a GHS witness for an account absent from that mapping;
+- `FiatLiquidityReceipt.amountGhs` presupposes GHS; nothing in the provider response independently proves it.
+
+## 10. Credential and process boundary (corrected)
+
+| Credential | Nature per provider docs | Where it may live |
+|---|---|---|
+| `X-API-USER` | account identifier | reconciler and app |
+| `X-API-PUBKEY` | **Public** API Key — not a secret | either |
+| `X-API-KEY` | **Private** API Key — genuinely secret | **reconciler only** |
+
+The asymmetry matters: the witness that can prove arbitrary credits (the statement) requires the **private** key, so the reconciler — not the application — must hold it. That is the concrete reason the reconciliation identity cannot be a second credential inside the same Node process.
+
+Required properties of the reconciliation boundary:
+
+1. A separate process/service with its own deployment and egress identity, not a request handler inside the API.
+2. It holds the private key; the API process does not.
+3. It connects to PostgreSQL under its **own** database identity, with `INSERT` only on the witness table and `SELECT` only on the pre-existing treasury openings it must match.
+4. It queries the provider over HTTPS itself — never in response to a user-supplied reference or amount.
+5. The lookup key is a **pre-existing server-created treasury opening** (its dedupKey plus stored account and reference), not anything the application or a user supplies at query time.
+6. Matching is exact on provider account, external reference, net amount, currency (via the mapping) and settled state.
+7. It stores the **immutable provider response**: raw body, retrieval timestamp, response digest, endpoint and request parameters.
+8. No application-supplied claim may select, parameterise or manufacture the provider result.
+9. Receipt binding stays single-use, with contradiction quarantine for byte-different but economically identical observations.
+
+**How a compromised application process is kept out:** it can run *any SQL the runtime role may run* and call *any endpoint the app exposes*, but it cannot (a) read the private key, (b) write the witness table, (c) ask the reconciler to fetch a reference it chose, or (d) fabricate the provider's HTTPS response and its digest. The reconciler must therefore accept **no inbound instruction carrying an amount or reference**; its only trigger is "reconcile opening X", where X must already exist in the database with a stored account and reference. Anything else reintroduces the forgery primitive this document exists to remove.
+
+## 11. Callback verification for the actual Moolre contract
+
+1. **Secret location:** `data.secret` inside the JSON body; compare against our stored expectation in constant time. Never echo it; redact it from retained raw payload.
+2. **Source-IP allowlisting** at the network edge (proxy/LB), using the published callback IP list, as an additional control — not the primary one.
+3. **Proxy and client-IP handling:** trust only the platform's own forwarding header, from known proxy addresses; never `X-Forwarded-For` as supplied by the caller. Reject when the effective client IP cannot be established.
+4. **Raw payload retention and digest:** store the exact bytes received plus a SHA-256 digest and receipt timestamp, before any parsing-derived state is committed.
+5. **External-reference correlation:** correlate on `data.externalref` for collections we initiated; a callback whose reference is unknown must be recorded and **not** bound to any receipt.
+6. **Exact decimal and account validation:** parse `amount`/`value` through the existing exact-decimal authority; validate `data.accountnumber` against the stored account→currency mapping; treat `status=0` / `P02` / `txstatus=2` as failure and `txstatus=0` as pending, never as settled.
+7. **Duplicates and contradictions:** idempotent on the economic identity; byte-different but economically identical observations converge; materially different observations are quarantined, never overwritten.
+8. **Mandatory independent reconciliation** before an observation becomes treasury-eligible (Part II §10). The callback alone — body secret, IP allowlist, or both — never makes a receipt `AVAILABLE`.
+9. **Remove** the undocumented static-header fallback at `controllers/moolreQuoteDepositController.js:344` and the static-first ordering at `controllers/fiatSettlementWebhook.controller.js:35-40`. Do **not** replace them with an invented HMAC; if Azaman wants HMAC, the exact algorithm, encoding and signed bytes must be confirmed in writing by Moolre first.
+
+## 12. Additional acceptance cases (matrix now 26)
+
+Each negative case must prove: no receipt reaches `AVAILABLE`, `FiatLiquidityState.availableGhs` is unchanged, and no duplicate economic effect occurs.
+
+| # | Case | Required outcome |
+|---|---|---|
+| 19 | Funding type not supported by the selected status endpoint (bank deposit queried as `type=1`) | Witness refused as inapplicable; receipt stays `RECEIVED` |
+| 20 | Status response cannot prove GHS (account not in currency mapping) | Refused; stays `RECEIVED` |
+| 21 | Gross `amount` vs net `value` mismatch on a fee-bearing payment | Refused or reconciled to net only; never credited gross |
+| 22 | Provider returns pending / non-final (`txstatus=0`, or no terminal state) | Stays `RECEIVED`; no promotion |
+| 23 | Reconciliation service unavailable | Fail closed; `RECEIVED`; alert |
+| 24 | Application submits an arbitrary reference with no pre-existing treasury opening | Reconciler refuses to query; no witness written |
+| 25 | Reconciler process compromise (simulated: witness written without a provider call) | Detected by digest/timestamp/endpoint binding; receipt not promoted |
+| 26 | One provider observation matched to a second treasury opening | Refused by single-use binding; second receipt stays `RECEIVED` |
+
+## 13. Remaining provider questions (supersedes §3.5 items)
+
+1. Written confirmation of the authoritative callback authentication method, including whether any HMAC exists and its exact specification.
+2. Whether bank credits to a virtual account fire a callback at all — no documented callback was found.
+3. `txtype` semantics (examples show `1` and `2`, no definition found); whether `1` reliably denotes a credit.
+4. Which party bears fees per pricing band, and therefore when `value < amount`.
+5. Whether the statement API can be filtered reliably enough to serve as a durable witness, and its pagination and retention limits.
+6. Whether Moolre provides settlement statements, reconciliation exports or a written statement of account suitable for audit.
+7. Whether the published callback IP list is stable, and the expected behaviour behind a CDN or proxy.
+8. Confirmation that `X-API-PUBKEY` may be treated as non-secret and `X-API-KEY` must remain private, and what each may access.
+
+## 14. Verdict (updated)
+
+Treasury funding remains **NOT READY**. Two defects stand: (a) a runtime database credential can fabricate the evidence `confirmTreasuryOpening` consumes — proven on `6a6f233`; (b) the evidence amount is the payer's gross figure rather than the net credited value, so even honest evidence can overstate the treasury by the fee. Neither the callback body secret nor IP allowlisting closes (a). Only an independently fetched provider witness, holding the private key outside the application, closes it — and only for the funding types whose inflows that witness can address.
