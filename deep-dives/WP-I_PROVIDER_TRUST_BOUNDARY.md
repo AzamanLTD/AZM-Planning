@@ -409,3 +409,31 @@ The forgery path is closed **at the witness layer** and proven with real roles. 
 funding nonetheless remains **NOT READY** for production: the opening itself can still be
 created by the runtime with an invented reference, live provider behaviour is unverified, and
 the account-to-currency mapping is operator configuration rather than stored, protected state.
+
+## 21. Wallet binding implementation (2026-11-15)
+
+The reconciler previously took the wallet account from `opening.evidence.walletAccount` — JSON the
+application runtime writes — with an environment variable as the alternative. Both are claims, not
+facts, so a compromised runtime could point reconciliation at a wallet of its choosing.
+
+Now: `FiatLiquidityReceipt.walletAccount` is a real column, and the reconciler reads the wallet
+**only** from the opening row.
+
+| Condition | Behaviour |
+|---|---|
+| opening has `walletAccount` | used verbatim in the provider request |
+| opening has none | refused (`OPENING_HAS_NO_WALLET_ACCOUNT`), **no provider call made** |
+| `AZM_RECONCILER_ACCOUNT_NUMBER` set and differs | refused (`RECONCILER_WALLET_MISMATCH`) |
+| `AZM_RECONCILER_ACCOUNT_NUMBER` unset | any opening wallet is served (one reconciler, many wallets) |
+
+The overlay adds the column, its index, and a backfill from `ProviderSettlementWitness` for
+openings already witnessed. Openings that were never witnessed need an operator to set the wallet,
+which is deliberate: the column exists to stop the wallet being guessed.
+
+Evidence class: **tested locally** (four new cases, including that a claim inside `evidence` is
+refused and that a pinned reconciler will not query a different wallet).
+
+**Attempted and withdrawn.** Capturing the destination wallet on `FiatProviderEvent` from
+`data.accountnumber` was implemented and then reverted: it passed in isolation but broke suite
+isolation when the financial suites ran together in one process, and it could not be verified
+locally. It is recorded here as unfinished work rather than a delivered control.
