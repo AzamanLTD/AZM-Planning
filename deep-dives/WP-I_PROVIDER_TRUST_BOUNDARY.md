@@ -437,3 +437,25 @@ refused and that a pinned reconciler will not query a different wallet).
 `data.accountnumber` was implemented and then reverted: it passed in isolation but broke suite
 isolation when the financial suites ran together in one process, and it could not be verified
 locally. It is recorded here as unfinished work rather than a delivered control.
+
+## 22. Account binding, and why the event column is not needed (2026-11-15)
+
+**A real gap, now closed.** The reconciler queried the provider about wallet Y (so a payment in
+another wallet simply would not be found), but it never compared the account the provider NAMED in
+its answer against the opening's wallet. A settled answer for wallet Z could therefore be recorded
+as evidence about Y. Recording a witness now refuses with `WITNESS_ACCOUNT_MISMATCH` unless the
+reported account is the reconciled one. An answer that names no account is still accepted: the
+query was scoped to the opening's wallet, so no account means nothing was found there.
+
+Ordering matters and is deliberate: currency resolution runs first, so an unmapped wallet keeps its
+own refusal (`WITNESS_ACCOUNT_UNMAPPED`) instead of becoming a mismatch. Both are refusals; the
+distinction tells an operator which one to fix.
+
+**Withdrawn idea, now closed as redundant.** Capturing the destination wallet as a new
+`FiatProviderEvent` column is no longer worth doing: opening creation already derives the wallet
+server-side from that same observation's stored payload (`raw -> 'data' ->> 'accountnumber'`). A
+second column would duplicate one source of truth and add a second way to disagree. What actually
+enforces the binding is the provider's own answer, checked above, not the column.
+
+Evidence class: **tested locally** (18 tests in the reconciler suite, 165 across 11 suites on a
+freshly rebuilt database).
