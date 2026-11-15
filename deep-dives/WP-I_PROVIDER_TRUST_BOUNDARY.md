@@ -333,3 +333,79 @@ Each negative case must prove: no receipt reaches `AVAILABLE`, `FiatLiquiditySta
 ## 14. Verdict (updated)
 
 Treasury funding remains **NOT READY**. Two defects stand: (a) a runtime database credential can fabricate the evidence `confirmTreasuryOpening` consumes — proven on `6a6f233`; (b) the evidence amount is the payer's gross figure rather than the net credited value, so even honest evidence can overstate the treasury by the fee. Neither the callback body secret nor IP allowlisting closes (a). For (a), only evidence fetched independently by a component the application can neither instruct nor impersonate closes it, presenting credentials for the exact wallet that holds the funds; the private key is required only for the statement category, while collection and bank deposits need no secret at all and still require the separate writer.
+
+---
+
+# PART III — Implementation evidence (2026-11-15)
+
+Backend work: `AzamanLTD/AZM-backend`, branch `wp-i/on-wph`, draft PR #403, based on
+`feature/wp-h-tristate-authority` (PR #400 head `c02d05c7`), which is itself stacked on
+PR #399 `6a6f233`. WP-I commits from the abandoned-on-main branch were replayed onto the
+WP-H head rather than merged, so the #399 → #400 lineage is preserved.
+
+## 15. What the reconciler now actually sends
+
+The previous implementation authenticated with `X-API-KEY` (the **private** key) and omitted
+`accountnumber`. The documented type-1 status request is `X-API-USER` + `X-API-PUBKEY` with
+`{ type: 1, idtype: 1, id, accountnumber }`. Both were wrong, so the live call would have
+been malformed twice over even with a correct parser.
+
+Evidence class: **confirmed from provider documentation**, then **tested locally** against
+fixtures copied from the documented response shapes.
+
+## 16. Settlement parsing
+
+`src/services/providers/moolreStatusAdapter.js` separates transport success (HTTP 200 plus
+wrapper `status: 1`) from transaction settlement (`data.txstatus`). `1` is settled, `0`
+pending, `2` failed; a missing, unknown, malformed or non-numeric value is never settled.
+The undocumented `state` / `txstatus_label` shape still parses, but only under a named legacy
+rule that is stamped on the witness in `ProviderSettlementWitness.adapterRule`, so an auditor
+can tell documented evidence from guessed evidence.
+
+Evidence class: **confirmed from documentation** (field names and the numeric success value),
+**tested locally** (10 adapter tests including pending, failed, wrapper-failed, missing
+`txstatus`, non-200, non-JSON, unknown status, legacy).
+
+## 17. Witness binding and the opening
+
+The funding reference is read from the persisted opening (`FiatLiquidityReceipt.providerRef`),
+not from a caller. `observationKey` binds provider, funding type, endpoint, reference, wallet
+account and provider transaction identity, so one payment observed through two paths or two
+wallets cannot become two independent witnesses, and the database uniqueness constraint
+settles concurrency rather than a pre-check.
+
+## 18. Privileges, proven against real logins
+
+Running the shipped `infra/wp-i/install-witness-provenance.js` as a process against genuine
+`LOGIN` roles, then asking PostgreSQL for effective privileges:
+
+| Identity | May | May not |
+| --- | --- | --- |
+| runtime | `SELECT` the witness table | `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, alter, own |
+| reconciler | `SELECT` openings, `INSERT` witnesses | rewrite/delete witnesses, promote a receipt, alter, own |
+
+Neither role can assume the other, a second install is a no-op, and the installer previously
+did not grant the reconciler `SELECT` on `FiatLiquidityReceipt` even though the reconciler
+reads the opening before writing a witness. That grant now exists and is verified after
+installation rather than assumed from the statement list.
+
+Evidence class: **tested locally against real PostgreSQL roles**. Not yet re-verified against
+a managed provider database.
+
+## 19. Still open, and honestly unresolved
+
+- No live Moolre wallet exists, so nothing here proves the provider's real responses match
+  the documentation; every fixture derives from docs.moolre.com.
+- `FiatLiquidityReceipt` has no account column; the reconciler resolves the wallet from
+  `AZM_RECONCILER_ACCOUNT_NUMBER`, which works for one reconciler per wallet and no further.
+- Fee allocation per pricing band remains unanswered, so `value < amount` is expected but the
+  magnitude is unproven.
+- Whether the reconciler should ever be scheduled rather than operator-invoked is an owner
+  decision; it is built to run only when invoked.
+
+## 20. Verdict after implementation
+
+The forgery path is closed **at the witness layer** and proven with real roles. Treasury
+funding nonetheless remains **NOT READY** for production: the opening itself can still be
+created by the runtime with an invented reference, live provider behaviour is unverified, and
+the account-to-currency mapping is operator configuration rather than stored, protected state.
